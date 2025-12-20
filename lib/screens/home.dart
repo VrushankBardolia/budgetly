@@ -1,6 +1,6 @@
 import 'package:budgetly/screens/dashboard/dashboardTab.dart';
 import 'package:budgetly/screens/months/monthsTab.dart';
-import 'package:budgetly/screens/settingTab.dart';
+import 'package:budgetly/screens/settings/settingTab.dart';
 import 'package:crystal_navigation_bar/crystal_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

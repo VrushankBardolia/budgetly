@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+// Assuming these exist in your project structure
 import '../../provider/CategoryProvider.dart';
 import '../../provider/ExpenseProvider.dart';
 import 'categoriesScreen.dart';
@@ -18,6 +19,12 @@ class _DashboardTabState extends State<DashboardTab> {
   List<int> _availableYears = [];
   bool _isLoading = true;
 
+  // Color Palette
+  final Color _backgroundColor = const Color(0xFF121212);
+  final Color _cardColor = const Color(0xFF1E1E1E);
+  final Color _primaryColor = const Color(0xFF2196F3);
+  final Color _accentColor = const Color(0xFF64B5F6);
+
   @override
   void initState() {
     super.initState();
@@ -28,12 +35,13 @@ class _DashboardTabState extends State<DashboardTab> {
     final expenseProvider = context.read<ExpenseProvider>();
     final years = await expenseProvider.getYearsWithExpenses();
 
-    setState(() {
-      _availableYears = years;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _availableYears = years;
+        _isLoading = false;
+      });
+    }
 
-    // ✅ Always loads expenses for selected/current year
     if (years.isNotEmpty) {
       if (!years.contains(expenseProvider.selectedYear)) {
         expenseProvider.setSelectedYear(years.first);
@@ -53,11 +61,17 @@ class _DashboardTabState extends State<DashboardTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: _backgroundColor,
       appBar: AppBar(
-        title: const Text('Budgetly'),
+        backgroundColor: _backgroundColor,
+        elevation: 0,
+        title: const Text('Budgetly',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+        ),
         actions: [
-          TextButton(
-            child: const Text("Categories"),
+          IconButton(
+            icon: const Icon(Icons.category_rounded),
+            color: Colors.white,
             onPressed: () {
               Navigator.push(
                 context,
@@ -68,78 +82,124 @@ class _DashboardTabState extends State<DashboardTab> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Colors.white,))
+          ? Center(child: CircularProgressIndicator(color: _primaryColor))
           : _availableYears.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.receipt_long, size: 80, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No expenses yet',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 8),
-                  Text('Start tracking your expenses',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            )
+          ? _buildEmptyState()
           : Consumer2<ExpenseProvider, CategoryProvider>(
-              builder: (context, expenseProvider, categoryProvider, _) {
-                final categoryTotals = expenseProvider.getCategoryTotals(
-                  expenseProvider.selectedYear,
-                );
+        builder: (context, expenseProvider, categoryProvider, _) {
+          final categoryTotals = expenseProvider.getCategoryTotals(
+            expenseProvider.selectedYear,
+          );
 
-                return SingleChildScrollView(
-                  physics: BouncingScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildYearSelector(expenseProvider),
-                      const SizedBox(height: 24),
-                      _buildTotalCard(categoryTotals),
-                      const SizedBox(height: 24),
-                      _buildCategoryList(categoryProvider, categoryTotals),
-                      const SizedBox(height: 24),
-                      _buildCharts(
-                        categoryProvider,
-                        categoryTotals,
-                        expenseProvider,
-                      ),
-                      SizedBox(height: 120,)
-                    ],
-                  ),
-                );
-              },
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 10),
+                _buildYearSelector(expenseProvider),
+                const SizedBox(height: 20),
+                _buildTotalCard(categoryTotals),
+                const SizedBox(height: 30),
+                _buildSectionTitle('Top Categories'),
+                const SizedBox(height: 16),
+                _buildCategoryList(categoryProvider, categoryTotals),
+                const SizedBox(height: 30),
+                _buildSectionTitle('Analytics'),
+                const SizedBox(height: 16),
+                _buildCharts(
+                  categoryProvider,
+                  categoryTotals,
+                  expenseProvider,
+                ),
+                const SizedBox(height: 150),
+              ],
             ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: Colors.white70,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: _cardColor,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.receipt_long, size: 60, color: Colors.grey[700]),
+          ),
+          const SizedBox(height: 24),
+          Text('No expenses yet',
+            style: const TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+          const SizedBox(height: 8),
+          Text('Start tracking your expenses to see data here.',
+            style: TextStyle(color: Colors.grey[500]),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildYearSelector(ExpenseProvider expenseProvider) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white10),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: DropdownButton<int>(
-        value: expenseProvider.selectedYear,
-        isExpanded: true,
-        style: TextStyle(
-          fontSize: 20
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: _cardColor,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: Colors.white12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text("Year: ",
+                style: TextStyle(color: Colors.grey),
+              ),
+              DropdownButton<int>(
+                value: expenseProvider.selectedYear,
+                dropdownColor: _cardColor,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white),
+                underline: const SizedBox(),
+                isDense: true,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                items: _availableYears.map((year) {
+                  return DropdownMenuItem(value: year, child: Text(year.toString()));
+                }).toList(),
+                onChanged: (year) {
+                  if (year != null) _changeYear(year);
+                },
+              ),
+            ],
+          ),
         ),
-        underline: const SizedBox(),
-        items: _availableYears.map((year) {
-          return DropdownMenuItem(value: year, child: Text(year.toString()));
-        }).toList(),
-        onChanged: (year) {
-          if (year != null) _changeYear(year);
-        },
-      ),
+      ],
     );
   }
 
@@ -147,154 +207,258 @@ class _DashboardTabState extends State<DashboardTab> {
     final total = categoryTotals.values.fold(0.0, (sum, val) => sum + val);
     final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Text('Total Expenses',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              formatter.format(total),
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                color: const Color(0xFF2196F3),
-              ),
-            ),
-          ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [const Color(0xFF1565C0), const Color(0xFF1E88E5)],
         ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1565C0).withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.wallet, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Total Expenses',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.9),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(formatter.format(total),
+            style: const TextStyle(
+              fontSize: 40,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              height: 1.0,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'for ${context.read<ExpenseProvider>().selectedYear}',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildCategoryList(
-    CategoryProvider categoryProvider,
-    Map<String, double> categoryTotals,
-  ) {
+      CategoryProvider categoryProvider,
+      Map<String, double> categoryTotals,
+      ) {
     final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
 
     if (categoryTotals.isEmpty) {
-      return const Card(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('No expenses in this year', textAlign: TextAlign.center),
-        ),
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(16)),
+        child: const Text('No expenses recorded', style: TextStyle(color: Colors.grey), textAlign: TextAlign.center),
       );
     }
 
     final sortedEntries = categoryTotals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
+    // Calculate max value for progress bar calculation
+    final maxVal = sortedEntries.isNotEmpty ? sortedEntries.first.value : 0.0;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Categories', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        ...sortedEntries.map((entry) {
-          final category = categoryProvider.getCategoryById(entry.key);
-          return Card(
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListTile(
-              leading: Text(
-                category?.emoji ?? '📦',
-                style: const TextStyle(fontSize: 24),
+      children: sortedEntries.map((entry) {
+        final category = categoryProvider.getCategoryById(entry.key);
+        final percentage = maxVal > 0 ? (entry.value / maxVal) : 0.0;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _cardColor,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: _backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  category?.emoji ?? '📦',
+                  style: const TextStyle(fontSize: 24),
+                ),
               ),
-              title: Text(category?.name ?? 'Unknown'),
-              trailing: Text(
-                formatter.format(entry.value),
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          category?.name ?? 'Unknown',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          formatter.format(entry.value),
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Visual bar indicating expense magnitude relative to highest
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: percentage,
+                        backgroundColor: Colors.white10,
+                        valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        }),
-      ],
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
   Widget _buildCharts(
-    CategoryProvider categoryProvider,
-    Map<String, double> categoryTotals,
-    ExpenseProvider expenseProvider,
-  ) {
+      CategoryProvider categoryProvider,
+      Map<String, double> categoryTotals,
+      ExpenseProvider expenseProvider,
+      ) {
     if (categoryTotals.isEmpty) return const SizedBox();
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Charts', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
         _buildPieChart(categoryProvider, categoryTotals),
-        const SizedBox(height: 24),
+        const SizedBox(height: 20),
         _buildMonthlyChart(expenseProvider),
       ],
     );
   }
 
   Widget _buildPieChart(
-    CategoryProvider categoryProvider,
-    Map<String, double> categoryTotals,
-  ) {
+      CategoryProvider categoryProvider,
+      Map<String, double> categoryTotals,
+      ) {
     final total = categoryTotals.values.fold(0.0, (sum, val) => sum + val);
-    final blueColors = [
-      const Color(0xFF0D47A1),
-      const Color(0xFF1565C0),
-      const Color(0xFF1976D2),
-      const Color(0xFF1E88E5),
-      const Color(0xFF2196F3),
-      const Color(0xFF42A5F5),
-      const Color(0xFF64B5F6),
-      const Color(0xFF90CAF9),
+
+    // Modern Palette
+    final colors = [
+      const Color(0xFF42A5F5), // Blue 400
+      const Color(0xFF26C6DA), // Cyan 400
+      const Color(0xFF66BB6A), // Green 400
+      const Color(0xFFFFA726), // Orange 400
+      const Color(0xFFEF5350), // Red 400
+      const Color(0xFFAB47BC), // Purple 400
+      const Color(0xFF7E57C2), // Deep Purple 400
     ];
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Category Distribution',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 250,
-              child: PieChart(
-                PieChartData(
-                  pieTouchData: PieTouchData(enabled: true),
-                  sections: categoryTotals.entries.toList().asMap().entries.map(
-                    (entry) {
-                      final index = entry.key;
-                      final category = categoryProvider
-                          .getCategoryById(entry.value.key)
-                          ?.name;
-                      final value = entry.value.value;
-                      final percentage = (value / total * 100).toStringAsFixed(
-                        1,
-                      );
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.pie_chart_outline, size: 20, color: _accentColor),
+              const SizedBox(width: 8),
+              const Text('Distribution', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 220,
+            child: PieChart(
+              PieChartData(
+                pieTouchData: PieTouchData(enabled: true),
+                centerSpaceRadius: 40, // Makes it a Donut Chart
+                sectionsSpace: 4,
+                sections: categoryTotals.entries.toList().asMap().entries.map(
+                      (entry) {
+                    final index = entry.key;
+                    final category = categoryProvider.getCategoryById(entry.value.key)?.name;
+                    final value = entry.value.value;
+                    final percentage = (value / total * 100);
 
-                      return PieChartSectionData(
-                        value: value,
-                        title: '$percentage%\n$category',
-                        color: blueColors[index % blueColors.length],
-                        radius: 100,
-                        // showTitle: true,
-                        titleStyle: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      );
-                    },
-                  ).toList(),
-                  sectionsSpace: 2,
-                ),
+                    final isLargeEnough = percentage > 5;
+
+                    return PieChartSectionData(
+                      value: value,
+                      title: isLargeEnough ? '${percentage.toStringAsFixed(0)}%' : '',
+                      color: colors[index % colors.length],
+                      radius: isLargeEnough ? 60 : 50,
+                      titleStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      badgeWidget: isLargeEnough ? null : _buildMiniBadge(colors[index % colors.length]),
+                      badgePositionPercentageOffset: .98,
+                    );
+                  },
+                ).toList(),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildMiniBadge(Color color) {
+    return Container(
+      width: 8, height: 8,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 
@@ -310,108 +474,107 @@ class _DashboardTabState extends State<DashboardTab> {
 
     final maxY = monthlyData.values.isEmpty
         ? 10000.0
-        : monthlyData.values.reduce((a, b) => a > b ? a : b) * 1.1;
+        : monthlyData.values.reduce((a, b) => a > b ? a : b) * 1.2; // Add 20% headroom
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text('Monthly Expenses',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 250,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(
-                    show: true,
-                    drawVerticalLine: true,
-                    horizontalInterval: maxY / 5,
-                    getDrawingHorizontalLine: (value) {
-                      return const FlLine(
-                        color: Color(0xFF2C2C2C),
-                        strokeWidth: 1,
-                      );
-                    },
-                    getDrawingVerticalLine: (value) {
-                      return const FlLine(
-                        color: Color(0xFF2C2C2C),
-                        strokeWidth: 1,
-                      );
-                    },
-                  ),
-                  titlesData: FlTitlesData(
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: _cardColor,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.show_chart_rounded, size: 20, color: _accentColor),
+              const SizedBox(width: 8),
+              const Text('Monthly Trend', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 200,
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  horizontalInterval: maxY / 4,
+                  getDrawingHorizontalLine: (value) {
+                    return FlLine(
+                      color: Colors.white.withValues(alpha: 0.05),
+                      strokeWidth: 1,
+                      dashArray: [5, 5], // Dashed lines look cleaner
+                    );
+                  },
+                ),
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
                         showTitles: true,
-                          getTitlesWidget: (value, meta) {
-                            if (value >= 1 && value <= 12) {
-                              return Text(value.toInt().toString());
-                            }
-                            return const SizedBox();
+                        interval: 1,
+                        getTitlesWidget: (value, meta) {
+                          const months = ['J','F','M','A','M','J','J','A','S','O','N','D'];
+                          final index = value.toInt() - 1;
+                          if (index >= 0 && index < 12) {
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(months[index], style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                            );
                           }
-
-                      ),
-                    ),
-                    leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 40,
-                      ),
-                    ),
-                    topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
+                          return const SizedBox();
+                        }
                     ),
                   ),
-                  borderData: FlBorderData(
-                    show: true,
-                    border: Border.all(color: Color(0xFF2C2C2C)),
-                  ),
-                  minX: 1,
-                  maxX: 12,
-                  minY: 0,
-                  maxY: maxY,
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: monthlyData.entries
-                          .map((e) => FlSpot(e.key.toDouble(), e.value))
-                          .toList(),
-                      isCurved: true,
-                      preventCurveOverShooting: true,
-                      color: const Color(0xFF2196F3),
-                      barWidth: 3,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: const Color(0xFF2196F3),
-                            strokeWidth: 2,
-                            strokeColor: const Color(0xFF1E1E1E),
-                          );
-                        },
-                      ),
-                      belowBarData: BarAreaData(
-                        show: true,
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF2196F3).withOpacity(0.2),Color(0xFF2196F3).withOpacity(0),],
-                          begin: AlignmentGeometry.topCenter,
-                          end: AlignmentGeometry.bottomCenter
-                        ),
-                        // color: const Color(0xFF2196F3).withOpacity(0.2),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                borderData: FlBorderData(show: false),
+                minX: 1,
+                maxX: 12,
+                minY: 0,
+                maxY: maxY,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: monthlyData.entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+                    isCurved: true,
+                    curveSmoothness: 0.35,
+                    color: _primaryColor,
+                    barWidth: 3,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(show: false), // Hide dots for cleaner look
+                    belowBarData: BarAreaData(
+                      show: true,
+                      gradient: LinearGradient(
+                        colors: [
+                          _primaryColor.withValues(alpha: 0.3),
+                          _primaryColor.withValues(alpha: 0.0),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
                     ),
-                  ],
+                  ),
+                ],
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    tooltipRoundedRadius: 8,
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((LineBarSpot touchedSpot) {
+                        return LineTooltipItem(
+                          '₹${touchedSpot.y.toInt()}',
+                          const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        );
+                      }).toList();
+                    },
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
