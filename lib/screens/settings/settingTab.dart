@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -86,6 +87,7 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 
   void _changePhone() {
+    HapticFeedback.heavyImpact();
     final controller = TextEditingController(text: _phone);
 
     showModalBottomSheet(
@@ -108,7 +110,6 @@ class _SettingsTabState extends State<SettingsTab> {
               controller: controller,
               keyboardType: TextInputType.phone,
               style: const TextStyle(color: Colors.white),
-
             ),
 
             const SizedBox(height: 24),
@@ -124,10 +125,12 @@ class _SettingsTabState extends State<SettingsTab> {
                     .collection('users')
                     .doc(user.email)
                     .update({'phone': newPhone});
-
-
+                
                 setState(() => _phone = newPhone);
 
+                ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Phone number is updated successfully!"))
+                );
                 Navigator.pop(context);
               },
               child: const Text("Update"),
@@ -308,6 +311,7 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 
   Future<void> _handleSignOut() async {
+    HapticFeedback.heavyImpact();
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -340,6 +344,7 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 
   void _showAboutAppDialog() {
+    HapticFeedback.heavyImpact();
     showModalBottomSheet(
       context: context,
       backgroundColor: _cardColor,
@@ -347,7 +352,7 @@ class _SettingsTabState extends State<SettingsTab> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      isScrollControlled: true, // Allows the sheet to size itself based on content
+      isScrollControlled: true,
       builder: (context) => Padding(
         padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 24),
         child: Column(
@@ -375,8 +380,7 @@ class _SettingsTabState extends State<SettingsTab> {
             Text("Version 1.0.0", style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),
 
-            Text(
-              "A simple and effective personal expense tracking application designed to help you save money.",
+            Text("A simple and effective personal expense tracking application designed to help you save money.",
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[400], height: 1.5, fontSize: 15),
             ),

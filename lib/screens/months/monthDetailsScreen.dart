@@ -3,6 +3,7 @@ import 'package:budgetly/model/Expense.dart';
 import 'package:budgetly/screens/months/editExpenseDialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -253,6 +254,28 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
               selectedMonthDate.year == now.year &&
               selectedMonthDate.month == now.month;
 
+          final difference = remaining;
+          final isBalanced = difference == 0;
+          final isSaved = difference > 0;
+
+          Color statusColor;
+          String statusLabel;
+          IconData statusIcon;
+
+          if (isBalanced) {
+            statusColor = Colors.orangeAccent;
+            statusLabel = "On Target";
+            statusIcon = CupertinoIcons.nosign;
+          } else if (isSaved) {
+            statusColor = Colors.greenAccent;
+            statusLabel = isCurrent ? "Remaining" : "Saved";
+            statusIcon = CupertinoIcons.check_mark;
+          } else {
+            statusColor = Colors.redAccent;
+            statusLabel = "Overspent";
+            statusIcon = CupertinoIcons.exclamationmark;
+          }
+
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
@@ -291,13 +314,10 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                         Row(
                           children: [
                             Expanded(
-                              child: _buildInfoCard(
-                                "Remaining",
+                              child: _buildInfoCard(statusLabel,
                                 formatter.format(remaining),
-                                remaining >= 0
-                                    ? Colors.greenAccent
-                                    : Colors.redAccent,
-                                icon: Icons.pie_chart_outline,
+                                statusColor,
+                                icon: statusIcon,
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -313,15 +333,10 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                         ),
                       ] else ...[
                         // Full width result for past months
-                        _buildInfoCard(
-                          isPast ? "Final Balance" : "Remaining",
+                        _buildInfoCard(statusLabel,
                           formatter.format(remaining),
-                          remaining >= 0
-                              ? Colors.greenAccent
-                              : Colors.redAccent,
-                          icon: remaining >= 0
-                              ? Icons.savings_outlined
-                              : Icons.warning_amber_rounded,
+                          statusColor,
+                          icon: statusIcon,
                           isFullWidth: true,
                         ),
                       ],
@@ -400,6 +415,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: GestureDetector(
                         onLongPressStart: (details) {
+                          HapticFeedback.heavyImpact();
                           showPullDownMenu(
                             context: context,
                             routeTheme: PullDownMenuRouteTheme(

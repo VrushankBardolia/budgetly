@@ -1,11 +1,12 @@
-import 'package:budgetly/screens/dashboard/dashboardTab.dart';
-import 'package:budgetly/screens/months/monthsTab.dart';
-import 'package:budgetly/screens/settings/settingTab.dart';
 import 'package:crystal_navigation_bar/crystal_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'dashboard/dashboardTab.dart';
+import 'months/monthsTab.dart';
+import 'settings/settingTab.dart';
 import '../provider/CategoryProvider.dart';
 import '../provider/ExpenseProvider.dart';
 
@@ -50,7 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: CrystalNavigationBar(
         borderRadius: 200,
         borderWidth: 1,
-        // itemPadding: const EdgeInsets.symmetric(vertical: 8),
         paddingR: EdgeInsets.symmetric(horizontal: 24, ),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.2),
@@ -64,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
         splashColor: Colors.transparent,
         currentIndex: _currentIndex,
         onTap: (index) {
+          HapticFeedback.heavyImpact();
           setState(() => _currentIndex = index);
         },
         items: [
@@ -75,4 +76,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-// import 'package:flutter/material.dart';

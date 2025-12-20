@@ -33,9 +33,9 @@ class MonthsTab extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.3, // Slightly adjusted for better fit
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.3,
             ),
             itemCount: 12,
             itemBuilder: (ctx, index) {
@@ -49,12 +49,10 @@ class MonthsTab extends StatelessWidget {
               final budget = expenseProvider.getBudgetForMonth(selectedYear, month);
               final expense = expenseProvider.getTotalExpenseForMonth(selectedYear, month);
 
-              // --- LOGIC FOR 3 STATES ---
               final difference = budget - expense;
               final isBalanced = difference == 0;
               final isSaved = difference > 0;
 
-              // Define Styles based on state
               Color statusColor;
               String statusLabel;
               IconData statusIcon;
@@ -65,7 +63,7 @@ class MonthsTab extends StatelessWidget {
                 statusIcon = CupertinoIcons.nosign;
               } else if (isSaved) {
                 statusColor = Colors.greenAccent;
-                statusLabel = "Saved";
+                statusLabel = isCurrent ? "Remaining" : "Saved";
                 statusIcon = CupertinoIcons.check_mark;
               } else {
                 statusColor = Colors.redAccent;
@@ -100,7 +98,7 @@ class MonthsTab extends StatelessWidget {
                     ],
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -130,7 +128,7 @@ class MonthsTab extends StatelessWidget {
                               fontSize: 20,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          // const SizedBox(height: 2),
 
                           // Progress Bar
                           ClipRRect(
@@ -140,18 +138,18 @@ class MonthsTab extends StatelessWidget {
                               value: budget > 0 ? (expense / budget).clamp(0.0, 1.0) : 0,
                               backgroundColor: Colors.grey[800],
                               valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                              minHeight: 6,
+                              minHeight: 4,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: 4,),
                           Text('Spent: ₹${expense.toStringAsFixed(0)}',
                             style: TextStyle(color: Colors.grey, fontSize: 12),
                           ),
                         ] else ...[
                           Center(
                             child: Icon(CupertinoIcons.calendar,
-                              color: Colors.white.withValues(alpha: 0.1),
-                              size: 40,
+                              color: Colors.white.withValues(alpha: 0.15),
+                              size: 36,
                             ),
                           ),
                           const Spacer(),

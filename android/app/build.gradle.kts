@@ -45,3 +45,10 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.core:core:1.15.0")
+    implementation("androidx.browser:browser:1.8.0")
+}
+
