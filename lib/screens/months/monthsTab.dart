@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+
 import '../../provider/ExpenseProvider.dart';
 import 'monthDetailsScreen.dart';
 
@@ -128,13 +129,10 @@ class MonthsTab extends StatelessWidget {
                               fontSize: 20,
                             ),
                           ),
-                          // const SizedBox(height: 2),
 
-                          // Progress Bar
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
-                              // If balanced, fill it 100% (1.0)
                               value: budget > 0 ? (expense / budget).clamp(0.0, 1.0) : 0,
                               backgroundColor: Colors.grey[800],
                               valueColor: AlwaysStoppedAnimation<Color>(statusColor),

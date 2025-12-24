@@ -1,5 +1,6 @@
-import 'package:budgetly/components/button.dart';
 import 'package:flutter/material.dart';
+
+import '../components/button.dart';
 import 'auth/loginScreen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -65,7 +66,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Animated background gradient
           AnimatedContainer(
             duration: const Duration(milliseconds: 600),
             decoration: BoxDecoration(
@@ -77,11 +77,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          // Content
           SafeArea(
             child: Column(
               children: [
-                // Skip button
                 Align(
                   alignment: Alignment.topRight,
                   child: Padding(
@@ -89,20 +87,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: TextButton(
                       onPressed: _completeOnboarding,
                       style: TextButton.styleFrom(
-                        foregroundColor: Colors.white.withOpacity(0.8),
+                        foregroundColor: Colors.white.withValues(alpha: 0.8),
                       ),
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: const Text('Skip',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                     ),
                   ),
                 ),
 
-                // PageView
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,
@@ -116,7 +109,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
 
-                // Page indicators
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   child: Row(
@@ -139,7 +131,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
 
-                // Next/Get Started button
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Button(
@@ -176,7 +167,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Animated icon with glow effect
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
             duration: const Duration(milliseconds: 800),
@@ -189,10 +179,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     padding: const EdgeInsets.all(32),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.white.withOpacity(0.2 * value),
+                          color: Colors.white.withValues(alpha: 0.2 * value),
                           blurRadius: 40,
                           spreadRadius: 0,
                         ),
@@ -207,7 +197,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           const SizedBox(height: 60),
 
-          // Title with slide animation
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
             duration: const Duration(milliseconds: 600),
@@ -217,8 +206,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Opacity(opacity: value, child: child),
               );
             },
-            child: Text(
-              page.title,
+            child: Text(page.title,
               style: const TextStyle(
                 fontSize: 48,
                 fontFamily: 'BBH Bogle',
@@ -232,7 +220,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
           const SizedBox(height: 24),
 
-          // Description with slide animation
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
             duration: const Duration(milliseconds: 800),
@@ -242,11 +229,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Opacity(opacity: value, child: child),
               );
             },
-            child: Text(
-              page.description,
+            child: Text(page.description,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 height: 1.5,
               ),
               textAlign: TextAlign.center,

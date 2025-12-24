@@ -1,9 +1,9 @@
-import 'package:budgetly/components/button.dart';
-import 'package:budgetly/screens/auth/loginScreen.dart';
-import 'package:budgetly/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../components/button.dart';
+import 'loginScreen.dart';
+import '../home.dart';
 import '../../provider/AuthProvider.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -51,7 +51,6 @@ class _SignupScreenState extends State<SignupScreen> {
       setState(() => _isLoading = false);
 
       if (error != null) {
-        print(error);
         showDialog(context: context, builder: (context)=>AlertDialog(
           title: Text("Create account failed"),
           content: Text(error),
@@ -63,9 +62,26 @@ class _SignupScreenState extends State<SignupScreen> {
           ],
         ));
       }else {
-        ScaffoldMessenger.of(context,)
-            .showSnackBar(SnackBar(content: Text("SIGNUP SUCCESSFUL")));
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>HomeScreen()));
+        showDialog(context: context, builder: (context)=>AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 12,
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.green.withValues(alpha: 0.1),
+                radius: 60,
+                child: Icon(Icons.check, size: 100, color: Colors.green,),
+              ),
+              Text("Account Created Successfully!!!",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+        ));
+        Future.delayed(Duration(seconds: 2),(){
+          Navigator.pop(context);
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>HomeScreen()));
+        });
       }
     }
   }
@@ -188,22 +204,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 16),
 
                 const SizedBox(height: 24),
-                // ElevatedButton(
-                //   onPressed: _isLoading ? null : _signUp,
-                //   style: ElevatedButton.styleFrom(
-                //     padding: const EdgeInsets.all(16),
-                //   ),
-                //   child: _isLoading
-                //       ? const SizedBox(
-                //           height: 20,
-                //           width: 20,
-                //           child: CircularProgressIndicator(
-                //             strokeWidth: 2,
-                //             color: Colors.white,
-                //           ),
-                //         )
-                //       : const Text('Sign Up'),
-                // ),
+
                 Button(
                   onClick: _isLoading ? null : _signUp,
                   child: _isLoading

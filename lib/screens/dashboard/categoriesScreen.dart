@@ -1,4 +1,3 @@
-import 'package:budgetly/model/Expense.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,16 +5,15 @@ import 'package:provider/provider.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 
 import '../../provider/CategoryProvider.dart';
+import '../../model/Expense.dart';
 
 class CategoriesScreen extends StatelessWidget {
   const CategoriesScreen({super.key});
 
-  // Theme Colors
   final Color _backgroundColor = const Color(0xFF121212);
   final Color _cardColor = const Color(0xFF1E1E1E);
   final Color _primaryColor = const Color(0xFF2196F3);
 
-  // Custom Input Decoration for Dark Mode
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
@@ -78,7 +76,17 @@ class CategoriesScreen extends StatelessWidget {
                   );
                   if (dialogContext.mounted) Navigator.pop(dialogContext);
                 } catch (e) {
-                  // Error handling
+                  if (dialogContext.mounted) {
+                    Navigator.pop(dialogContext);
+                    showDialog(context: dialogContext, builder: (context)=>AlertDialog(
+                      title: Text("Error"),
+                      content: Text(e.toString()),
+                      actions: [
+                        TextButton(onPressed: ()=>Navigator.pop(dialogContext), child: Text("Okay"))
+                      ],
+                    ));
+                  }
+
                 }
               }
             },

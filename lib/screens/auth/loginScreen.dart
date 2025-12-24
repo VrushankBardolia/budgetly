@@ -1,11 +1,13 @@
-import 'package:budgetly/components/button.dart';
-import 'package:budgetly/screens/auth/signupScreen.dart';
-import 'package:budgetly/screens/home.dart';
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../provider/AuthProvider.dart';
+import '../../components/button.dart';
+import '../home.dart';
+import 'signupScreen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,13 +35,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    // if (email.isEmpty || password.isEmpty) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(content: Text('Please enter email and password')),
-    //   );
-    //   return;
-    // }
-
     setState(() => _isLoading = true);
 
     final error = await context.read<AuthProvider>().signIn(email, password);
@@ -48,8 +43,7 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (error != null) {
-        print(error);
-        showDialog(context: context, builder: (context)=>AlertDialog(
+        showDialog(context: context, fullscreenDialog: false, builder: (context)=>AlertDialog(
           title: Text("Login failed"),
           content: Text(error),
           actions: [
@@ -60,7 +54,26 @@ class _LoginScreenState extends State<LoginScreen> {
           ],
         ));
       } else {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>HomeScreen()));
+        showDialog(context: context, builder: (context)=>AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 12,
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.green.withValues(alpha: 0.1),
+                radius: 60,
+                child: Icon(Icons.check, size: 100, color: Colors.green,),
+              ),
+              Text("Logged in Successfully!!!",
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+        ));
+        Future.delayed(Duration(seconds: 2),(){
+          Navigator.pop(context);
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>HomeScreen()));
+        });
       }
     }
   }
@@ -75,7 +88,6 @@ class _LoginScreenState extends State<LoginScreen> {
             key: _formKey,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
-              // crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Icon(Icons.wallet, size: 80),
                 const SizedBox(height: 24),
@@ -106,7 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     }
                     return null;
                   },
-                  autovalidateMode: AutovalidateMode.always,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -136,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     }
                     return null;
                   },
-                  autovalidateMode: AutovalidateMode.always,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
                 const SizedBox(height: 20),
 

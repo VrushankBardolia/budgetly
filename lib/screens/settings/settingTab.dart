@@ -23,7 +23,6 @@ class _SettingsTabState extends State<SettingsTab> {
 
   bool _isLoading = true;
 
-  // Theme Colors
   final Color _backgroundColor = const Color(0xFF121212);
   final Color _cardColor = const Color(0xFF1E1E1E);
   final Color _primaryColor = const Color(0xFF2196F3);
@@ -197,7 +196,7 @@ class _SettingsTabState extends State<SettingsTab> {
             Text("Version 1.0.0",
               style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
-            const SizedBox(height: 100), // Bottom padding
+            const SizedBox(height: 100),
           ],
         ),
       ),
@@ -220,7 +219,6 @@ class _SettingsTabState extends State<SettingsTab> {
             child: Text(
               _getInitials(_fullName),
               style: TextStyle(
-                // fontFamily: GoogleFonts.bbh,
                 fontSize: 28,
                 fontWeight: FontWeight.w800,
                 color: Theme.of(context).colorScheme.primary,

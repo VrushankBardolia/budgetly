@@ -1,14 +1,14 @@
-import 'package:budgetly/provider/AuthProvider.dart';
-import 'package:budgetly/provider/CategoryProvider.dart';
-import 'package:budgetly/provider/ExpenseProvider.dart';
-import 'package:budgetly/screens/home.dart';
-import 'package:budgetly/screens/onboarding.dart';
-import 'firebase_options.dart';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+
+import '/provider/AuthProvider.dart';
+import '/provider/CategoryProvider.dart';
+import '/provider/ExpenseProvider.dart';
+import '/screens/home.dart';
+import '/screens/onboarding.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,52 +34,34 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         themeMode: ThemeMode.dark,
 
-        // STRICT DARK & GREY THEME WITH NAVY ACCENTS
         theme: ThemeData(
           useMaterial3: true,
           brightness: Brightness.dark,
-
           fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-
-          // 1. Backgrounds: Pure Neutral Dark Grays
-          // Darker than standard material dark for that "OLED" feel
           scaffoldBackgroundColor: const Color(0xFF121212),
 
           colorScheme: const ColorScheme.dark(
-            // PRIMARY: Deep Navy Blue (Used for buttons/active states)
-            // primary: Color(0xFF001F42), // Rich Deep Blue
-            primary: Color(0xFF42A5F5), // Rich Deep Blue
-            onPrimary: Colors.white,    // White text on blue buttons
-
-            // SECONDARY: Subtle Gray-Blue (For secondary accents/toggles)
-            // secondary: Color(0xFF42A5F5),
+            primary: Color(0xFF42A5F5),
+            onPrimary: Colors.white,
             secondary: Color(0xFF001F42),
             onSecondary: Colors.white,
-
-            // SURFACE: Neutral Dark Gray (No blue tint)
             surface: Color(0xFF1E1E1E),
-            onSurface: Color(0xFFE0E0E0), // Light Gray text (easier on eyes than pure white)
-
-            // BACKGROUND
+            onSurface: Color(0xFFE0E0E0),
             background: Color(0xFF121212),
             onBackground: Color(0xFFE0E0E0),
-
             error: Color(0xFFCF6679),
           ),
 
-          // 2. Card Theme: Distinct Gray to separate from black background
           cardTheme: CardThemeData(
             color: const Color(0xFF1E1E1E),
             elevation: 0,
             margin: const EdgeInsets.symmetric(vertical: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              // A thin dark gray border defines the edges without using color
               side: const BorderSide(color: Color(0xFF2C2C2C), width: 1),
             ),
           ),
 
-          // 3. AppBar: Blends into the background (Clean look)
           appBarTheme: const AppBarTheme(
             backgroundColor: Color(0xFF121212),
             foregroundColor: Colors.white,
@@ -89,15 +71,14 @@ class MyApp extends StatelessWidget {
             iconTheme: IconThemeData(color: Colors.white),
           ),
 
-          // 4. Buttons: The "Pop" of Navy Blue
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF42A5F5), // The Navy Accent
+              backgroundColor: Color(0xFF42A5F5),
               foregroundColor: Colors.black,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12), // Slightly boxier for a "Tech" feel
+                borderRadius: BorderRadius.circular(12),
               ),
               textStyle: TextStyle(
                 fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
@@ -108,22 +89,18 @@ class MyApp extends StatelessWidget {
             ),
           ),
 
-          // 5. Text Fields: Dark Gray background, Focused border gets the Navy Blue
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: const Color(0xFF1E1E1E), // Matches Cards
+            fillColor: const Color(0xFF1E1E1E),
             contentPadding: const EdgeInsets.all(16),
-            hintStyle: const TextStyle(color: Color(0xFF757575)), // Medium Gray
-
-            // Default border (Idle)
+            hintStyle: const TextStyle(color: Color(0xFF757575)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFF2C2C2C)), // Dark Gray border
+              borderSide: const BorderSide(color: Color(0xFF2C2C2C)),
             ),
-            // Focused border (Active) -> This is where color appears
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Color(0xFFA8A8A8), width: 2), // Navy Blue glow
+              borderSide: const BorderSide(color: Color(0xFFA8A8A8), width: 2),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -139,20 +116,17 @@ class MyApp extends StatelessWidget {
             ),
           ),
 
-          // 6. Floating Action Button: High Visibility Navy
           floatingActionButtonTheme: const FloatingActionButtonThemeData(
             backgroundColor: Color(0xFF001F42),
             foregroundColor: Colors.white,
             elevation: 2,
           ),
 
-          // 7. Divider: Very subtle gray line
           dividerTheme: const DividerThemeData(
             color: Color(0xFF2C2C2C),
             thickness: 1,
           ),
 
-          // 8. Bottom Sheet
           bottomSheetTheme: const BottomSheetThemeData(
             backgroundColor: Color(0xFF1E1E1E),
             modalBackgroundColor: Color(0xFF1E1E1E),
@@ -180,7 +154,6 @@ class InitialScreen extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         }
-
         return authProvider.user != null
             ? const HomeScreen()
             : const OnboardingScreen();

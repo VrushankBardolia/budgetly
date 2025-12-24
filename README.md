@@ -1,16 +1,44 @@
-# budgetly
+# 💸 Budgetly – Personal Budget & Expense Tracker
 
-A new Flutter project.
+Budgetly is a modern **budget tracking mobile app** built using **Flutter** and **Firebase**.  
+It helps users track expenses, manage budgets, and visualize spending patterns with clean charts and insights.
 
-## Getting Started
+---
 
-This project is a starting point for a Flutter application.
+## 🚀 Features
 
-A few resources to get you started if this is your first Flutter project:
+- 📊 **Track Expenses**
+    - Add, edit, and delete daily expenses
+    - Categorize expenses for better organization
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- 🗂️ **Category Management**
+    - Custom expense categories with emoji support
+    - View top spending categories
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- 📅 **Year & Month-wise Tracking**
+    - Switch between different years
+    - Monthly expense breakdown
+
+- 📈 **Analytics & Insights**
+    - Pie chart for category-wise distribution
+    - Line chart for monthly spending trends
+
+- 💰 **Budget Management**
+    - Set yearly / monthly budgets
+    - Compare expenses against budgets
+
+- 🔐 **Firebase Integration**
+    - Cloud Firestore for real-time data storage
+    - Firebase Authentication (optional / extendable)
+
+- 🎨 **Modern UI**
+    - Dark theme optimized UI
+    - Clean dashboard layout with cards and charts
+
+---
+
+## 🛠️ Tech Stack
+
+- **Frontend:** Flutter (Dart)
+- **State Management:** Provider
+- **Backend:** Firebase

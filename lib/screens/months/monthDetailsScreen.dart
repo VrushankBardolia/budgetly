@@ -1,6 +1,3 @@
-import 'package:budgetly/components/expenseTile.dart';
-import 'package:budgetly/model/Expense.dart';
-import 'package:budgetly/screens/months/editExpenseDialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,8 +6,11 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 
+import '../../model/Expense.dart';
 import '../../provider/CategoryProvider.dart';
 import '../../provider/ExpenseProvider.dart';
+import '../../components/expenseTile.dart';
+import 'editExpenseDialog.dart';
 import 'addExpenseDialog.dart';
 
 class MonthDetailScreen extends StatefulWidget {
@@ -26,7 +26,6 @@ class MonthDetailScreen extends StatefulWidget {
 class _MonthDetailScreenState extends State<MonthDetailScreen> {
   final _budgetController = TextEditingController();
 
-  // Theme Colors
   final Color _backgroundColor = const Color(0xFF121212);
   final Color _cardColor = const Color(0xFF1E1E1E);
   final Color _primaryColor = const Color(0xFF2196F3);
@@ -73,9 +72,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                DateFormat(
-                  'MMMM yyyy',
-                ).format(DateTime(widget.year, widget.month)),
+                DateFormat('MMMM yyyy',).format(DateTime(widget.year, widget.month)),
                 style: TextStyle(color: Colors.grey[400], fontSize: 14),
               ),
               const SizedBox(height: 16),
@@ -162,12 +159,8 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: _cardColor,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Delete Expense',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Are you sure you want to delete this expense?',
+        title: const Text('Delete Expense', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to delete this expense?',
           style: TextStyle(color: Colors.grey),
         ),
         actions: [
@@ -246,10 +239,8 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
               : 0.0;
 
           final now = DateTime.now();
-          final currentMonthDate = DateTime(now.year, now.month);
           final selectedMonthDate = DateTime(widget.year, widget.month);
 
-          final bool isPast = selectedMonthDate.isBefore(currentMonthDate);
           final bool isCurrent =
               selectedMonthDate.year == now.year &&
               selectedMonthDate.month == now.month;
@@ -279,7 +270,6 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // 1. Summary Cards Section
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -309,7 +299,6 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                       ),
                       const SizedBox(height: 12),
 
-                      // Full width logic or Grid logic
                       if (isCurrent) ...[
                         Row(
                           children: [
@@ -332,7 +321,6 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                           ],
                         ),
                       ] else ...[
-                        // Full width result for past months
                         _buildInfoCard(statusLabel,
                           formatter.format(remaining),
                           statusColor,
@@ -345,7 +333,6 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                 ),
               ),
 
-              // 2. Transactions Header
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -373,7 +360,6 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                 ),
               ),
 
-              // 3. Transactions List
               if (expenses.isEmpty)
                 SliverFillRemaining(
                   hasScrollBody: false,
@@ -451,8 +437,6 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                             ),
                           );
                         },
-                        // Assuming ExpenseTile is your custom widget.
-                        // Wrapping it to ensure it blends or stands out as needed.
                         child: ExpenseTile(
                           expense: expense,
                           category: category!,
@@ -462,7 +446,6 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                   }, childCount: expenses.length),
                 ),
 
-              // Bottom Padding for FAB
               const SliverToBoxAdapter(child: SizedBox(height: 150)),
             ],
           );
