@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:pull_down_button/pull_down_button.dart';
@@ -65,7 +66,8 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
           ),
           title: Text(
             'Set Budget',
-            style: const TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(color: Colors.white),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -73,21 +75,18 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
             children: [
               Text(
                 DateFormat('MMMM yyyy',).format(DateTime(widget.year, widget.month)),
-                style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                style: TextStyle(color: Colors.grey[400]),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: _budgetController,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 18),
                 decoration: InputDecoration(
-                  hintText: 'e.g. 5000',
-                  hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.5)),
+                  hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey.withValues(alpha: 0.5)),
                   filled: true,
                   fillColor: const Color(0xFF2C2C2C),
-                  prefixIcon: const Icon(
-                    Icons.currency_rupee,
-                    color: Colors.grey,
-                  ),
+                  prefixText: '₹',
+                  prefixStyle: GoogleFonts.plusJakartaSans(color: Colors.white),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
@@ -107,7 +106,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Skip', style: TextStyle(color: Colors.grey[600])),
+              child: Text(_budgetController.text.isEmpty? 'Skip' :'Cancel', style: TextStyle(color: Colors.grey[600])),
             ),
             ElevatedButton(
               onPressed: () {
@@ -209,11 +208,11 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
         centerTitle: true,
         title: Text(
           DateFormat('MMMM yyyy').format(DateTime(widget.year, widget.month)),
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_calendar_rounded, size: 20),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04, size: 20,),
             tooltip: "Edit Budget",
             onPressed: _showBudgetDialog,
           ),
@@ -251,20 +250,20 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
 
           Color statusColor;
           String statusLabel;
-          IconData statusIcon;
+          dynamic statusIcon;
 
           if (isBalanced) {
             statusColor = Colors.orangeAccent;
             statusLabel = "On Target";
-            statusIcon = CupertinoIcons.nosign;
+            statusIcon = HugeIcons.strokeRoundedAlert02;
           } else if (isSaved) {
             statusColor = Colors.greenAccent;
             statusLabel = isCurrent ? "Remaining" : "Saved";
-            statusIcon = CupertinoIcons.check_mark;
+            statusIcon = HugeIcons.strokeRoundedCheckmarkCircle03;
           } else {
             statusColor = Colors.redAccent;
             statusLabel = "Overspent";
-            statusIcon = CupertinoIcons.exclamationmark;
+            statusIcon = HugeIcons.strokeRoundedCancelCircle;
           }
 
           return CustomScrollView(
@@ -282,7 +281,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                               "Budget",
                               formatter.format(budget),
                               Colors.white,
-                              icon: Icons.wallet,
+                              icon: HugeIcons.strokeRoundedWallet01,
                               onTap: _showBudgetDialog,
                             ),
                           ),
@@ -292,7 +291,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                               "Spent",
                               formatter.format(totalExpense),
                               Colors.white,
-                              icon: Icons.shopping_bag_outlined,
+                              icon: HugeIcons.strokeRoundedMoney01,
                             ),
                           ),
                         ],
@@ -315,7 +314,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                                 "Safe / Day",
                                 formatter.format(remainPerDay),
                                 Colors.blueAccent,
-                                icon: Icons.today,
+                                icon: HugeIcons.strokeRoundedCoins01,
                               ),
                             ),
                           ],
@@ -344,7 +343,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                     children: [
                       Text(
                         "Transactions",
-                        style: TextStyle(
+                        style: GoogleFonts.plusJakartaSans(
                           color: Colors.grey[400],
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -353,7 +352,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                       ),
                       Text(
                         "${expenses.length} entries",
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: GoogleFonts.plusJakartaSans(color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -381,7 +380,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text('No transactions',
-                          style: TextStyle(
+                          style: GoogleFonts.plusJakartaSans(
                             color: Colors.white.withValues(alpha: 0.5),
                           ),
                         ),
@@ -454,7 +453,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addExpense,
         label: const Text("Add Expense"),
-        icon: const Icon(Icons.add_rounded,),
+        icon: HugeIcon(icon: HugeIcons.strokeRoundedMoneyAdd01)
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
@@ -464,7 +463,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
     String title,
     String value,
     Color valueColor, {
-    IconData? icon,
+    dynamic icon,
     VoidCallback? onTap,
     bool isFullWidth = false,
   }) {
@@ -492,18 +491,19 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: TextStyle(color: Colors.grey)),
-                Icon(icon, size: 20, color: valueColor.withValues(alpha: 0.7)),
+                Text(title, style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
+                HugeIcon(icon: icon, size: 20, color: valueColor),
               ],
             ),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(value,
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   color: valueColor,
                   fontSize: 24,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0
                 ),
               ),
             ),

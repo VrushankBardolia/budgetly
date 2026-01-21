@@ -44,13 +44,16 @@ dependencies:
   fl_chart: ^0.66.0
   intl: ^0.18.1
   google_fonts:
-  crystal_navigation_bar: ^1.1.0
   pull_down_button: ^0.10.2
+  hugeicons:
+  animated_digit: ^3.3.2
+  shimmer: ^3.0.0
 
   # Storage
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.2
 
+  flutter_local_notifications: ^19.5.0
 
 dev_dependencies:
   flutter_test:

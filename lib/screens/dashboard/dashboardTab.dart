@@ -1,8 +1,13 @@
+import 'package:animated_digit/animated_digit.dart';
+import 'package:budgetly/screens/months/monthDetailsScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../provider/CategoryProvider.dart';
 import '../../provider/ExpenseProvider.dart';
@@ -18,6 +23,7 @@ class DashboardTab extends StatefulWidget {
 class _DashboardTabState extends State<DashboardTab> {
   List<int> _availableYears = [];
   bool _isLoading = true;
+  bool showMonthly = true;
 
   // Color Palette
   final Color _backgroundColor = const Color(0xFF121212);
@@ -58,6 +64,12 @@ class _DashboardTabState extends State<DashboardTab> {
     await expenseProvider.loadBudgets(year);
   }
 
+  void toggleMonthlyYearly() {
+    setState(() {
+      showMonthly = !showMonthly;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,12 +77,16 @@ class _DashboardTabState extends State<DashboardTab> {
       appBar: AppBar(
         backgroundColor: _backgroundColor,
         elevation: 0,
-        title: const Text('Budgetly',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+        title: Text(
+          'Budgetly',
+          style: GoogleFonts.plusJakartaSans(
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+          ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.category_rounded),
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedLeftToRightListDash),
             color: Colors.white,
             onPressed: () {
               Navigator.push(
@@ -81,54 +97,185 @@ class _DashboardTabState extends State<DashboardTab> {
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: _primaryColor))
-          : _availableYears.isEmpty
-          ? _buildEmptyState()
-          : Consumer2<ExpenseProvider, CategoryProvider>(
-              builder: (context, expenseProvider, categoryProvider, _) {
-                final categoryTotals = expenseProvider.getCategoryTotals(
-                  expenseProvider.selectedYear,
-                );
+      body: AnimatedSwitcher(
+        duration: Duration(milliseconds: 300),
+        switchInCurve: Curves.easeIn,
+        switchOutCurve: Curves.easeIn,
+        child: _isLoading
+            ? _buildShimmerLoader()
+            : _availableYears.isEmpty
+            ? _buildEmptyState()
+            : Consumer2<ExpenseProvider, CategoryProvider>(
+                builder: (context, expenseProvider, categoryProvider, _) {
+                  final categoryTotals = expenseProvider.getCategoryTotals(
+                    expenseProvider.selectedYear,
+                  );
+                  return SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildYearSelector(expenseProvider),
+                        const SizedBox(height: 20),
+                        _buildTotalCard(categoryTotals),
+                        const SizedBox(height: 24),
+                        _buildCategoryList(categoryProvider, categoryTotals),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('Analytics'),
+                        const SizedBox(height: 16),
+                        _buildCharts(
+                          categoryProvider,
+                          categoryTotals,
+                          expenseProvider,
+                        ),
+                        // const SizedBox(height: 150),
+                      ],
+                    ),
+                  );
+                },
+              ),
+      ),
+    );
+  }
 
-                return SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 10),
-                      _buildYearSelector(expenseProvider),
-                      const SizedBox(height: 20),
-                      _buildTotalCard(categoryTotals),
-                      const SizedBox(height: 30),
-                      // _buildSectionTitle('Top Categories'),
-                      // const SizedBox(height: 16),
-                      _buildCategoryList(categoryProvider, categoryTotals),
-                      const SizedBox(height: 30),
-                      _buildSectionTitle('Analytics'),
-                      const SizedBox(height: 16),
-                      _buildCharts(
-                        categoryProvider,
-                        categoryTotals,
-                        expenseProvider,
-                      ),
-                      const SizedBox(height: 150),
-                    ],
+  Widget _buildShimmerLoader() {
+    final Color baseColor = const Color(0xFF1E1E1E);
+    final Color highlightColor = const Color(
+      0xFF2C2C2C,
+    ); // Slightly lighter for shine
+    final Color backgroundColor = const Color(0xFF121212);
+    return Container(
+      color: backgroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Shimmer.fromColors(
+        baseColor: baseColor,
+        highlightColor: highlightColor,
+        child: SingleChildScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 10),
+              // Year Selector Shimmer
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    width: 100,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: baseColor,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
-                );
-              },
-            ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // Total Card Shimmer
+              Container(
+                height: 180,
+                decoration: BoxDecoration(
+                  color: baseColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Categories Header Shimmer
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(width: 120, height: 20, color: baseColor),
+                  Container(width: 60, height: 20, color: baseColor),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Category List Items Shimmer (3 items)
+              ...List.generate(
+                3,
+                (index) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: baseColor,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 12),
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: backgroundColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 100,
+                                height: 14,
+                                color: baseColor,
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                width: 60,
+                                height: 14,
+                                color: baseColor,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          width: 80,
+                          height: 20,
+                          margin: const EdgeInsets.only(right: 16),
+                          color: baseColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // Analytics Header
+              Container(width: 100, height: 20, color: baseColor),
+              const SizedBox(height: 16),
+
+              // Pie Chart Placeholder
+              Container(
+                height: 250,
+                decoration: BoxDecoration(
+                  color: baseColor,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(title,
-      style: const TextStyle(
+    return Text(
+      title,
+      style: GoogleFonts.plusJakartaSans(
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: Colors.white70,
-        letterSpacing: 0.5,
       ),
     );
   }
@@ -147,7 +294,8 @@ class _DashboardTabState extends State<DashboardTab> {
             child: Icon(Icons.receipt_long, size: 60, color: Colors.grey[700]),
           ),
           const SizedBox(height: 24),
-          Text('No expenses yet',
+          Text(
+            'No expenses yet',
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -155,7 +303,8 @@ class _DashboardTabState extends State<DashboardTab> {
             ),
           ),
           const SizedBox(height: 8),
-          Text('Start tracking your expenses to see data here.',
+          Text(
+            'Start tracking your expenses to see data here.',
             style: TextStyle(color: Colors.grey[500]),
           ),
         ],
@@ -187,7 +336,7 @@ class _DashboardTabState extends State<DashboardTab> {
                 ),
                 underline: const SizedBox(),
                 isDense: true,
-                style: const TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -211,18 +360,23 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Widget _buildTotalCard(Map<String, double> categoryTotals) {
     final total = categoryTotals.values.fold(0.0, (sum, val) => sum + val);
-    final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+
+    final provider = context.read<ExpenseProvider>();
+    final year = provider.selectedYear;
+    final month = DateTime.now().month;
+    final monthName = DateFormat.MMMM().format(DateTime.now());
+    final currentMonthExpense = provider.getTotalExpenseForMonth(year, month);
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [const Color(0xFF1565C0), const Color(0xFF1E88E5)],
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF1565C0).withValues(alpha: 0.3),
@@ -245,30 +399,93 @@ class _DashboardTabState extends State<DashboardTab> {
                 child: const Icon(Icons.wallet, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 12),
-              Text('Total Expenses',
-                style: TextStyle(
+              Text(
+                'Total Expenses',
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
                 ),
+              ),
+
+              Spacer(),
+
+              GestureDetector(
+                onTap: toggleMonthlyYearly,
+                child: Text(showMonthly ? "Show Yearly" : "Monthly"),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Text(formatter.format(total),
-            style: const TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              height: 1.0,
-            ),
+          Row(
+            spacing: 4,
+            children: [
+              Text(
+                '₹',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 40,
+                  color: Colors.white,
+                  height: 1.0,
+                ),
+              ),
+              AnimatedDigitWidget(
+                value: showMonthly ? currentMonthExpense : total,
+                textStyle: GoogleFonts.plusJakartaSans(
+                  fontSize: 40,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  height: 1.0,
+                  letterSpacing: -2,
+                ),
+                enableSeparator: true,
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+              ),
+            ],
           ),
           const SizedBox(height: 8),
-          Text('for ${context.read<ExpenseProvider>().selectedYear}',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
-              fontSize: 14,
-            ),
+          Row(
+            children: [
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) {
+                  final slideAnimation = Tween<Offset>(
+                    begin: Offset(-0.1, 0),
+                    end: Offset.zero,
+                  ).animate(animation);
+
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: slideAnimation,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Text(
+                  showMonthly ? 'For $monthName $year' : 'For $year',
+                  key: ValueKey(showMonthly),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 16),
+                ),
+              ),
+
+              Spacer(),
+              AnimatedOpacity(
+                duration: Duration(milliseconds: 200),
+                opacity: showMonthly ? 1 : 0,
+                child: GestureDetector(
+                  onTap: () => Navigator.push(
+                    context,
+                    CupertinoPageRoute(
+                      builder: (_) =>
+                          MonthDetailScreen(year: year, month: month),
+                    ),
+                  ),
+                  child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight03),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -288,7 +505,8 @@ class _DashboardTabState extends State<DashboardTab> {
           color: _cardColor,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Text('No expenses recorded',
+        child: const Text(
+          'No expenses recorded',
           style: TextStyle(color: Colors.grey),
           textAlign: TextAlign.center,
         ),
@@ -309,29 +527,23 @@ class _DashboardTabState extends State<DashboardTab> {
     return Column(
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(
-              child: Text("Top Categories",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white70,
-                  letterSpacing: 0.5,
+            _buildSectionTitle("Top Categories"),
+            if (showOnly3)
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  CupertinoPageRoute(builder: (_) => CategoriesScreen()),
+                ),
+                child: Text(
+                  "View all »",
+                  style: GoogleFonts.plusJakartaSans(color: _primaryColor),
                 ),
               ),
-            ),
-            if(showOnly3)
-              TextButton(
-                onPressed: ()=>Navigator.push(context, CupertinoPageRoute(builder: (_)=>CategoriesScreen())),
-                style: TextButton.styleFrom(
-                  foregroundColor: _primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-                ),
-                child: Text("View all »"),
-              )
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 4),
 
         Column(
           children: displayedEntries.map((entry) {
@@ -339,11 +551,11 @@ class _DashboardTabState extends State<DashboardTab> {
             final percentage = maxVal > 0 ? (entry.value / maxVal) : 0.0;
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: _cardColor,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
               ),
               child: Row(
@@ -358,10 +570,10 @@ class _DashboardTabState extends State<DashboardTab> {
                     alignment: Alignment.center,
                     child: Text(
                       category?.emoji ?? '📦',
-                      style: const TextStyle(fontSize: 24),
+                      style: GoogleFonts.plusJakartaSans(fontSize: 24),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,15 +581,17 @@ class _DashboardTabState extends State<DashboardTab> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(category?.name ?? 'Unknown',
-                              style: const TextStyle(
+                            Text(
+                              category?.name ?? 'Unknown',
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
                               ),
                             ),
-                            Text(formatter.format(entry.value),
-                              style: const TextStyle(
+                            Text(
+                              formatter.format(entry.value),
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
@@ -392,7 +606,9 @@ class _DashboardTabState extends State<DashboardTab> {
                           child: LinearProgressIndicator(
                             value: percentage,
                             backgroundColor: Colors.white10,
-                            valueColor: AlwaysStoppedAnimation<Color>(_primaryColor),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              _primaryColor,
+                            ),
                             minHeight: 6,
                           ),
                         ),
@@ -452,10 +668,15 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Row(
             children: [
-              Icon(Icons.pie_chart_outline, size: 20, color: _accentColor),
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedPieChart08,
+                size: 20,
+                color: _accentColor,
+              ),
               const SizedBox(width: 8),
-              const Text('Distribution',
-                style: TextStyle(
+              Text(
+                'Distribution',
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -464,8 +685,6 @@ class _DashboardTabState extends State<DashboardTab> {
             ],
           ),
 
-          const SizedBox(height: 24),
-
           SizedBox(
             height: 220,
             child: PieChart(
@@ -473,7 +692,9 @@ class _DashboardTabState extends State<DashboardTab> {
                 pieTouchData: PieTouchData(enabled: true),
                 centerSpaceRadius: 40,
                 sectionsSpace: 4,
-                sections: categoryTotals.entries.toList().asMap().entries.map((entry) {
+                sections: categoryTotals.entries.toList().asMap().entries.map((
+                  entry,
+                ) {
                   final index = entry.key;
                   final value = entry.value.value;
                   final percentage = (value / total * 100);
@@ -486,8 +707,7 @@ class _DashboardTabState extends State<DashboardTab> {
                         : '',
                     color: colors[index % colors.length],
                     radius: isLargeEnough ? 60 : 50,
-                    titleStyle: const TextStyle(
-                      fontSize: 14,
+                    titleStyle: GoogleFonts.plusJakartaSans(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -501,19 +721,21 @@ class _DashboardTabState extends State<DashboardTab> {
             ),
           ),
 
-          const SizedBox(height: 20),
-
           Wrap(
             spacing: 16,
             runSpacing: 10,
             runAlignment: WrapAlignment.center,
             crossAxisAlignment: WrapCrossAlignment.center,
-            children: categoryTotals.entries.toList().asMap().entries.map((entry) {
+            children: categoryTotals.entries.toList().asMap().entries.map((
+              entry,
+            ) {
               final index = entry.key;
               final categoryId = entry.value.key;
-              final category = categoryProvider.getCategoryById(categoryId)?.name??"";
+              final category =
+                  categoryProvider.getCategoryById(categoryId)?.name ?? "";
 
               return Row(
+                spacing: 4,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
@@ -524,9 +746,12 @@ class _DashboardTabState extends State<DashboardTab> {
                       shape: BoxShape.circle,
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Text(category,
-                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  Text(
+                    category,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: Colors.white70,
+                    ),
                   ),
                 ],
               );
@@ -571,11 +796,15 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Row(
             children: [
-              Icon(Icons.show_chart_rounded, size: 20, color: _accentColor),
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedChartEvaluation,
+                size: 20,
+                color: _accentColor,
+              ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Monthly Trend',
-                style: TextStyle(
+                style: GoogleFonts.plusJakartaSans(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -583,7 +812,7 @@ class _DashboardTabState extends State<DashboardTab> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          // const SizedBox(height: 24),
           SizedBox(
             height: 200,
             child: LineChart(
@@ -611,8 +840,9 @@ class _DashboardTabState extends State<DashboardTab> {
                         if (month >= 1 && month <= 12) {
                           return SideTitleWidget(
                             axisSide: meta.axisSide,
-                            child: Text(month.toString(),
-                              style: TextStyle(
+                            child: Text(
+                              month.toString(),
+                              style: GoogleFonts.plusJakartaSans(
                                 color: Colors.grey[600],
                                 fontSize: 12,
                               ),
@@ -668,8 +898,18 @@ class _DashboardTabState extends State<DashboardTab> {
                     tooltipRoundedRadius: 8,
                     getTooltipItems: (touchedSpots) {
                       const months = [
-                        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+                        'Jan',
+                        'Feb',
+                        'Mar',
+                        'Apr',
+                        'May',
+                        'Jun',
+                        'Jul',
+                        'Aug',
+                        'Sep',
+                        'Oct',
+                        'Nov',
+                        'Dec',
                       ];
                       return touchedSpots.map((LineBarSpot touchedSpot) {
                         final monthIndex = touchedSpot.x.toInt() - 1;
@@ -677,8 +917,9 @@ class _DashboardTabState extends State<DashboardTab> {
                             ? months[monthIndex]
                             : '';
 
-                        return LineTooltipItem('$monthName  •  ₹${touchedSpot.y.toInt()}',
-                          const TextStyle(
+                        return LineTooltipItem(
+                          '$monthName  •  ₹${touchedSpot.y.toInt()}',
+                          GoogleFonts.plusJakartaSans(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),

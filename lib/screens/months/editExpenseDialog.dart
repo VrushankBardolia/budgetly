@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -94,7 +96,8 @@ class _EditExpenseDialogState extends State<EditExpenseDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Edit Expense'),
+      constraints: BoxConstraints.tightFor(width: MediaQuery.of(context).size.width),
+      title: const Text('Edit Expense', textAlign: TextAlign.center,),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -109,15 +112,16 @@ class _EditExpenseDialogState extends State<EditExpenseDialog> {
                       ? DateFormat('MMM dd, yyyy').format(_selectedDate!)
                       : 'Select date',
                 ),
-                trailing: const Icon(Icons.calendar_today),
+                trailing: HugeIcon(icon: HugeIcons.strokeRoundedCalendar04,),
                 onTap: _selectDate,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _priceController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Price',
                   prefixText: '₹',
+                  prefixStyle: GoogleFonts.plusJakartaSans(color: Colors.white),
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.number,

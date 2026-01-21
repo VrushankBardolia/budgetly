@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../components/button.dart';
 import 'auth/loginScreen.dart';
@@ -62,7 +63,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: Stack(
         children: [
@@ -89,8 +89,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white.withValues(alpha: 0.8),
                       ),
-                      child: const Text('Skip',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      child: Text(
+                        'Skip',
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
@@ -121,8 +125,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 8,
                         width: _currentPage == index ? 24 : 8,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha:
-                            _currentPage == index ? 1.0 : 0.4,
+                          color: Colors.white.withValues(
+                            alpha: _currentPage == index ? 1.0 : 0.4,
                           ),
                           borderRadius: BorderRadius.circular(4),
                         ),
@@ -206,7 +210,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Opacity(opacity: value, child: child),
               );
             },
-            child: Text(page.title,
+            child: Text(
+              page.title,
               style: const TextStyle(
                 fontSize: 48,
                 fontFamily: 'BBH Bogle',
@@ -229,11 +234,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Opacity(opacity: value, child: child),
               );
             },
-            child: Text(page.description,
-              style: TextStyle(
+            child: Text(
+              page.description,
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 16,
                 color: Colors.white.withValues(alpha: 0.9),
                 height: 1.5,
+                fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
             ),

@@ -1,7 +1,6 @@
-import 'package:crystal_navigation_bar/crystal_navigation_bar.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 
 import 'dashboard/dashboardTab.dart';
@@ -39,39 +38,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screens = [
-      DashboardTab(),
-      MonthsTab(),
-      SettingsTab(),
-    ];
+    final screens = [DashboardTab(), MonthsTab(), SettingsTab()];
 
     return Scaffold(
-      extendBody: true,
       body: screens[_currentIndex],
-      bottomNavigationBar: CrystalNavigationBar(
-        borderRadius: 200,
-        borderWidth: 1,
-        paddingR: EdgeInsets.symmetric(horizontal: 24, ),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            spreadRadius: 10
-          ),
-        ],
-        indicatorColor: Colors.transparent,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        unselectedItemColor: Colors.grey.shade600,
-        splashColor: Colors.transparent,
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          HapticFeedback.heavyImpact();
-          setState(() => _currentIndex = index);
-        },
-        items: [
-          CrystalNavigationBarItem(icon: CupertinoIcons.home, ),
-          CrystalNavigationBarItem(icon: CupertinoIcons.calendar),
-          CrystalNavigationBarItem(icon: CupertinoIcons.gear),
-        ],
+      bottomNavigationBar: Theme(
+        data: ThemeData(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent
+        ),
+        child: BottomNavigationBar(
+          onTap: (value) {
+            HapticFeedback.heavyImpact();
+            setState(() => _currentIndex = value);
+          },
+          currentIndex: _currentIndex,
+          unselectedItemColor: Colors.grey.shade700,
+          backgroundColor: Theme.of(context).colorScheme.background,
+          selectedItemColor: Theme.of(context).colorScheme.primary,
+          items: [
+            BottomNavigationBarItem(
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedHome11),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedCalendar03),
+              label: 'Months',
+            ),
+            BottomNavigationBarItem(
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings01),
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }

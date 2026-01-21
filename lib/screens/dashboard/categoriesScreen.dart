@@ -201,7 +201,7 @@ class CategoriesScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: _backgroundColor,
         elevation: 0,
-        title: const Text('Categories', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+        title: Text('Categories', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 24)),
       ),
       body: Consumer<CategoryProvider>(
         builder: (context, categoryProvider, _) {
@@ -273,7 +273,7 @@ class CategoriesScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: _cardColor,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
                   ),
                   child: Row(
@@ -286,13 +286,13 @@ class CategoriesScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         alignment: Alignment.center,
-                        child: Text(category.emoji, style: const TextStyle(fontSize: 24)),
+                        child: Text(category.emoji, style: GoogleFonts.plusJakartaSans(fontSize: 24)),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(category.name,
-                          style: const TextStyle(
-                            fontSize: 16,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
                           ),
@@ -308,7 +308,7 @@ class CategoriesScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _addCategory(context),
-        label: const Text("Add Category",),
+        label: const Text("Add Category"),
         icon: const Icon(Icons.add,),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,

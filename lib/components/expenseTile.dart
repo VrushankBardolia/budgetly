@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../model/Expense.dart';
 
@@ -13,13 +14,9 @@ class ExpenseTile extends StatelessWidget {
     final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
     final dateFormatter = DateFormat('MMM dd');
 
-    // Logic: If user added a detail note, that becomes the title,
-    // and Category name moves to subtitle.
-    // If no note, Category name is the title.
     final hasDetail = expense.detail.isNotEmpty;
     final title = hasDetail ? expense.detail : category.name;
 
-    // Theme Colors (Matching your app)
     final cardColor = const Color(0xFF1E1E1E);
 
     return Container(
@@ -27,7 +24,7 @@ class ExpenseTile extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
         boxShadow: [
           BoxShadow(
@@ -48,10 +45,10 @@ class ExpenseTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
-            child: Text(category.emoji, style: const TextStyle(fontSize: 24)),
+            child: Text(category.emoji, style: GoogleFonts.plusJakartaSans(fontSize: 24)),
           ),
 
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
           // 2. Title & Subtitle
           Expanded(
@@ -61,9 +58,9 @@ class ExpenseTile extends StatelessWidget {
                 Text(title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 18,
-                    // fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),
@@ -72,7 +69,7 @@ class ExpenseTile extends StatelessWidget {
                   children: [
                     Text(
                       dateFormatter.format(expense.date),
-                      style: TextStyle(
+                      style: GoogleFonts.plusJakartaSans(
                         color: Colors.grey,
                         fontWeight: FontWeight.w800,
                       ),
@@ -86,9 +83,7 @@ class ExpenseTile extends StatelessWidget {
                         child: Text(category.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.grey,
-                          ),
+                          style: GoogleFonts.plusJakartaSans(color: Colors.grey),
                         ),
                       ),
                     ]
@@ -102,12 +97,10 @@ class ExpenseTile extends StatelessWidget {
 
           // 3. Price
           Text(formatter.format(expense.price),
-            style: const TextStyle(
+            style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w700,
               fontSize: 18,
               color: Colors.white,
-              // Option: Use primaryColor if you want the price to pop more
-              // color: primaryColor,
             ),
           ),
         ],

@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
@@ -30,7 +32,7 @@ class MonthsTab extends StatelessWidget {
           final now = DateTime.now();
 
           return GridView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 150),
+            padding: const EdgeInsets.all(16),
             physics: const BouncingScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
@@ -56,20 +58,20 @@ class MonthsTab extends StatelessWidget {
 
               Color statusColor;
               String statusLabel;
-              IconData statusIcon;
+              dynamic statusIcon;
 
               if (isBalanced) {
                 statusColor = Colors.orangeAccent;
                 statusLabel = "On Target";
-                statusIcon = CupertinoIcons.nosign;
+                statusIcon = HugeIcons.strokeRoundedAlert02;
               } else if (isSaved) {
                 statusColor = Colors.greenAccent;
                 statusLabel = isCurrent ? "Remaining" : "Saved";
-                statusIcon = CupertinoIcons.check_mark;
+                statusIcon = HugeIcons.strokeRoundedCheckmarkCircle03;
               } else {
                 statusColor = Colors.redAccent;
                 statusLabel = "Overspent";
-                statusIcon = CupertinoIcons.exclamationmark;
+                statusIcon = HugeIcons.strokeRoundedCancelCircle;
               }
 
               final hasData = (isPast && budget > 0) || (isCurrent && (budget > 0 || expense > 0));
@@ -84,9 +86,10 @@ class MonthsTab extends StatelessWidget {
                   );
                 },
                 child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
                     color: cardColor,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(16),
                     border: isCurrent
                         ? Border.all(color: primaryColor, width: 2)
                         : Border.all(color: Colors.white.withValues(alpha: 0.05)),
@@ -98,65 +101,63 @@ class MonthsTab extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(monthName,
-                              style: TextStyle(
-                                color: isCurrent ? primaryColor : Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(monthName,
+                            style: GoogleFonts.plusJakartaSans(
+                              color: isCurrent ? primaryColor : Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
                             ),
-                            if (hasData)
-                              Icon(statusIcon, color: statusColor, size: 20)
-                          ],
+                          ),
+                          if (hasData)
+                            HugeIcon(icon: statusIcon, color: statusColor, size: 20)
+                        ],
+                      ),
+
+                      const Spacer(),
+
+                      if (hasData) ...[
+                        Text(statusLabel, style: GoogleFonts.plusJakartaSans(color: Colors.grey, fontSize: 12)),
+                        Text('₹${difference.abs().toStringAsFixed(0)}',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: statusColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                          ),
                         ),
 
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: budget > 0 ? (expense / budget).clamp(0.0, 1.0) : 0,
+                            backgroundColor: Colors.grey[800],
+                            valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                            minHeight: 4,
+                          ),
+                        ),
+                        SizedBox(height: 4,),
+                        Text('Spent: ₹${expense.toStringAsFixed(0)}',
+                          style: GoogleFonts.plusJakartaSans(color: Colors.grey, fontSize: 12),
+                        ),
+                      ] else ...[
+                        Center(
+                          child: HugeIcon(icon: HugeIcons.strokeRoundedCalendarMinus02,
+                            strokeWidth: 1.5,
+                            color: Colors.grey.shade800,
+                            size: 36,
+                          ),
+                        ),
                         const Spacer(),
-
-                        if (hasData) ...[
-                          Text(statusLabel, style: TextStyle(color: Colors.grey, fontSize: 12)),
-                          Text('₹${difference.abs().toStringAsFixed(0)}',
-                            style: TextStyle(
-                              color: statusColor,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 20,
-                            ),
-                          ),
-
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: budget > 0 ? (expense / budget).clamp(0.0, 1.0) : 0,
-                              backgroundColor: Colors.grey[800],
-                              valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                              minHeight: 4,
-                            ),
-                          ),
-                          SizedBox(height: 4,),
-                          Text('Spent: ₹${expense.toStringAsFixed(0)}',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                        ] else ...[
-                          Center(
-                            child: Icon(CupertinoIcons.calendar,
-                              color: Colors.white.withValues(alpha: 0.15),
-                              size: 36,
-                            ),
-                          ),
-                          const Spacer(),
-                          Text("No Data",
-                            style: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-                          )
-                        ],
+                        Text("No Data",
+                          style: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                        )
                       ],
-                    ),
+                    ],
                   ),
                 ),
               );
