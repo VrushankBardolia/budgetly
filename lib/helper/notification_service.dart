@@ -61,7 +61,7 @@ class NotificationService {
           notification.body,
           const NotificationDetails(
             android: AndroidNotificationDetails(
-              "daily_expense_channel_v2",
+              "daily_expense_channel",
               "Daily Expense Reminder",
               importance: Importance.max,
               priority: Priority.max,

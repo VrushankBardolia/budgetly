@@ -11,7 +11,6 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../controller/category_controller.dart';
 import '../../controller/expense_controller.dart';
-import '../catregories/categoriesTab.dart';
 
 class DashboardTab extends StatefulWidget {
   const DashboardTab({super.key});
@@ -77,13 +76,7 @@ class _DashboardTabState extends State<DashboardTab> {
       appBar: AppBar(
         backgroundColor: _backgroundColor,
         elevation: 0,
-        title: Text(
-          'Budgetly',
-          style: GoogleFonts.plusJakartaSans(
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
-        ),
+        title: Text('Budgetly', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 24)),
       ),
       body: AnimatedSwitcher(
         duration: Duration(milliseconds: 300),
@@ -97,9 +90,7 @@ class _DashboardTabState extends State<DashboardTab> {
                 final expenseController = Get.find<ExpenseController>();
                 final categoryController = Get.find<CategoryController>();
 
-                final categoryTotals = expenseController.getCategoryTotals(
-                  expenseController.selectedYear,
-                );
+                final categoryTotals = expenseController.getCategoryTotals(expenseController.selectedYear);
                 return SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -116,11 +107,7 @@ class _DashboardTabState extends State<DashboardTab> {
                       const SizedBox(height: 24),
                       _buildSectionTitle('Analytics'),
                       const SizedBox(height: 16),
-                      _buildCharts(
-                        categoryController,
-                        categoryTotals,
-                        expenseController,
-                      ),
+                      _buildCharts(categoryController, categoryTotals, expenseController),
                       // const SizedBox(height: 150),
                     ],
                   ),
@@ -132,9 +119,7 @@ class _DashboardTabState extends State<DashboardTab> {
 
   Widget _buildShimmerLoader() {
     final Color baseColor = const Color(0xFF1E1E1E);
-    final Color highlightColor = const Color(
-      0xFF2C2C2C,
-    ); // Slightly lighter for shine
+    final Color highlightColor = const Color(0xFF2C2C2C); // Slightly lighter for shine
     final Color backgroundColor = const Color(0xFF121212);
     return Container(
       color: backgroundColor,
@@ -155,10 +140,7 @@ class _DashboardTabState extends State<DashboardTab> {
                   Container(
                     width: 100,
                     height: 40,
-                    decoration: BoxDecoration(
-                      color: baseColor,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
+                    decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(30)),
                   ),
                 ],
               ),
@@ -167,10 +149,7 @@ class _DashboardTabState extends State<DashboardTab> {
               // Total Card Shimmer
               Container(
                 height: 180,
-                decoration: BoxDecoration(
-                  color: baseColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
+                decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(20)),
               ),
               const SizedBox(height: 24),
 
@@ -202,10 +181,7 @@ class _DashboardTabState extends State<DashboardTab> {
                         Container(
                           width: 50,
                           height: 50,
-                          decoration: BoxDecoration(
-                            color: backgroundColor,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(12)),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -213,26 +189,13 @@ class _DashboardTabState extends State<DashboardTab> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                width: 100,
-                                height: 14,
-                                color: baseColor,
-                              ),
+                              Container(width: 100, height: 14, color: baseColor),
                               const SizedBox(height: 8),
-                              Container(
-                                width: 60,
-                                height: 14,
-                                color: baseColor,
-                              ),
+                              Container(width: 60, height: 14, color: baseColor),
                             ],
                           ),
                         ),
-                        Container(
-                          width: 80,
-                          height: 20,
-                          margin: const EdgeInsets.only(right: 16),
-                          color: baseColor,
-                        ),
+                        Container(width: 80, height: 20, margin: const EdgeInsets.only(right: 16), color: baseColor),
                       ],
                     ),
                   ),
@@ -248,10 +211,7 @@ class _DashboardTabState extends State<DashboardTab> {
               // Pie Chart Placeholder
               Container(
                 height: 250,
-                decoration: BoxDecoration(
-                  color: baseColor,
-                  borderRadius: BorderRadius.circular(24),
-                ),
+                decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(24)),
               ),
             ],
           ),
@@ -263,11 +223,7 @@ class _DashboardTabState extends State<DashboardTab> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: GoogleFonts.plusJakartaSans(
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
-        color: Colors.white70,
-      ),
+      style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white70),
     );
   }
 
@@ -278,26 +234,16 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: _cardColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: _cardColor, shape: BoxShape.circle),
             child: Icon(Icons.receipt_long, size: 60, color: Colors.grey[700]),
           ),
           const SizedBox(height: 24),
           Text(
             'No expenses yet',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Start tracking your expenses to see data here.',
-            style: TextStyle(color: Colors.grey[500]),
-          ),
+          Text('Start tracking your expenses to see data here.', style: TextStyle(color: Colors.grey[500])),
         ],
       ),
     );
@@ -321,22 +267,12 @@ class _DashboardTabState extends State<DashboardTab> {
               DropdownButton<int>(
                 value: expenseController.selectedYear,
                 dropdownColor: _cardColor,
-                icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  color: Colors.white,
-                ),
+                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white),
                 underline: const SizedBox(),
                 isDense: true,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                 items: _availableYears.map((year) {
-                  return DropdownMenuItem(
-                    value: year,
-                    child: Text(year.toString()),
-                  );
+                  return DropdownMenuItem(value: year, child: Text(year.toString()));
                 }).toList(),
                 onChanged: (year) {
                   if (year != null) _changeYear(year);
@@ -362,19 +298,9 @@ class _DashboardTabState extends State<DashboardTab> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [const Color(0xFF1565C0), const Color(0xFF1E88E5)],
-        ),
+        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [const Color(0xFF1565C0), const Color(0xFF1E88E5)]),
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1565C0).withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: const Color(0xFF1565C0).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -383,52 +309,28 @@ class _DashboardTabState extends State<DashboardTab> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
                 child: const Icon(Icons.wallet, color: Colors.white, size: 20),
               ),
               const SizedBox(width: 12),
               Text(
                 'Total Expenses',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.9), fontSize: 18, fontWeight: FontWeight.w600),
               ),
 
               Spacer(),
 
-              GestureDetector(
-                onTap: toggleMonthlyYearly,
-                child: Text(showMonthly ? "Show Yearly" : "Monthly"),
-              ),
+              GestureDetector(onTap: toggleMonthlyYearly, child: Text(showMonthly ? "Show Yearly" : "Monthly")),
             ],
           ),
           const SizedBox(height: 12),
           Row(
             spacing: 4,
             children: [
-              Text(
-                '₹',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 40,
-                  color: Colors.white,
-                  height: 1.0,
-                ),
-              ),
+              Text('₹', style: GoogleFonts.plusJakartaSans(fontSize: 40, color: Colors.white, height: 1.0)),
               AnimatedDigitWidget(
                 value: showMonthly ? currentMonthExpense : total,
-                textStyle: GoogleFonts.plusJakartaSans(
-                  fontSize: 40,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.0,
-                  letterSpacing: -2,
-                ),
+                textStyle: GoogleFonts.plusJakartaSans(fontSize: 40, fontStyle: FontStyle.italic, fontWeight: FontWeight.w800, color: Colors.white, height: 1.0, letterSpacing: -2),
                 enableSeparator: true,
                 duration: Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,
@@ -441,24 +343,14 @@ class _DashboardTabState extends State<DashboardTab> {
               AnimatedSwitcher(
                 duration: Duration(milliseconds: 200),
                 transitionBuilder: (child, animation) {
-                  final slideAnimation = Tween<Offset>(
-                    begin: Offset(-0.1, 0),
-                    end: Offset.zero,
-                  ).animate(animation);
+                  final slideAnimation = Tween<Offset>(begin: Offset(-0.1, 0), end: Offset.zero).animate(animation);
 
                   return FadeTransition(
                     opacity: animation,
-                    child: SlideTransition(
-                      position: slideAnimation,
-                      child: child,
-                    ),
+                    child: SlideTransition(position: slideAnimation, child: child),
                   );
                 },
-                child: Text(
-                  showMonthly ? 'For $monthName $year' : 'For $year',
-                  key: ValueKey(showMonthly),
-                  style: GoogleFonts.plusJakartaSans(fontSize: 16),
-                ),
+                child: Text(showMonthly ? 'For $monthName $year' : 'For $year', key: ValueKey(showMonthly), style: GoogleFonts.plusJakartaSans(fontSize: 16)),
               ),
 
               Spacer(),
@@ -469,8 +361,7 @@ class _DashboardTabState extends State<DashboardTab> {
                   onTap: () => Navigator.push(
                     context,
                     CupertinoPageRoute(
-                      builder: (_) =>
-                          MonthDetailScreen(year: year, month: month),
+                      builder: (_) => MonthDetailScreen(year: year, month: month),
                     ),
                   ),
                   child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight03),
@@ -483,19 +374,13 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _buildCategoryList(
-    CategoryController categoryController,
-    Map<String, double> categoryTotals,
-  ) {
+  Widget _buildCategoryList(CategoryController categoryController, Map<String, double> categoryTotals) {
     final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
 
     if (categoryTotals.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: _cardColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(16)),
         child: const Text(
           'No expenses recorded',
           style: TextStyle(color: Colors.grey),
@@ -504,14 +389,11 @@ class _DashboardTabState extends State<DashboardTab> {
       );
     }
 
-    final sortedEntries = categoryTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final sortedEntries = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
     final showOnly3 = sortedEntries.length > 3 ? true : false;
 
-    final displayedEntries = showOnly3
-        ? sortedEntries.take(3).toList()
-        : sortedEntries;
+    final displayedEntries = showOnly3 ? sortedEntries.take(3).toList() : sortedEntries;
 
     final maxVal = sortedEntries.isNotEmpty ? sortedEntries.first.value : 0.0;
 
@@ -533,15 +415,9 @@ class _DashboardTabState extends State<DashboardTab> {
               Container(
                 width: 50,
                 height: 50,
-                decoration: BoxDecoration(
-                  color: _backgroundColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                decoration: BoxDecoration(color: _backgroundColor, borderRadius: BorderRadius.circular(12)),
                 alignment: Alignment.center,
-                child: Text(
-                  category?.emoji ?? '📦',
-                  style: GoogleFonts.plusJakartaSans(fontSize: 24),
-                ),
+                child: Text(category?.emoji ?? '📦', style: GoogleFonts.plusJakartaSans(fontSize: 24)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -553,33 +429,18 @@ class _DashboardTabState extends State<DashboardTab> {
                       children: [
                         Text(
                           category?.name ?? 'Unknown',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                         ),
                         Text(
                           formatter.format(entry.value),
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                          style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(
-                        value: percentage,
-                        backgroundColor: Colors.white10,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _primaryColor,
-                        ),
-                        minHeight: 6,
-                      ),
+                      child: LinearProgressIndicator(value: percentage, backgroundColor: Colors.white10, valueColor: AlwaysStoppedAnimation<Color>(_primaryColor), minHeight: 6),
                     ),
                   ],
                 ),
@@ -591,33 +452,19 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _buildCharts(
-    CategoryController categoryController,
-    Map<String, double> categoryTotals,
-    ExpenseController expenseController,
-  ) {
+  Widget _buildCharts(CategoryController categoryController, Map<String, double> categoryTotals, ExpenseController expenseController) {
     if (categoryTotals.isEmpty) return const SizedBox();
 
-    return Column(
-      children: [
-        _buildPieChart(categoryController, categoryTotals),
-        const SizedBox(height: 20),
-        _buildMonthlyChart(expenseController),
-      ],
-    );
+    return Column(children: [_buildPieChart(categoryController, categoryTotals), const SizedBox(height: 20), _buildMonthlyChart(expenseController)]);
   }
 
-  Widget _buildPieChart(
-    CategoryController categoryController,
-    Map<String, double> categoryTotals,
-  ) {
+  Widget _buildPieChart(CategoryController categoryController, Map<String, double> categoryTotals) {
     if (categoryTotals.isEmpty) return const SizedBox();
 
     final total = categoryTotals.values.fold(0.0, (sum, val) => sum + val);
 
     // Sort descending
-    final sortedEntries = categoryTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final sortedEntries = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
 
     final colors = [
       const Color(0xFF42A5F5), // Blue
@@ -645,18 +492,10 @@ class _DashboardTabState extends State<DashboardTab> {
           Row(
             spacing: 8,
             children: [
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedPieChart08,
-                size: 20,
-                color: _accentColor,
-              ),
+              HugeIcon(icon: HugeIcons.strokeRoundedPieChart08, size: 20, color: _accentColor),
               Text(
                 'Distribution',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
@@ -680,15 +519,9 @@ class _DashboardTabState extends State<DashboardTab> {
                   return PieChartSectionData(
                     color: color,
                     value: value,
-                    title: percentage > 10
-                        ? '${percentage.toStringAsFixed(0)}%'
-                        : '',
+                    title: percentage > 10 ? '${percentage.toStringAsFixed(0)}%' : '',
                     radius: 70,
-                    titleStyle: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    titleStyle: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                     // badgePositionPercentageOffset: .98,
                   );
                 }).toList(),
@@ -705,8 +538,7 @@ class _DashboardTabState extends State<DashboardTab> {
               final index = entry.key;
               final data = entry.value;
               final categoryId = data.key;
-              final category =
-                  categoryController.getCategoryById(categoryId)?.name ?? "";
+              final category = categoryController.getCategoryById(categoryId)?.name ?? "";
               final color = colors[index % colors.length];
 
               return Row(
@@ -715,19 +547,10 @@ class _DashboardTabState extends State<DashboardTab> {
                   Container(
                     width: 10,
                     height: 10,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    category,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text(category, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white)),
                 ],
               );
             }).toList(),
@@ -741,16 +564,10 @@ class _DashboardTabState extends State<DashboardTab> {
     final monthlyData = <int, double>{};
 
     for (var i = 1; i <= 12; i++) {
-      monthlyData[i] = expenseController.getTotalExpenseForMonth(
-        expenseController.selectedYear,
-        i,
-      );
+      monthlyData[i] = expenseController.getTotalExpenseForMonth(expenseController.selectedYear, i);
     }
 
-    final maxY = monthlyData.values.isEmpty
-        ? 10000.0
-        : monthlyData.values.reduce((a, b) => a > b ? a : b) *
-              1.2; // Add 20% headroom
+    final maxY = monthlyData.values.isEmpty ? 10000.0 : monthlyData.values.reduce((a, b) => a > b ? a : b) * 1.2; // Add 20% headroom
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -763,19 +580,11 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Row(
             children: [
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedChartEvaluation,
-                size: 20,
-                color: _accentColor,
-              ),
+              HugeIcon(icon: HugeIcons.strokeRoundedChartEvaluation, size: 20, color: _accentColor),
               const SizedBox(width: 8),
               Text(
                 'Monthly Trend',
-                style: GoogleFonts.plusJakartaSans(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ],
           ),
@@ -789,11 +598,7 @@ class _DashboardTabState extends State<DashboardTab> {
                   drawVerticalLine: false,
                   horizontalInterval: maxY / 4,
                   getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.white.withValues(alpha: 0.1),
-                      strokeWidth: 1,
-                      dashArray: [5, 5],
-                    );
+                    return FlLine(color: Colors.white.withValues(alpha: 0.1), strokeWidth: 1, dashArray: [5, 5]);
                   },
                 ),
                 titlesData: FlTitlesData(
@@ -807,13 +612,7 @@ class _DashboardTabState extends State<DashboardTab> {
                         if (month >= 1 && month <= 12) {
                           return SideTitleWidget(
                             axisSide: meta.axisSide,
-                            child: Text(
-                              month.toString(),
-                              style: GoogleFonts.plusJakartaSans(
-                                color: Colors.grey[600],
-                                fontSize: 12,
-                              ),
-                            ),
+                            child: Text(month.toString(), style: GoogleFonts.plusJakartaSans(color: Colors.grey[600], fontSize: 12)),
                           );
                         }
                         return const SizedBox();
@@ -821,15 +620,9 @@ class _DashboardTabState extends State<DashboardTab> {
                     ),
                   ),
 
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 minX: 1,
@@ -838,9 +631,7 @@ class _DashboardTabState extends State<DashboardTab> {
                 maxY: maxY,
                 lineBarsData: [
                   LineChartBarData(
-                    spots: monthlyData.entries
-                        .map((e) => FlSpot(e.key.toDouble(), e.value))
-                        .toList(),
+                    spots: monthlyData.entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                     isCurved: true,
                     preventCurveOverShooting: true,
                     color: _primaryColor,
@@ -850,10 +641,7 @@ class _DashboardTabState extends State<DashboardTab> {
                     belowBarData: BarAreaData(
                       show: true,
                       gradient: LinearGradient(
-                        colors: [
-                          _primaryColor.withValues(alpha: 0.3),
-                          _primaryColor.withValues(alpha: 0.0),
-                        ],
+                        colors: [_primaryColor.withValues(alpha: 0.3), _primaryColor.withValues(alpha: 0.0)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -864,33 +652,12 @@ class _DashboardTabState extends State<DashboardTab> {
                   touchTooltipData: LineTouchTooltipData(
                     tooltipRoundedRadius: 8,
                     getTooltipItems: (touchedSpots) {
-                      const months = [
-                        'Jan',
-                        'Feb',
-                        'Mar',
-                        'Apr',
-                        'May',
-                        'Jun',
-                        'Jul',
-                        'Aug',
-                        'Sep',
-                        'Oct',
-                        'Nov',
-                        'Dec',
-                      ];
+                      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                       return touchedSpots.map((LineBarSpot touchedSpot) {
                         final monthIndex = touchedSpot.x.toInt() - 1;
-                        final monthName = (monthIndex >= 0 && monthIndex < 12)
-                            ? months[monthIndex]
-                            : '';
+                        final monthName = (monthIndex >= 0 && monthIndex < 12) ? months[monthIndex] : '';
 
-                        return LineTooltipItem(
-                          '$monthName  •  ₹${touchedSpot.y.toInt()}',
-                          GoogleFonts.plusJakartaSans(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        );
+                        return LineTooltipItem('$monthName  •  ₹${touchedSpot.y.toInt()}', GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold));
                       }).toList();
                     },
                   ),
