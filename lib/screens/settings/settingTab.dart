@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../components/button.dart';
-import '../../provider/AuthProvider.dart';
+import '../../controller/auth_controller.dart';
+import '../../core/globals.dart';
+import '../auth/loginScreen.dart';
 
 class SettingsTab extends StatefulWidget {
   const SettingsTab({super.key});
@@ -17,8 +19,8 @@ class SettingsTab extends StatefulWidget {
 }
 
 class _SettingsTabState extends State<SettingsTab> {
-  String _fullName = 'Loading...';
-  String _email = '';
+  final Globals globals = Get.put(Globals());
+
   String _phone = '';
   String _usingSince = '';
 
@@ -36,54 +38,34 @@ class _SettingsTabState extends State<SettingsTab> {
   }
 
   Future<void> _loadUserData() async {
-    final user = context.read<AuthProvider>().user;
+    final user = Get.find<AuthController>().user;
     if (user?.uid == null) {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
       return;
     }
 
     String monthName(int month) {
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
       return months[month - 1];
     }
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user?.email)
-          .get();
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user?.email).get();
 
       if (doc.exists && mounted) {
         final data = doc.data();
         setState(() {
-          _fullName = data?['name'] ?? 'User';
-          _email = data?['email'] ?? 'No Email';
-          _phone = data?['phone'] ?? '';
+          // _phone = data?['phone'] ?? '';
           final Timestamp? ts = data?['createdAt'];
-          _usingSince = ts != null
-              ? "Using since ${monthName(ts.toDate().month)} ${ts.toDate().year}"
-              : '';
+          _usingSince = ts != null ? "Using since ${monthName(ts.toDate().month)} ${ts.toDate().year}" : '';
 
           _isLoading = false;
         });
+      } else {
+        if (mounted) setState(() => _isLoading = false);
       }
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
-    } finally {
-      setState(() => _isLoading = false);
     }
   }
 
@@ -103,18 +85,13 @@ class _SettingsTabState extends State<SettingsTab> {
     showModalBottomSheet(
       context: context,
       backgroundColor: _cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              "Change Phone",
-              style: TextStyle(color: Colors.white, fontSize: 20),
-            ),
+            const Text("Change Phone", style: TextStyle(color: Colors.white, fontSize: 20)),
 
             const SizedBox(height: 16),
 
@@ -128,24 +105,19 @@ class _SettingsTabState extends State<SettingsTab> {
 
             ElevatedButton(
               onPressed: () async {
-                final user = context.read<AuthProvider>().user;
+                final user = Get.find<AuthController>().user;
                 if (user == null) return;
 
                 final newPhone = controller.text.trim();
 
-                await FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(user.email)
-                    .update({'phone': newPhone});
+                await FirebaseFirestore.instance.collection('users').doc(user.email).update({'phone': newPhone});
 
                 setState(() => _phone = newPhone);
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text("Phone number is updated successfully!"),
-                  ),
-                );
-                Navigator.pop(context);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Phone number is updated successfully!")));
+                  Navigator.pop(context);
+                }
               },
               child: const Text("Update"),
             ),
@@ -163,66 +135,40 @@ class _SettingsTabState extends State<SettingsTab> {
       appBar: AppBar(
         backgroundColor: _backgroundColor,
         elevation: 0,
-        title: const Text(
-          'Settings',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
-        ),
+        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
       ),
       body: AnimatedSwitcher(
         duration: Duration(milliseconds: 300),
         switchInCurve: Curves.easeIn,
         switchOutCurve: Curves.easeIn,
-        child: _isLoading
-            ? ShimmerLoader()
-            : SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    _buildProfileHeader(),
-                    const SizedBox(height: 20),
+        child: _isLoading ? ShimmerLoader() : _buildMainContent(),
+      ),
+    );
+  }
 
-                    _buildSectionTitle("Profile"),
-                    _buildSettingsTile(
-                      icon: HugeIcons.strokeRoundedMail02,
-                      title: _email,
-                    ),
+  Widget _buildMainContent() {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          _buildProfileHeader(),
+          const SizedBox(height: 20),
 
-                    _buildSettingsTile(
-                      icon: HugeIcons.strokeRoundedCall02,
-                      title: _phone,
-                      onTap: _changePhone,
-                    ),
+          _buildSectionTitle("Profile"),
+          _buildSettingsTile(icon: HugeIcons.strokeRoundedMail02, title: globals.userEmail.value),
 
-                    const SizedBox(height: 20),
-                    _buildSectionTitle("Support"),
-                    _buildSettingsTile(
-                      icon: HugeIcons.strokeRoundedFile02,
-                      title: "About Budgetly",
-                      onTap: () => _showAboutAppDialog(),
-                    ),
+          _buildSettingsTile(icon: HugeIcons.strokeRoundedCall02, title: globals.userPhone.value == "" ? "Add Phone" : globals.userPhone.value, onTap: _changePhone),
 
-                    const SizedBox(height: 20),
-                    _buildSectionTitle("Account"),
-                    _buildSettingsTile(
-                      icon: HugeIcons.strokeRoundedLogoutSquare01,
-                      title: "Sign Out",
-                      color: _dangerColor,
-                      isDestructive: true,
-                      onTap: _handleSignOut,
-                    ),
-                    const SizedBox(height: 40),
+          const SizedBox(height: 20),
+          _buildSectionTitle("Support"),
+          _buildSettingsTile(icon: HugeIcons.strokeRoundedFile02, title: "About Budgetly", onTap: () => _showAboutAppDialog()),
 
-                    Text(
-                      "Version 1.0.0",
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.grey[600],
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          const SizedBox(height: 20),
+          _buildSectionTitle("Account"),
+          _buildSettingsTile(icon: HugeIcons.strokeRoundedLogoutSquare01, title: "Sign Out", color: _dangerColor, isDestructive: true, onTap: _handleSignOut),
+          const SizedBox(height: 40),
+        ],
       ),
     );
   }
@@ -241,12 +187,8 @@ class _SettingsTabState extends State<SettingsTab> {
             radius: 28,
             backgroundColor: Theme.of(context).colorScheme.secondary,
             child: Text(
-              _getInitials(_fullName),
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              _getInitials(globals.userName.value),
+              style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: Theme.of(context).colorScheme.primary),
             ),
           ),
           const SizedBox(width: 20),
@@ -254,12 +196,8 @@ class _SettingsTabState extends State<SettingsTab> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _fullName,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                globals.userName.value,
+                style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
               ),
               Text(_usingSince),
             ],
@@ -276,102 +214,57 @@ class _SettingsTabState extends State<SettingsTab> {
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: GoogleFonts.plusJakartaSans(
-            color: _primaryColor,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style: GoogleFonts.plusJakartaSans(color: _primaryColor, fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
     );
   }
 
-  Widget _buildSettingsTile({
-    required dynamic icon,
-    required String title,
-    VoidCallback? onTap,
-    Color? color,
-    bool isDestructive = false,
-  }) {
+  Widget _buildSettingsTile({required dynamic icon, required String title, VoidCallback? onTap, Color? color, bool isDestructive = false}) {
     final iconColor = color ?? Colors.white;
     final textColor = isDestructive ? _dangerColor : Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(top: 12),
-      decoration: BoxDecoration(
-        color: _cardColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         onTap: onTap,
         splashColor: Colors.transparent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isDestructive
-                ? _dangerColor.withValues(alpha: 0.1)
-                : _backgroundColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
+          decoration: BoxDecoration(color: isDestructive ? _dangerColor.withValues(alpha: 0.1) : _backgroundColor, borderRadius: BorderRadius.circular(10)),
           child: HugeIcon(icon: icon, color: iconColor, size: 22),
         ),
         title: Text(
           title,
-          style: TextStyle(
-            color: textColor,
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 16),
         ),
-        trailing: ((onTap != () {}) || (onTap != null))
-            ? Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.grey[600],
-                size: 24,
-              )
-            : null,
+        trailing: ((onTap != () {}) || (onTap != null)) ? Icon(Icons.chevron_right_rounded, color: Colors.grey[600], size: 24) : null,
       ),
     );
   }
 
   Future<void> _handleSignOut() async {
     HapticFeedback.heavyImpact();
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: _cardColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Sign Out', style: TextStyle(color: Colors.white)),
-        content: Text(
-          'Are you sure you want to sign out?',
-          style: TextStyle(color: Colors.grey[400]),
+    Get.defaultDialog(
+      contentPadding: EdgeInsets.all(24),
+      titlePadding: EdgeInsets.only(top: 24, left: 24, right: 24),
+      title: "Sign Out",
+      middleText: "Are you sure you want to sign out?",
+      confirm: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _dangerColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _dangerColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Sign Out',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+        onPressed: () {
+          Get.find<AuthController>().signOut();
+          Get.offAll(() => LoginScreen());
+        },
+        child: const Text("Sign Out"),
       ),
+      cancel: TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
     );
-
-    if (confirm == true && mounted) {
-      await context.read<AuthProvider>().signOut();
-    }
   }
 
   void _showAboutAppDialog() {
@@ -380,42 +273,21 @@ class _SettingsTabState extends State<SettingsTab> {
       context: context,
       backgroundColor: _cardColor,
       showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       isScrollControlled: true,
       builder: (context) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          16,
-          24,
-          MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
+        padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).viewInsets.bottom + 24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.wallet,
-                size: 56,
-                color: Theme.of(context).colorScheme.onSecondary,
-              ),
+              decoration: BoxDecoration(color: Theme.of(context).colorScheme.secondary, shape: BoxShape.circle),
+              child: Icon(Icons.wallet, size: 56, color: Theme.of(context).colorScheme.onSecondary),
             ),
             const SizedBox(height: 16),
 
-            const Text(
-              "Budgetly",
-              style: TextStyle(
-                fontFamily: 'BBH Bogle',
-                fontSize: 32,
-                letterSpacing: 1,
-              ),
-            ),
+            const Text("Budgetly", style: TextStyle(fontFamily: 'BBH Bogle', fontSize: 32, letterSpacing: 1)),
             const SizedBox(height: 8),
 
             Text("Version 1.0.0", style: TextStyle(color: Colors.grey)),
@@ -424,11 +296,7 @@ class _SettingsTabState extends State<SettingsTab> {
             Text(
               "A simple and effective personal expense tracking application designed to help you save money.",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey[400],
-                height: 1.5,
-                fontSize: 15,
-              ),
+              style: TextStyle(color: Colors.grey[400], height: 1.5, fontSize: 15),
             ),
             const SizedBox(height: 32),
 
@@ -475,10 +343,7 @@ class ShimmerLoader extends StatelessWidget {
                     Container(
                       width: 56,
                       height: 56,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 20),
                     // Name and Date lines
@@ -515,9 +380,7 @@ class ShimmerLoader extends StatelessWidget {
               const SizedBox(height: 40),
 
               // Version Text
-              Center(
-                child: Container(width: 80, height: 12, color: _baseColor),
-              ),
+              Center(child: Container(width: 80, height: 12, color: _baseColor)),
             ],
           ),
         ),
@@ -536,10 +399,7 @@ class ShimmerLoader extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       height: 64, // Matches approx height of your settings tile
-      decoration: BoxDecoration(
-        color: _baseColor,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: _baseColor, borderRadius: BorderRadius.circular(12)),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
@@ -547,10 +407,7 @@ class ShimmerLoader extends StatelessWidget {
           Container(
             width: 38,
             height: 38,
-            decoration: BoxDecoration(
-              color: _backgroundColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
+            decoration: BoxDecoration(color: _backgroundColor, borderRadius: BorderRadius.circular(10)),
           ),
           const SizedBox(width: 16),
           // Title
@@ -560,10 +417,7 @@ class ShimmerLoader extends StatelessWidget {
           Container(
             width: 24,
             height: 24,
-            decoration: BoxDecoration(
-              color: _backgroundColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: _backgroundColor, shape: BoxShape.circle),
           ),
         ],
       ),

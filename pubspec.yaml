@@ -30,16 +30,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # Firebase
   firebase_core: ^4.2.1
   firebase_auth: ^6.1.2
   cloud_firestore: ^6.1.0
-
-  # State Management
-  provider: ^6.1.1
-
-  # UI
   cupertino_icons: ^1.0.2
   fl_chart: ^0.66.0
   intl: ^0.18.1
@@ -48,12 +41,14 @@ dependencies:
   hugeicons:
   animated_digit: ^3.3.2
   shimmer: ^3.0.0
-
-  # Storage
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.2
-
   flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.0
+  get: ^4.7.3
+  flutter_svg: ^2.2.3
+  google_sign_in: ^6.2.1
+  firebase_messaging: ^16.1.1
 
 dev_dependencies:
   flutter_test:
@@ -76,6 +71,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+  assets:
+    - assets/fonts/
+    - assets/logo/
 
   fonts:
     - family: BBH Bogle

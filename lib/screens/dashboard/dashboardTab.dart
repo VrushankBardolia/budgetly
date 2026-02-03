@@ -4,14 +4,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../provider/CategoryProvider.dart';
-import '../../provider/ExpenseProvider.dart';
-import 'categoriesScreen.dart';
+import '../../controller/category_controller.dart';
+import '../../controller/expense_controller.dart';
+import '../catregories/categoriesTab.dart';
 
 class DashboardTab extends StatefulWidget {
   const DashboardTab({super.key});
@@ -38,8 +38,8 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Future<void> _loadYears() async {
-    final expenseProvider = context.read<ExpenseProvider>();
-    final years = await expenseProvider.getYearsWithExpenses();
+    final expenseController = Get.find<ExpenseController>();
+    final years = await expenseController.getYearsWithExpenses();
 
     if (mounted) {
       setState(() {
@@ -49,19 +49,19 @@ class _DashboardTabState extends State<DashboardTab> {
     }
 
     if (years.isNotEmpty) {
-      if (!years.contains(expenseProvider.selectedYear)) {
-        expenseProvider.setSelectedYear(years.first);
+      if (!years.contains(expenseController.selectedYear)) {
+        expenseController.setSelectedYear(years.first);
       }
-      await expenseProvider.loadExpenses(expenseProvider.selectedYear);
-      await expenseProvider.loadBudgets(expenseProvider.selectedYear);
+      await expenseController.loadExpenses(expenseController.selectedYear);
+      await expenseController.loadBudgets(expenseController.selectedYear);
     }
   }
 
   Future<void> _changeYear(int year) async {
-    final expenseProvider = context.read<ExpenseProvider>();
-    expenseProvider.setSelectedYear(year);
-    await expenseProvider.loadExpenses(year);
-    await expenseProvider.loadBudgets(year);
+    final expenseController = Get.find<ExpenseController>();
+    expenseController.setSelectedYear(year);
+    await expenseController.loadExpenses(year);
+    await expenseController.loadBudgets(year);
   }
 
   void toggleMonthlyYearly() {
@@ -84,18 +84,6 @@ class _DashboardTabState extends State<DashboardTab> {
             fontSize: 24,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedLeftToRightListDash),
-            color: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CategoriesScreen()),
-              );
-            },
-          ),
-        ],
       ),
       body: AnimatedSwitcher(
         duration: Duration(milliseconds: 300),
@@ -105,36 +93,39 @@ class _DashboardTabState extends State<DashboardTab> {
             ? _buildShimmerLoader()
             : _availableYears.isEmpty
             ? _buildEmptyState()
-            : Consumer2<ExpenseProvider, CategoryProvider>(
-                builder: (context, expenseProvider, categoryProvider, _) {
-                  final categoryTotals = expenseProvider.getCategoryTotals(
-                    expenseProvider.selectedYear,
-                  );
-                  return SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _buildYearSelector(expenseProvider),
-                        const SizedBox(height: 20),
-                        _buildTotalCard(categoryTotals),
-                        const SizedBox(height: 24),
-                        _buildCategoryList(categoryProvider, categoryTotals),
-                        const SizedBox(height: 24),
-                        _buildSectionTitle('Analytics'),
-                        const SizedBox(height: 16),
-                        _buildCharts(
-                          categoryProvider,
-                          categoryTotals,
-                          expenseProvider,
-                        ),
-                        // const SizedBox(height: 150),
-                      ],
-                    ),
-                  );
-                },
-              ),
+            : Obx(() {
+                final expenseController = Get.find<ExpenseController>();
+                final categoryController = Get.find<CategoryController>();
+
+                final categoryTotals = expenseController.getCategoryTotals(
+                  expenseController.selectedYear,
+                );
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildYearSelector(expenseController),
+                      const SizedBox(height: 20),
+                      _buildTotalCard(categoryTotals),
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('Top Categories'),
+                      const SizedBox(height: 16),
+                      _buildCategoryList(categoryController, categoryTotals),
+                      const SizedBox(height: 24),
+                      _buildSectionTitle('Analytics'),
+                      const SizedBox(height: 16),
+                      _buildCharts(
+                        categoryController,
+                        categoryTotals,
+                        expenseController,
+                      ),
+                      // const SizedBox(height: 150),
+                    ],
+                  ),
+                );
+              }),
       ),
     );
   }
@@ -312,7 +303,7 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _buildYearSelector(ExpenseProvider expenseProvider) {
+  Widget _buildYearSelector(ExpenseController expenseController) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -328,7 +319,7 @@ class _DashboardTabState extends State<DashboardTab> {
             children: [
               const Text("Year: ", style: TextStyle(color: Colors.grey)),
               DropdownButton<int>(
-                value: expenseProvider.selectedYear,
+                value: expenseController.selectedYear,
                 dropdownColor: _cardColor,
                 icon: const Icon(
                   Icons.keyboard_arrow_down_rounded,
@@ -361,11 +352,11 @@ class _DashboardTabState extends State<DashboardTab> {
   Widget _buildTotalCard(Map<String, double> categoryTotals) {
     final total = categoryTotals.values.fold(0.0, (sum, val) => sum + val);
 
-    final provider = context.read<ExpenseProvider>();
-    final year = provider.selectedYear;
+    final controller = Get.find<ExpenseController>();
+    final year = controller.selectedYear;
     final month = DateTime.now().month;
     final monthName = DateFormat.MMMM().format(DateTime.now());
-    final currentMonthExpense = provider.getTotalExpenseForMonth(year, month);
+    final currentMonthExpense = controller.getTotalExpenseForMonth(year, month);
 
     return Container(
       width: double.infinity,
@@ -493,7 +484,7 @@ class _DashboardTabState extends State<DashboardTab> {
   }
 
   Widget _buildCategoryList(
-    CategoryProvider categoryProvider,
+    CategoryController categoryController,
     Map<String, double> categoryTotals,
   ) {
     final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
@@ -525,135 +516,120 @@ class _DashboardTabState extends State<DashboardTab> {
     final maxVal = sortedEntries.isNotEmpty ? sortedEntries.first.value : 0.0;
 
     return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildSectionTitle("Top Categories"),
-            if (showOnly3)
-              GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  CupertinoPageRoute(builder: (_) => CategoriesScreen()),
+      children: displayedEntries.map((entry) {
+        final category = categoryController.getCategoryById(entry.key);
+        final percentage = maxVal > 0 ? (entry.value / maxVal) : 0.0;
+
+        return Container(
+          margin: const EdgeInsets.only(top: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _cardColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: _backgroundColor,
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                alignment: Alignment.center,
                 child: Text(
-                  "View all »",
-                  style: GoogleFonts.plusJakartaSans(color: _primaryColor),
+                  category?.emoji ?? '📦',
+                  style: GoogleFonts.plusJakartaSans(fontSize: 24),
                 ),
               ),
-          ],
-        ),
-        const SizedBox(height: 4),
-
-        Column(
-          children: displayedEntries.map((entry) {
-            final category = categoryProvider.getCategoryById(entry.key);
-            final percentage = maxVal > 0 ? (entry.value / maxVal) : 0.0;
-
-            return Container(
-              margin: const EdgeInsets.only(top: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: _cardColor,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: _backgroundColor,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      category?.emoji ?? '📦',
-                      style: GoogleFonts.plusJakartaSans(fontSize: 24),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              category?.name ?? 'Unknown',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            Text(
-                              formatter.format(entry.value),
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
+                        Text(
+                          category?.name ?? 'Unknown',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
                         ),
-                        const SizedBox(height: 8),
-                        // Visual bar indicating expense magnitude relative to highest
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: percentage,
-                            backgroundColor: Colors.white10,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              _primaryColor,
-                            ),
-                            minHeight: 6,
+                        Text(
+                          formatter.format(entry.value),
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
                         ),
                       ],
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: percentage,
+                        backgroundColor: Colors.white10,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _primaryColor,
+                        ),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          }).toList(),
-        ),
-      ],
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
   Widget _buildCharts(
-    CategoryProvider categoryProvider,
+    CategoryController categoryController,
     Map<String, double> categoryTotals,
-    ExpenseProvider expenseProvider,
+    ExpenseController expenseController,
   ) {
     if (categoryTotals.isEmpty) return const SizedBox();
 
     return Column(
       children: [
-        _buildPieChart(categoryProvider, categoryTotals),
+        _buildPieChart(categoryController, categoryTotals),
         const SizedBox(height: 20),
-        _buildMonthlyChart(expenseProvider),
+        _buildMonthlyChart(expenseController),
       ],
     );
   }
 
   Widget _buildPieChart(
-    CategoryProvider categoryProvider,
+    CategoryController categoryController,
     Map<String, double> categoryTotals,
   ) {
+    if (categoryTotals.isEmpty) return const SizedBox();
+
     final total = categoryTotals.values.fold(0.0, (sum, val) => sum + val);
 
+    // Sort descending
+    final sortedEntries = categoryTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
     final colors = [
-      const Color(0xFF42A5F5),
-      const Color(0xFF26C6DA),
-      const Color(0xFF66BB6A),
-      const Color(0xFFFFA726),
-      const Color(0xFFEF5350),
-      const Color(0xFFAB47BC),
-      const Color(0xFF7E57C2),
+      const Color(0xFF42A5F5), // Blue
+      const Color(0xFF26C6DA), // Cyan
+      const Color(0xFF66BB6A), // Green
+      const Color(0xFFFFA726), // Orange
+      const Color(0xFFEF5350), // Red
+      const Color(0xFFAB47BC), // Purple
+      const Color(0xFF7E57C2), // Deep Purple
+      const Color(0xFFEC407A), // Pink
+      const Color(0xFF5C6BC0), // Indigo
+      const Color(0xFFFFCA28), // Amber
     ];
 
     return Container(
@@ -665,15 +641,15 @@ class _DashboardTabState extends State<DashboardTab> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        children: <Widget>[
           Row(
+            spacing: 8,
             children: [
               HugeIcon(
                 icon: HugeIcons.strokeRoundedPieChart08,
                 size: 20,
                 color: _accentColor,
               ),
-              const SizedBox(width: 8),
               Text(
                 'Distribution',
                 style: GoogleFonts.plusJakartaSans(
@@ -685,72 +661,71 @@ class _DashboardTabState extends State<DashboardTab> {
             ],
           ),
 
+          const SizedBox(height: 32),
+
           SizedBox(
-            height: 220,
+            height: 200,
             child: PieChart(
               PieChartData(
-                pieTouchData: PieTouchData(enabled: true),
-                centerSpaceRadius: 40,
-                sectionsSpace: 4,
-                sections: categoryTotals.entries.toList().asMap().entries.map((
-                  entry,
-                ) {
+                borderData: FlBorderData(show: false),
+                sectionsSpace: 2,
+                centerSpaceRadius: 50,
+                sections: sortedEntries.asMap().entries.map((entry) {
                   final index = entry.key;
-                  final value = entry.value.value;
+                  final data = entry.value;
+                  final value = data.value;
                   final percentage = (value / total * 100);
-                  final isLargeEnough = percentage > 5;
+                  final color = colors[index % colors.length];
 
                   return PieChartSectionData(
+                    color: color,
                     value: value,
-                    title: isLargeEnough
+                    title: percentage > 10
                         ? '${percentage.toStringAsFixed(0)}%'
                         : '',
-                    color: colors[index % colors.length],
-                    radius: isLargeEnough ? 60 : 50,
+                    radius: 70,
                     titleStyle: GoogleFonts.plusJakartaSans(
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
-                    badgeWidget: isLargeEnough
-                        ? null
-                        : _buildMiniBadge(colors[index % colors.length]),
-                    badgePositionPercentageOffset: .98,
+                    // badgePositionPercentageOffset: .98,
                   );
                 }).toList(),
               ),
             ),
           ),
 
+          const SizedBox(height: 32),
+
           Wrap(
-            spacing: 16,
-            runSpacing: 10,
-            runAlignment: WrapAlignment.center,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: categoryTotals.entries.toList().asMap().entries.map((
-              entry,
-            ) {
+            spacing: 8,
+            runSpacing: 8,
+            children: sortedEntries.asMap().entries.map((entry) {
               final index = entry.key;
-              final categoryId = entry.value.key;
+              final data = entry.value;
+              final categoryId = data.key;
               final category =
-                  categoryProvider.getCategoryById(categoryId)?.name ?? "";
+                  categoryController.getCategoryById(categoryId)?.name ?? "";
+              final color = colors[index % colors.length];
 
               return Row(
-                spacing: 4,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     width: 10,
                     height: 10,
                     decoration: BoxDecoration(
-                      color: colors[index % colors.length],
+                      color: color,
                       shape: BoxShape.circle,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Text(
                     category,
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
-                      color: Colors.white70,
+                      color: Colors.white,
                     ),
                   ),
                 ],
@@ -762,20 +737,12 @@ class _DashboardTabState extends State<DashboardTab> {
     );
   }
 
-  Widget _buildMiniBadge(Color color) {
-    return Container(
-      width: 8,
-      height: 8,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Widget _buildMonthlyChart(ExpenseProvider expenseProvider) {
+  Widget _buildMonthlyChart(ExpenseController expenseController) {
     final monthlyData = <int, double>{};
 
     for (var i = 1; i <= 12; i++) {
-      monthlyData[i] = expenseProvider.getTotalExpenseForMonth(
-        expenseProvider.selectedYear,
+      monthlyData[i] = expenseController.getTotalExpenseForMonth(
+        expenseController.selectedYear,
         i,
       );
     }

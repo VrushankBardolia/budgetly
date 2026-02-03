@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import '../../model/Expense.dart';
-import '../../provider/AuthProvider.dart';
-import '../../provider/CategoryProvider.dart';
-import '../../provider/ExpenseProvider.dart';
+import '../../controller/expense_controller.dart';
+import '../../controller/category_controller.dart';
+import '../../controller/auth_controller.dart';
 
 class AddExpenseDialog extends StatefulWidget {
   final int year;
   final int month;
 
-  const AddExpenseDialog({
-    super.key,
-    required this.year,
-    required this.month,
-  });
+  const AddExpenseDialog({super.key, required this.year, required this.month});
 
   @override
   State<AddExpenseDialog> createState() => _AddExpenseDialogState();
@@ -59,14 +55,14 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a category')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
       return;
     }
 
     final price = double.parse(_priceController.text);
-    final userId = context.read<AuthProvider>().user!.uid;
+    final userId = Get.find<AuthController>().user!.uid;
 
     final expense = Expense(
       id: '',
@@ -77,7 +73,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       userId: userId,
     );
 
-    await context.read<ExpenseProvider>().addExpense(expense);
+    await Get.find<ExpenseController>().addExpense(expense);
 
     if (mounted) {
       Navigator.pop(context, true);
@@ -87,8 +83,10 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      constraints: BoxConstraints.tightFor(width: MediaQuery.of(context).size.width),
-      title: const Text('Add Expense',textAlign: TextAlign.center,),
+      constraints: BoxConstraints.tightFor(
+        width: MediaQuery.of(context).size.width,
+      ),
+      title: const Text('Add Expense', textAlign: TextAlign.center),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -102,7 +100,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                       ? DateFormat('MMM dd, yyyy').format(_selectedDate!)
                       : 'Select date',
                 ),
-                trailing: HugeIcon(icon: HugeIcons.strokeRoundedCalendar04,),
+                trailing: HugeIcon(icon: HugeIcons.strokeRoundedCalendar04),
                 onTap: _selectDate,
               ),
               const SizedBox(height: 8),
@@ -126,42 +124,47 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              Consumer<CategoryProvider>(
-                builder: (context, categoryProvider, _) {
-                  if (categoryProvider.categories.isEmpty) {
-                    return const Text('No categories. Please add categories first.');
-                  }
-
-                  return DropdownButtonFormField<String>(
-                    value: _selectedCategoryId,
-                    decoration: const InputDecoration(
-                      hintText: 'Category',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: categoryProvider.categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category.id,
-                        child: Row(
-                          children: [
-                            Text(category.emoji, style: const TextStyle(fontSize: 24)),
-                            const SizedBox(width: 12),
-                            Text(category.name),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => _selectedCategoryId = value);
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'Please select a category';
-                      }
-                      return null;
-                    },
+              const SizedBox(height: 16),
+              Obx(() {
+                final categoryController = Get.find<CategoryController>();
+                if (categoryController.categories.isEmpty) {
+                  return const Text(
+                    'No categories. Please add categories first.',
                   );
-                },
-              ),
+                }
+
+                return DropdownButtonFormField<String>(
+                  value: _selectedCategoryId,
+                  decoration: const InputDecoration(
+                    hintText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: categoryController.categories.map((category) {
+                    return DropdownMenuItem(
+                      value: category.id,
+                      child: Row(
+                        children: [
+                          Text(
+                            category.emoji,
+                            style: const TextStyle(fontSize: 24),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(category.name),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() => _selectedCategoryId = value);
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Please select a category';
+                    }
+                    return null;
+                  },
+                );
+              }),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _detailController,
@@ -180,10 +183,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        ElevatedButton(
-          onPressed: _submit,
-          child: const Text('Add'),
-        ),
+        ElevatedButton(onPressed: _submit, child: const Text('Add')),
       ],
     );
   }

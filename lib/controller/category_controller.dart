@@ -1,15 +1,23 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../model/Expense.dart';
+import 'package:get/get.dart';
 
-class CategoryProvider extends ChangeNotifier {
+import '../model/Category.dart';
+
+class CategoryController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  List<Category> _categories = [];
+  final RxList<Category> _categories = <Category>[].obs;
 
   List<Category> get categories => _categories;
+  int get categoryCount => _categories.length;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadCategories();
+  }
 
   Future<void> loadCategories() async {
     final userId = _auth.currentUser?.uid;
@@ -21,8 +29,9 @@ class CategoryProvider extends ChangeNotifier {
         .orderBy('name')
         .get();
 
-    _categories = snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList();
-    notifyListeners();
+    _categories.assignAll(
+      snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList(),
+    );
   }
 
   Future<void> addCategory(String name, String emoji) async {

@@ -1,23 +1,30 @@
-import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 import '../model/Expense.dart';
+import '../model/MonthBudget.dart';
 
-class ExpenseProvider extends ChangeNotifier {
+class ExpenseController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  List<Expense> _expenses = [];
-  List<MonthBudget> _budgets = [];
-  int _selectedYear = DateTime.now().year;
+  final RxList<Expense> _expenses = <Expense>[].obs;
+  final RxList<MonthBudget> _budgets = <MonthBudget>[].obs;
+  final RxInt _selectedYear = DateTime.now().year.obs;
 
   List<Expense> get expenses => _expenses;
   List<MonthBudget> get budgets => _budgets;
-  int get selectedYear => _selectedYear;
+  int get selectedYear => _selectedYear.value;
+
+  @override
+  void onInit() {
+    super.onInit();
+    loadExpenses(_selectedYear.value);
+  }
 
   void setSelectedYear(int year) {
-    _selectedYear = year;
-    notifyListeners();
+    _selectedYear.value = year;
+    loadExpenses(year);
   }
 
   Future<void> loadExpenses(int year) async {
@@ -35,8 +42,9 @@ class ExpenseProvider extends ChangeNotifier {
         .orderBy('date', descending: true)
         .get();
 
-    _expenses = snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList();
-    notifyListeners();
+    _expenses.assignAll(
+      snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList(),
+    );
   }
 
   Future<void> loadBudgets(int year) async {
@@ -49,8 +57,9 @@ class ExpenseProvider extends ChangeNotifier {
         .where('year', isEqualTo: year)
         .get();
 
-    _budgets = snapshot.docs.map((doc) => MonthBudget.fromFirestore(doc)).toList();
-    notifyListeners();
+    _budgets.assignAll(
+      snapshot.docs.map((doc) => MonthBudget.fromFirestore(doc)).toList(),
+    );
   }
 
   Future<List<int>> getYearsWithExpenses() async {
@@ -62,7 +71,6 @@ class ExpenseProvider extends ChangeNotifier {
         .where('userId', isEqualTo: userId)
         .get();
 
-    // ✅ If no expenses, return current year
     if (snapshot.docs.isEmpty) {
       return [DateTime.now().year];
     }
@@ -73,7 +81,6 @@ class ExpenseProvider extends ChangeNotifier {
       years.add(expense.date.year);
     }
 
-    // ✅ Safety check: if years is empty, return current year
     if (years.isEmpty) {
       return [DateTime.now().year];
     }
@@ -84,17 +91,17 @@ class ExpenseProvider extends ChangeNotifier {
 
   Future<void> addExpense(Expense expense) async {
     await _db.collection('expenses').add(expense.toFirestore());
-    await loadExpenses(_selectedYear);
+    await loadExpenses(_selectedYear.value);
   }
 
   Future<void> updateExpense(String id, Expense expense) async {
     await _db.collection('expenses').doc(id).update(expense.toFirestore());
-    await loadExpenses(_selectedYear);
+    await loadExpenses(_selectedYear.value);
   }
 
   Future<void> deleteExpense(String id) async {
     await _db.collection('expenses').doc(id).delete();
-    await loadExpenses(_selectedYear);
+    await loadExpenses(_selectedYear.value);
   }
 
   Future<void> setBudget(int year, int month, double budget) async {
@@ -125,21 +132,30 @@ class ExpenseProvider extends ChangeNotifier {
   }
 
   double getBudgetForMonth(int year, int month) {
-    final budget = _budgets.firstWhere(
-          (b) => b.year == year && b.month == month,
-      orElse: () => MonthBudget(
-        id: '',
-        year: year,
-        month: month,
-        budget: 0,
-        userId: '',
-      ),
-    );
-    return budget.budget;
+    if (_budgets.isEmpty) return 0.0;
+
+    // Using firstWhereOrNull logic essentially
+    try {
+      final budget = _budgets.firstWhere(
+        (b) => b.year == year && b.month == month,
+        orElse: () => MonthBudget(
+          id: '',
+          year: year,
+          month: month,
+          budget: 0,
+          userId: '',
+        ),
+      );
+      return budget.budget;
+    } catch (e) {
+      return 0.0;
+    }
   }
 
   List<Expense> getExpensesForMonth(int year, int month) {
-    return _expenses.where((e) => e.date.year == year && e.date.month == month).toList();
+    return _expenses
+        .where((e) => e.date.year == year && e.date.month == month)
+        .toList();
   }
 
   double getTotalExpenseForMonth(int year, int month) {
@@ -150,6 +166,8 @@ class ExpenseProvider extends ChangeNotifier {
     final categoryTotals = <String, double>{};
     for (var expense in _expenses) {
       if (expense.date.year == year) {
+        // categoryId check?
+        // Logic from provider:
         categoryTotals[expense.categoryId] =
             (categoryTotals[expense.categoryId] ?? 0) + expense.price;
       }

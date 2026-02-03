@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 
+import 'catregories/categoriesTab.dart';
 import 'dashboard/dashboardTab.dart';
 import 'months/monthsTab.dart';
 import 'settings/settingTab.dart';
-import '../provider/CategoryProvider.dart';
-import '../provider/ExpenseProvider.dart';
+import '../controller/category_controller.dart';
+import '../controller/expense_controller.dart';
+import '../helper/notification_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,30 +31,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final categoryProvider = context.read<CategoryProvider>();
-    final expenseProvider = context.read<ExpenseProvider>();
+    final categoryController = Get.find<CategoryController>();
+    final expenseController = Get.find<ExpenseController>();
 
-    await categoryProvider.loadCategories();
-    await expenseProvider.loadExpenses(expenseProvider.selectedYear);
-    await expenseProvider.loadBudgets(expenseProvider.selectedYear);
+    await categoryController.loadCategories();
+    // expenseController.selectedYear is an int, passing it to loadExpenses
+    await expenseController.loadExpenses(expenseController.selectedYear);
+    await expenseController.loadBudgets(expenseController.selectedYear);
+
+    // Check for pending notification navigation
+    NotificationService.consumeInitialNotification();
   }
 
   @override
   Widget build(BuildContext context) {
-    final screens = [DashboardTab(), MonthsTab(), SettingsTab()];
+    final screens = [DashboardTab(), MonthsTab(), CategoriesTab(), SettingsTab()];
 
     return Scaffold(
       body: screens[_currentIndex],
       bottomNavigationBar: Theme(
-        data: ThemeData(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent
-        ),
+        data: ThemeData(splashColor: Colors.transparent, highlightColor: Colors.transparent),
         child: BottomNavigationBar(
           onTap: (value) {
             HapticFeedback.heavyImpact();
             setState(() => _currentIndex = value);
           },
+          type: BottomNavigationBarType.fixed,
+          selectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold),
+          unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
           currentIndex: _currentIndex,
           unselectedItemColor: Colors.grey.shade700,
           backgroundColor: Theme.of(context).colorScheme.background,
@@ -64,6 +71,10 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(
               icon: HugeIcon(icon: HugeIcons.strokeRoundedCalendar03),
               label: 'Months',
+            ),
+            BottomNavigationBarItem(
+              icon: HugeIcon(icon: HugeIcons.strokeRoundedLeftToRightListDash),
+              label: 'Categories',
             ),
             BottomNavigationBarItem(
               icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings01),

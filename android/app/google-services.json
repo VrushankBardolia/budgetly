@@ -12,7 +12,20 @@
           "package_name": "com.example.budgetly"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "894720813654-9if3kuesldkd305pmlj557k08non1tni.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.budgetly",
+            "certificate_hash": "232ecafc9ff7568e16509092b0e0c45158f723ba"
+          }
+        },
+        {
+          "client_id": "894720813654-17rb7vbf6lipukf6udse7jqmor07pdgf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC64cHyty_YmfctnF621svf-THB0PHuGYU"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "894720813654-17rb7vbf6lipukf6udse7jqmor07pdgf.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "894720813654-qu0uf3m52o9m7c6b3d5eajoen5cogmon.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.budgetly"
+              }
+            }
+          ]
         }
       }
     }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../model/Expense.dart';
+import '../model/Category.dart';
 
 class ExpenseTile extends StatelessWidget {
   final Expense expense;
@@ -45,7 +46,10 @@ class ExpenseTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,
-            child: Text(category.emoji, style: GoogleFonts.plusJakartaSans(fontSize: 24)),
+            child: Text(
+              category.emoji,
+              style: GoogleFonts.plusJakartaSans(fontSize: 24),
+            ),
           ),
 
           const SizedBox(width: 12),
@@ -55,7 +59,8 @@ class ExpenseTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
+                Text(
+                  title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
@@ -80,13 +85,16 @@ class ExpenseTile extends StatelessWidget {
                         child: Icon(Icons.circle, size: 4, color: Colors.grey),
                       ),
                       Flexible(
-                        child: Text(category.name,
+                        child: Text(
+                          category.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(color: Colors.grey),
+                          style: GoogleFonts.plusJakartaSans(
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
-                    ]
+                    ],
                   ],
                 ),
               ],
@@ -96,7 +104,8 @@ class ExpenseTile extends StatelessWidget {
           const SizedBox(width: 12),
 
           // 3. Price
-          Text(formatter.format(expense.price),
+          Text(
+            formatter.format(expense.price),
             style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w700,
               fontSize: 18,
