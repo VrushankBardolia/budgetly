@@ -1,13 +1,13 @@
 import 'dart:async';
 
+import 'signupScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../provider/AuthProvider.dart';
-import '../../components/button.dart';
-import '../home.dart';
-import 'signupScreen.dart';
+import '../provider/AuthProvider.dart';
+import '../../../components/button.dart';
+import '../../../screens/home.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
