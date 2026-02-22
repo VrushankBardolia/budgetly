@@ -19,10 +19,7 @@ void main() async {
   await NotificationService.init();
 
   // Initialize Controllers
-  Get.put(AuthController());
-  Get.put(CategoryController());
-  Get.put(ExpenseController());
-  Get.put(Globals());
+  initControllers();
 
   runApp(const MyApp());
 }
@@ -41,18 +38,16 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         brightness: Brightness.dark,
         fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-        scaffoldBackgroundColor: const Color(0xFF121212),
+        scaffoldBackgroundColor: AppColors.black,
 
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF42A5F5),
+          primary: AppColors.brand,
           onPrimary: Colors.white,
-          secondary: Color(0xFF001F42),
+          secondary: AppColors.brandDark,
           onSecondary: Colors.white,
-          surface: Color(0xFF1E1E1E),
-          onSurface: Color(0xFFE0E0E0),
-          background: Color(0xFF121212),
-          onBackground: Color(0xFFE0E0E0),
-          error: Color(0xFFCF6679),
+          surface: AppColors.surface,
+          onSurface: Colors.white,
+          error: AppColors.error,
         ),
 
         cardTheme: CardThemeData(
@@ -61,23 +56,23 @@ class MyApp extends StatelessWidget {
           margin: const EdgeInsets.symmetric(vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: const BorderSide(color: Color(0xFF2C2C2C), width: 1),
+            side: const BorderSide(color: AppColors.surfaceLight, width: 1),
           ),
         ),
 
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.black,
-          foregroundColor: AppColors.white,
+          foregroundColor: Colors.white,
           elevation: 0,
           centerTitle: false,
           scrolledUnderElevation: 0,
-          iconTheme: IconThemeData(color: AppColors.white),
+          iconTheme: IconThemeData(color: Colors.white),
         ),
 
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.brand,
-            foregroundColor: AppColors.black,
+            foregroundColor: Colors.white,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -87,38 +82,38 @@ class MyApp extends StatelessWidget {
 
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFF1E1E1E),
+          fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.all(16),
-          hintStyle: const TextStyle(color: Color(0xFF757575)),
+          hintStyle: const TextStyle(color: AppColors.hintColor),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF2C2C2C)),
+            borderSide: const BorderSide(color: AppColors.surfaceLight),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFA8A8A8), width: 2),
+            borderSide: const BorderSide(color: AppColors.focusedBorderColor, width: 2),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFCF6679)),
+            borderSide: const BorderSide(color: AppColors.error),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFFA8A8A8), width: 2),
+            borderSide: const BorderSide(color: AppColors.focusedBorderColor, width: 2),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF707070)),
+            borderSide: const BorderSide(color: AppColors.borderColor),
           ),
         ),
 
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(backgroundColor: Color(0xFF001F42), foregroundColor: Colors.white, elevation: 2),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(backgroundColor: AppColors.brandDark, foregroundColor: Colors.white, elevation: 2),
 
-        dividerTheme: const DividerThemeData(color: Color(0xFF2C2C2C), thickness: 1),
+        dividerTheme: const DividerThemeData(color: AppColors.surfaceLight, thickness: 1),
 
-        bottomSheetTheme: const BottomSheetThemeData(backgroundColor: Color(0xFF1E1E1E), modalBackgroundColor: Color(0xFF1E1E1E)),
+        bottomSheetTheme: const BottomSheetThemeData(backgroundColor: AppColors.surface, modalBackgroundColor: AppColors.surface),
 
-        textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: Colors.white)),
+        textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: AppColors.brand)),
       ),
       home: const InitialScreen(),
     );
@@ -141,4 +136,11 @@ class InitialScreen extends StatelessWidget {
       return authController.user != null ? const HomeScreen() : const OnboardingScreen();
     });
   }
+}
+
+void initControllers() {
+  Get.put(AuthController());
+  Get.put(CategoryController());
+  Get.put(ExpenseController());
+  Get.put(Globals());
 }

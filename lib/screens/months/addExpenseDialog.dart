@@ -55,23 +55,14 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a category')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a category')));
       return;
     }
 
     final price = double.parse(_priceController.text);
     final userId = Get.find<AuthController>().user!.uid;
 
-    final expense = Expense(
-      id: '',
-      date: _selectedDate!,
-      price: price,
-      categoryId: _selectedCategoryId!,
-      detail: _detailController.text,
-      userId: userId,
-    );
+    final expense = Expense(id: '', date: _selectedDate!, price: price, categoryId: _selectedCategoryId!, detail: _detailController.text, userId: userId);
 
     await Get.find<ExpenseController>().addExpense(expense);
 
@@ -83,9 +74,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      constraints: BoxConstraints.tightFor(
-        width: MediaQuery.of(context).size.width,
-      ),
+      constraints: BoxConstraints.tightFor(width: MediaQuery.of(context).size.width),
       title: const Text('Add Expense', textAlign: TextAlign.center),
       content: SingleChildScrollView(
         child: Form(
@@ -95,23 +84,14 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
             children: [
               ListTile(
                 title: const Text('Date'),
-                subtitle: Text(
-                  _selectedDate != null
-                      ? DateFormat('MMM dd, yyyy').format(_selectedDate!)
-                      : 'Select date',
-                ),
+                subtitle: Text(_selectedDate != null ? DateFormat('MMM dd, yyyy').format(_selectedDate!) : 'Select date'),
                 trailing: HugeIcon(icon: HugeIcons.strokeRoundedCalendar04),
                 onTap: _selectDate,
               ),
               const SizedBox(height: 8),
               TextFormField(
                 controller: _priceController,
-                decoration: InputDecoration(
-                  hintText: 'Price',
-                  prefixText: '₹',
-                  prefixStyle: GoogleFonts.plusJakartaSans(color: Colors.white),
-                  border: OutlineInputBorder(),
-                ),
+                decoration: InputDecoration(hintText: 'Price', prefixIcon: Icon(Icons.currency_rupee, size: 20), border: OutlineInputBorder()),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -124,32 +104,23 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                 },
               ),
               const SizedBox(height: 16),
-              const SizedBox(height: 16),
               Obx(() {
                 final categoryController = Get.find<CategoryController>();
                 if (categoryController.categories.isEmpty) {
-                  return const Text(
-                    'No categories. Please add categories first.',
-                  );
+                  return const Text('No categories. Please add categories first.');
                 }
 
                 return DropdownButtonFormField<String>(
                   value: _selectedCategoryId,
-                  decoration: const InputDecoration(
-                    hintText: 'Category',
-                    border: OutlineInputBorder(),
-                  ),
+                  decoration: const InputDecoration(hintText: 'Category', border: OutlineInputBorder()),
                   items: categoryController.categories.map((category) {
                     return DropdownMenuItem(
                       value: category.id,
                       child: Row(
                         children: [
-                          Text(
-                            category.emoji,
-                            style: const TextStyle(fontSize: 24),
-                          ),
+                          Text(category.emoji, style: TextStyle(fontSize: 16)),
                           const SizedBox(width: 12),
-                          Text(category.name),
+                          Text(category.name, style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14)),
                         ],
                       ),
                     );
@@ -168,21 +139,16 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _detailController,
-                decoration: const InputDecoration(
-                  hintText: 'Detail (Optional)',
-                  border: OutlineInputBorder(),
-                ),
+                decoration: const InputDecoration(hintText: 'Detail (Optional)', border: OutlineInputBorder()),
                 maxLines: 2,
+                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
               ),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         ElevatedButton(onPressed: _submit, child: const Text('Add')),
       ],
     );

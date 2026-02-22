@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../core/app_colors.dart';
 import '../../components/button.dart';
 import '../../controller/auth_controller.dart';
 import '../../core/globals.dart';
@@ -25,11 +26,6 @@ class _SettingsTabState extends State<SettingsTab> {
   String _usingSince = '';
 
   bool _isLoading = true;
-
-  final Color _backgroundColor = const Color(0xFF121212);
-  final Color _cardColor = const Color(0xFF1E1E1E);
-  final Color _primaryColor = const Color(0xFF2196F3);
-  final Color _dangerColor = const Color(0xFFCF6679);
 
   @override
   void initState() {
@@ -84,7 +80,7 @@ class _SettingsTabState extends State<SettingsTab> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: _cardColor,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (_) => Padding(
         padding: const EdgeInsets.all(24),
@@ -131,9 +127,9 @@ class _SettingsTabState extends State<SettingsTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: AppColors.black,
       appBar: AppBar(
-        backgroundColor: _backgroundColor,
+        backgroundColor: AppColors.black,
         elevation: 0,
         title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
       ),
@@ -166,7 +162,7 @@ class _SettingsTabState extends State<SettingsTab> {
 
           const SizedBox(height: 20),
           _buildSectionTitle("Account"),
-          _buildSettingsTile(icon: HugeIcons.strokeRoundedLogoutSquare01, title: "Sign Out", color: _dangerColor, isDestructive: true, onTap: _handleSignOut),
+          _buildSettingsTile(icon: HugeIcons.strokeRoundedLogoutSquare01, title: "Sign Out", color: AppColors.error, isDestructive: true, onTap: _handleSignOut),
           const SizedBox(height: 40),
         ],
       ),
@@ -177,7 +173,7 @@ class _SettingsTabState extends State<SettingsTab> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -214,7 +210,7 @@ class _SettingsTabState extends State<SettingsTab> {
         alignment: Alignment.centerLeft,
         child: Text(
           title,
-          style: GoogleFonts.plusJakartaSans(color: _primaryColor, fontWeight: FontWeight.w700, fontSize: 16),
+          style: GoogleFonts.plusJakartaSans(color: AppColors.brand, fontWeight: FontWeight.w700, fontSize: 16),
         ),
       ),
     );
@@ -222,18 +218,18 @@ class _SettingsTabState extends State<SettingsTab> {
 
   Widget _buildSettingsTile({required dynamic icon, required String title, VoidCallback? onTap, Color? color, bool isDestructive = false}) {
     final iconColor = color ?? Colors.white;
-    final textColor = isDestructive ? _dangerColor : Colors.white;
+    final textColor = isDestructive ? AppColors.error : Colors.white;
 
     return Container(
       margin: const EdgeInsets.only(top: 12),
-      decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         onTap: onTap,
         splashColor: Colors.transparent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Container(
           padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(color: isDestructive ? _dangerColor.withValues(alpha: 0.1) : _backgroundColor, borderRadius: BorderRadius.circular(10)),
+          decoration: BoxDecoration(color: isDestructive ? AppColors.error.withValues(alpha: 0.1) : AppColors.black, borderRadius: BorderRadius.circular(10)),
           child: HugeIcon(icon: icon, color: iconColor, size: 22),
         ),
         title: Text(
@@ -254,7 +250,7 @@ class _SettingsTabState extends State<SettingsTab> {
       middleText: "Are you sure you want to sign out?",
       confirm: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: _dangerColor,
+          backgroundColor: AppColors.error,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
         onPressed: () {
@@ -271,7 +267,7 @@ class _SettingsTabState extends State<SettingsTab> {
     HapticFeedback.heavyImpact();
     showModalBottomSheet(
       context: context,
-      backgroundColor: _cardColor,
+      backgroundColor: AppColors.surface,
       showDragHandle: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       isScrollControlled: true,
@@ -312,14 +308,13 @@ class _SettingsTabState extends State<SettingsTab> {
 class ShimmerLoader extends StatelessWidget {
   const ShimmerLoader({super.key});
 
-  final Color _baseColor = const Color(0xFF1E1E1E);
-  final Color _highlightColor = const Color(0xFF2C2C2C);
-  final Color _backgroundColor = const Color(0xFF121212);
+  final Color _baseColor = AppColors.surface;
+  final Color _highlightColor = AppColors.surfaceLight;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: _backgroundColor,
+      color: AppColors.black,
       padding: const EdgeInsets.all(16),
       child: Shimmer.fromColors(
         baseColor: _baseColor,
@@ -407,17 +402,17 @@ class ShimmerLoader extends StatelessWidget {
           Container(
             width: 38,
             height: 38,
-            decoration: BoxDecoration(color: _backgroundColor, borderRadius: BorderRadius.circular(10)),
+            decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(10)),
           ),
           const SizedBox(width: 16),
           // Title
-          Expanded(child: Container(height: 16, color: _backgroundColor)),
+          Expanded(child: Container(height: 16, color: AppColors.black)),
           const SizedBox(width: 16),
           // Chevron placeholder
           Container(
             width: 24,
             height: 24,
-            decoration: BoxDecoration(color: _backgroundColor, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.black, shape: BoxShape.circle),
           ),
         ],
       ),

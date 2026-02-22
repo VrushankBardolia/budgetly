@@ -3,17 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pull_down_button/pull_down_button.dart';
+import 'package:get/get.dart';
 
+import '../../core/app_colors.dart';
 import '../../core/globals.dart';
 import '../../model/Expense.dart';
 import '../../controller/category_controller.dart';
 import '../../controller/expense_controller.dart';
 import '../../components/expenseTile.dart';
-import 'editExpenseDialog.dart';
 import 'addExpenseDialog.dart';
+import 'editExpenseDialog.dart';
 
 class MonthDetailScreen extends StatefulWidget {
   final int year;
@@ -28,10 +29,6 @@ class MonthDetailScreen extends StatefulWidget {
 class _MonthDetailScreenState extends State<MonthDetailScreen> {
   final globals = Get.put(Globals());
   final _budgetController = TextEditingController();
-
-  final Color _backgroundColor = const Color(0xFF121212);
-  final Color _cardColor = const Color(0xFF1E1E1E);
-  final Color _primaryColor = const Color(0xFF2196F3);
 
   @override
   void initState() {
@@ -56,42 +53,40 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
   void _showBudgetDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: _cardColor,
+          backgroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Text(
             'Set Budget',
             textAlign: TextAlign.center,
-            style: GoogleFonts.plusJakartaSans(color: Colors.white),
+            style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(DateFormat('MMMM yyyy').format(DateTime(widget.year, widget.month)), style: TextStyle(color: Colors.grey[400])),
+              Text(DateFormat('MMMM yyyy').format(DateTime(widget.year, widget.month)), style: TextStyle(color: AppColors.grey)),
               const SizedBox(height: 16),
               TextField(
                 controller: _budgetController,
+                keyboardType: TextInputType.number,
                 style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 18),
                 decoration: InputDecoration(
                   hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey.withValues(alpha: 0.5)),
                   filled: true,
-                  fillColor: const Color(0xFF2C2C2C),
+                  fillColor: AppColors.surfaceLight,
                   prefixText: '₹',
-                  prefixStyle: GoogleFonts.plusJakartaSans(color: Colors.white),
+                  hintText: 'Enter amount',
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: _primaryColor, width: 2),
+                    borderSide: BorderSide(color: AppColors.brand, width: 2),
                   ),
                 ),
-                keyboardType: TextInputType.number,
-                autofocus: true,
               ),
             ],
           ),
@@ -110,7 +105,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: _primaryColor,
+                backgroundColor: AppColors.brand,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
               child: const Text(
@@ -136,10 +131,10 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
   }
 
   Future<void> _deleteExpense(String id) async {
-    final confirm = await showDialog<bool>(
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: _cardColor,
+        backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Expense', style: TextStyle(color: Colors.white)),
         content: const Text('Are you sure you want to delete this expense?', style: TextStyle(color: Colors.grey)),
@@ -148,17 +143,17 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
     );
 
-    if (confirm == true) {
+    if (confirmed == true) {
       await Get.find<ExpenseController>().deleteExpense(id);
+      setState(() {});
     }
   }
 
@@ -175,19 +170,16 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
-
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: AppColors.black,
       appBar: AppBar(
-        backgroundColor: _backgroundColor,
+        backgroundColor: AppColors.black,
         elevation: 0,
         centerTitle: true,
         title: Text(DateFormat('MMMM yyyy').format(DateTime(widget.year, widget.month)), style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 20)),
         actions: [
           IconButton(
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04, size: 20),
-            tooltip: "Edit Budget",
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04, size: 20, color: Colors.white),
             onPressed: _showBudgetDialog,
           ),
         ],
@@ -207,7 +199,6 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
 
         final now = DateTime.now();
         final selectedMonthDate = DateTime(widget.year, widget.month);
-
         final bool isCurrent = selectedMonthDate.year == now.year && selectedMonthDate.month == now.month;
 
         final difference = remaining;
@@ -219,25 +210,27 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
         dynamic statusIcon;
 
         if (isBalanced) {
-          statusColor = Colors.orangeAccent;
+          statusColor = AppColors.warning;
           statusLabel = "On Target";
           statusIcon = HugeIcons.strokeRoundedAlert02;
         } else if (isSaved) {
-          statusColor = Colors.greenAccent;
+          statusColor = AppColors.success;
           statusLabel = isCurrent ? "Remaining" : "Saved";
           statusIcon = HugeIcons.strokeRoundedCheckmarkCircle03;
         } else {
-          statusColor = Colors.redAccent;
+          statusColor = AppColors.error;
           statusLabel = "Overspent";
           statusIcon = HugeIcons.strokeRoundedCancelCircle;
         }
 
+        final formatter = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
+
         return CustomScrollView(
-          physics: expenses.isEmpty ? const NeverScrollableScrollPhysics() : const BouncingScrollPhysics(),
+          physics: const BouncingScrollPhysics(),
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
                     Row(
@@ -277,7 +270,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                       "Transactions",
                       style: GoogleFonts.plusJakartaSans(color: Colors.grey[400], fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: 1),
                     ),
-                    Text("${expenses.length} entries", style: GoogleFonts.plusJakartaSans(color: Colors.grey[600])),
+                    Text("${expenses.length}", style: GoogleFonts.plusJakartaSans(color: Colors.grey[600])),
                   ],
                 ),
               ),
@@ -285,19 +278,19 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
 
             if (expenses.isEmpty)
               SliverFillRemaining(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Spacer(flex: 1),
-                    Container(
-                      padding: const EdgeInsets.all(32),
-                      decoration: BoxDecoration(color: _cardColor, shape: BoxShape.circle),
-                      child: HugeIcon(icon: HugeIcons.strokeRoundedInvoice01, color: Colors.white.withValues(alpha: 0.5), size: 80),
-                    ),
-                    const SizedBox(height: 16),
-                    Text('No transactions', style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600)),
-                    Spacer(flex: 2),
-                  ],
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+                        child: Icon(Icons.receipt_long_rounded, size: 50, color: Colors.white.withValues(alpha: 0.1)),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('No transactions', style: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.5))),
+                    ],
+                  ),
                 ),
               )
             else
@@ -309,11 +302,11 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: GestureDetector(
-                      onLongPressStart: (details) {
+                      onLongPressStart: (details) async {
                         HapticFeedback.heavyImpact();
                         showPullDownMenu(
                           context: context,
-                          routeTheme: PullDownMenuRouteTheme(backgroundColor: const Color(0xFF2C2C2C), width: 200),
+                          routeTheme: PullDownMenuRouteTheme(backgroundColor: AppColors.surfaceLight, width: 200),
                           items: [
                             PullDownMenuItem(
                               onTap: () => _editExpense(expense),
@@ -337,8 +330,7 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                   );
                 }, childCount: expenses.length),
               ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 150)),
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
         );
       }),
@@ -355,17 +347,16 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 100,
+        width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _cardColor,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 0))],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -374,8 +365,8 @@ class _MonthDetailScreenState extends State<MonthDetailScreen> {
                 HugeIcon(icon: icon, size: 20, color: valueColor),
               ],
             ),
-            FittedBox(
-              fit: BoxFit.scaleDown,
+            const SizedBox(height: 8),
+            Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 value,

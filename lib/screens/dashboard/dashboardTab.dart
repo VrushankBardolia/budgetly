@@ -1,5 +1,6 @@
 import 'package:animated_digit/animated_digit.dart';
-import 'package:budgetly/screens/months/monthDetailsScreen.dart';
+import '../../core/app_colors.dart';
+import '../months/monthDetailsScreen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -11,6 +12,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../controller/category_controller.dart';
 import '../../controller/expense_controller.dart';
+import '../../components/categoryTile.dart';
 
 class DashboardTab extends StatefulWidget {
   const DashboardTab({super.key});
@@ -23,12 +25,6 @@ class _DashboardTabState extends State<DashboardTab> {
   List<int> _availableYears = [];
   bool _isLoading = true;
   bool showMonthly = true;
-
-  // Color Palette
-  final Color _backgroundColor = const Color(0xFF121212);
-  final Color _cardColor = const Color(0xFF1E1E1E);
-  final Color _primaryColor = const Color(0xFF2196F3);
-  final Color _accentColor = const Color(0xFF64B5F6);
 
   @override
   void initState() {
@@ -72,9 +68,9 @@ class _DashboardTabState extends State<DashboardTab> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _backgroundColor,
+      backgroundColor: AppColors.black,
       appBar: AppBar(
-        backgroundColor: _backgroundColor,
+        backgroundColor: AppColors.black,
         elevation: 0,
         title: Text('Budgetly', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 24)),
       ),
@@ -234,7 +230,7 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: _cardColor, shape: BoxShape.circle),
+            decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
             child: Icon(Icons.receipt_long, size: 60, color: Colors.grey[700]),
           ),
           const SizedBox(height: 24),
@@ -256,7 +252,7 @@ class _DashboardTabState extends State<DashboardTab> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: _cardColor,
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(30),
             border: Border.all(color: Colors.white12),
           ),
@@ -266,8 +262,8 @@ class _DashboardTabState extends State<DashboardTab> {
               const Text("Year: ", style: TextStyle(color: Colors.grey)),
               DropdownButton<int>(
                 value: expenseController.selectedYear,
-                dropdownColor: _cardColor,
-                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white),
+                dropdownColor: AppColors.surface,
+                icon: HugeIcon(icon: HugeIcons.strokeRoundedArrowDown01, size: 24, color: Colors.white, strokeWidth: 2),
                 underline: const SizedBox(),
                 isDense: true,
                 style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
@@ -380,7 +376,7 @@ class _DashboardTabState extends State<DashboardTab> {
     if (categoryTotals.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: _cardColor, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
         child: const Text(
           'No expenses recorded',
           style: TextStyle(color: Colors.grey),
@@ -390,11 +386,8 @@ class _DashboardTabState extends State<DashboardTab> {
     }
 
     final sortedEntries = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-
     final showOnly3 = sortedEntries.length > 3 ? true : false;
-
     final displayedEntries = showOnly3 ? sortedEntries.take(3).toList() : sortedEntries;
-
     final maxVal = sortedEntries.isNotEmpty ? sortedEntries.first.value : 0.0;
 
     return Column(
@@ -402,51 +395,23 @@ class _DashboardTabState extends State<DashboardTab> {
         final category = categoryController.getCategoryById(entry.key);
         final percentage = maxVal > 0 ? (entry.value / maxVal) : 0.0;
 
-        return Container(
+        // Calculate transaction count for this category in the selected year
+        int txCount = 0;
+        final expenseController = Get.find<ExpenseController>();
+        for (var expense in expenseController.expenses) {
+          if (expense.categoryId == entry.key && expense.date.year == expenseController.selectedYear) {
+            txCount++;
+          }
+        }
+
+        return CategoryTile(
           margin: const EdgeInsets.only(top: 12),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: _cardColor,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(color: _backgroundColor, borderRadius: BorderRadius.circular(12)),
-                alignment: Alignment.center,
-                child: Text(category?.emoji ?? '📦', style: GoogleFonts.plusJakartaSans(fontSize: 24)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          category?.name ?? 'Unknown',
-                          style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-                        ),
-                        Text(
-                          formatter.format(entry.value),
-                          style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: LinearProgressIndicator(value: percentage, backgroundColor: Colors.white10, valueColor: AlwaysStoppedAnimation<Color>(_primaryColor), minHeight: 6),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+          emoji: category?.emoji ?? '📦',
+          name: category?.name ?? 'Unknown',
+          showProgress: true,
+          percentage: percentage,
+          formattedAmount: formatter.format(entry.value),
+          transactionCount: txCount,
         );
       }).toList(),
     );
@@ -482,7 +447,7 @@ class _DashboardTabState extends State<DashboardTab> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -492,7 +457,7 @@ class _DashboardTabState extends State<DashboardTab> {
           Row(
             spacing: 8,
             children: [
-              HugeIcon(icon: HugeIcons.strokeRoundedPieChart08, size: 20, color: _accentColor),
+              HugeIcon(icon: HugeIcons.strokeRoundedPieChart08, size: 20, color: AppColors.accent),
               Text(
                 'Distribution',
                 style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
@@ -572,7 +537,7 @@ class _DashboardTabState extends State<DashboardTab> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: _cardColor,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -580,7 +545,7 @@ class _DashboardTabState extends State<DashboardTab> {
         children: [
           Row(
             children: [
-              HugeIcon(icon: HugeIcons.strokeRoundedChartEvaluation, size: 20, color: _accentColor),
+              HugeIcon(icon: HugeIcons.strokeRoundedChartEvaluation, size: 20, color: AppColors.accent),
               const SizedBox(width: 8),
               Text(
                 'Monthly Trend',
@@ -598,7 +563,7 @@ class _DashboardTabState extends State<DashboardTab> {
                   drawVerticalLine: false,
                   horizontalInterval: maxY / 4,
                   getDrawingHorizontalLine: (value) {
-                    return FlLine(color: Colors.white.withValues(alpha: 0.1), strokeWidth: 1, dashArray: [5, 5]);
+                    return FlLine(color: AppColors.surfaceLight, strokeWidth: 1, dashArray: [5, 5]);
                   },
                 ),
                 titlesData: FlTitlesData(
@@ -634,14 +599,14 @@ class _DashboardTabState extends State<DashboardTab> {
                     spots: monthlyData.entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                     isCurved: true,
                     preventCurveOverShooting: true,
-                    color: _primaryColor,
+                    color: AppColors.brand,
                     barWidth: 3,
                     isStrokeCapRound: true,
                     dotData: FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
                       gradient: LinearGradient(
-                        colors: [_primaryColor.withValues(alpha: 0.3), _primaryColor.withValues(alpha: 0.0)],
+                        colors: [AppColors.brand.withValues(alpha: 0.3), AppColors.brand.withValues(alpha: 0.0)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
