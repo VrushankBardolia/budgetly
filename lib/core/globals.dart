@@ -6,6 +6,7 @@ class Globals extends GetxController {
   RxString userName = "".obs;
   RxString userEmail = "".obs;
   RxString userPhone = "".obs;
+  RxString FCMToken = "".obs;
 
   // USER AUTH
   RxBool isGoogleUser = false.obs;

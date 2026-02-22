@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
+import '../core/globals.dart';
 import '../screens/months/monthDetailsScreen.dart';
 
 @pragma('vm:entry-point')
@@ -10,9 +11,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin plugin = FlutterLocalNotificationsPlugin();
+  static final globals = Get.put(Globals());
 
   static Future<void> init() async {
-    const androidInit = AndroidInitializationSettings('@drawable/ic_notification');
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const settings = InitializationSettings(android: androidInit);
 
     await plugin.initialize(
@@ -31,8 +33,9 @@ class NotificationService {
 
     NotificationSettings settings = await messaging.requestPermission(alert: true, badge: true, sound: true);
     final token = await messaging.getToken();
+    globals.FCMToken.value = token!;
 
-    print("TOKEN $token");
+    print("FCM TOKEN ${globals.FCMToken.value}");
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('User granted permission');
