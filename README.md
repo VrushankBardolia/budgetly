@@ -48,7 +48,12 @@ It helps users track expenses, manage budgets, and visualize spending patterns w
 
 ## Changelog
 
-### [Version 1.1 (Latest Release)](https://github.com/VrushankBardolia/budgetly/releases/tag/v1.1)
+### [Version 1.2 (Latest Release)](https://github.com/VrushankBardolia/budgetly/releases/tag/v1.2)
+- Google Sign-In authentication support
+- New Category tab for better transaction organization
+- Transaction count & Total transaction amount display in category tiles
+
+### [Version 1.1](https://github.com/VrushankBardolia/budgetly/releases/tag/v1.1)
 - View **current month expenses** directly from the home screen
 - Open **current month expense screen** using a toggle on the home screen
 - Improved **bottom navigation bar** for better visibility
