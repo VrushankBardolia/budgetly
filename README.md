@@ -63,7 +63,7 @@ It helps users track expenses, manage budgets, and visualize spending patterns w
 - Added **shimmer loading effects** for a smoother user experience
 - Updated **icons** for a refreshed and modern look
 
-### 1.0 (Initial Release
+### 1.0
 - Expense tracking with add, edit, and delete functionality
 - Category-based expense management with emoji support
 - Year-wise and month-wise expense tracking
