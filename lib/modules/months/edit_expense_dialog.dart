@@ -1,25 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:hugeicons/hugeicons.dart';
+import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
-import 'package:get/get.dart';
 
-import '../../model/Expense.dart';
-import '../../controller/expense_controller.dart';
-import '../../controller/category_controller.dart';
-import '../../controller/auth_controller.dart';
-
-class AddExpenseDialog extends StatefulWidget {
+class EditExpenseDialog extends StatefulWidget {
+  final Expense expense;
   final int year;
   final int month;
 
-  const AddExpenseDialog({super.key, required this.year, required this.month});
+  const EditExpenseDialog({super.key, required this.expense, required this.year, required this.month});
 
   @override
-  State<AddExpenseDialog> createState() => _AddExpenseDialogState();
+  State<EditExpenseDialog> createState() => _EditExpenseDialogState();
 }
 
-class _AddExpenseDialogState extends State<AddExpenseDialog> {
+class _EditExpenseDialogState extends State<EditExpenseDialog> {
   final _formKey = GlobalKey<FormState>();
   final _priceController = TextEditingController();
   final _detailController = TextEditingController();
@@ -29,7 +22,10 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   @override
   void initState() {
     super.initState();
-    _selectedDate = DateTime(widget.year, widget.month, DateTime.now().day);
+    _priceController.text = widget.expense.price.toInt().toString();
+    _detailController.text = widget.expense.detail;
+    _selectedDate = widget.expense.date;
+    _selectedCategoryId = widget.expense.categoryId;
   }
 
   @override
@@ -52,7 +48,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     }
   }
 
-  Future<void> _submit() async {
+  Future<void> _updateExpense() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategoryId == null) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a category')));
@@ -60,11 +56,11 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
     }
 
     final price = double.parse(_priceController.text);
-    final userId = Get.find<AuthController>().user!.uid;
+    final userId = FirebaseHelper.currentUser!.uid;
 
-    final expense = Expense(id: '', date: _selectedDate!, price: price, categoryId: _selectedCategoryId!, detail: _detailController.text, userId: userId);
+    final updatedExpense = Expense(id: widget.expense.id, date: _selectedDate!, price: price, categoryId: _selectedCategoryId!, detail: _detailController.text, userId: userId);
 
-    await Get.find<ExpenseController>().addExpense(expense);
+    await Get.find<ExpenseController>().updateExpense(widget.expense.id, updatedExpense);
 
     if (mounted) {
       Navigator.pop(context, true);
@@ -75,7 +71,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       constraints: BoxConstraints.tightFor(width: MediaQuery.of(context).size.width),
-      title: const Text('Add Expense', textAlign: TextAlign.center),
+      title: const Text('Edit Expense', textAlign: TextAlign.center),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -83,6 +79,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
+                contentPadding: EdgeInsets.zero,
                 title: const Text('Date'),
                 subtitle: Text(_selectedDate != null ? DateFormat('MMM dd, yyyy').format(_selectedDate!) : 'Select date'),
                 trailing: HugeIcon(icon: HugeIcons.strokeRoundedCalendar04),
@@ -93,11 +90,12 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                 controller: _priceController,
                 decoration: InputDecoration(hintText: 'Price', prefixIcon: Icon(Icons.currency_rupee, size: 20), border: OutlineInputBorder()),
                 keyboardType: TextInputType.number,
+                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter price';
                   }
-                  if (int.tryParse(value) == null) {
+                  if (double.tryParse(value) == null) {
                     return 'Please enter a valid number';
                   }
                   return null;
@@ -112,13 +110,14 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
 
                 return DropdownButtonFormField<String>(
                   value: _selectedCategoryId,
+                  style: TextStyle(fontSize: 18),
                   decoration: const InputDecoration(hintText: 'Category', border: OutlineInputBorder()),
                   items: categoryController.categories.map((category) {
                     return DropdownMenuItem(
                       value: category.id,
                       child: Row(
                         children: [
-                          Text(category.emoji, style: TextStyle(fontSize: 16)),
+                          Text(category.emoji, style: TextStyle(fontSize: 20)),
                           const SizedBox(width: 12),
                           Text(category.name, style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14)),
                         ],
@@ -141,7 +140,6 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
                 controller: _detailController,
                 decoration: const InputDecoration(hintText: 'Detail (Optional)', border: OutlineInputBorder()),
                 maxLines: 2,
-                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
               ),
             ],
           ),
@@ -149,7 +147,7 @@ class _AddExpenseDialogState extends State<AddExpenseDialog> {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        ElevatedButton(onPressed: _submit, child: const Text('Add')),
+        ElevatedButton(onPressed: _updateExpense, child: const Text('Update')),
       ],
     );
   }

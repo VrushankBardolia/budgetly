@@ -35,7 +35,7 @@ dependencies:
   cloud_firestore: ^6.1.0
   cupertino_icons: ^1.0.2
   fl_chart: ^0.66.0
-  intl: ^0.18.1
+  intl: ^0.20.2
   google_fonts:
   pull_down_button: ^0.10.2
   hugeicons:
@@ -44,11 +44,12 @@ dependencies:
   shared_preferences: ^2.2.2
   url_launcher: ^6.3.2
   flutter_local_notifications: ^19.5.0
-  timezone: ^0.10.0
+  timezone: ^0.10.1
   get: ^4.7.3
   flutter_svg: ^2.2.3
   google_sign_in: ^6.2.1
   firebase_messaging: ^16.1.1
+  table_calendar: ^3.2.0
 
 dev_dependencies:
   flutter_test:

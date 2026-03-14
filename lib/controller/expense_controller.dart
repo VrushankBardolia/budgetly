@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
-import '../model/Expense.dart';
-import '../model/MonthBudget.dart';
+import '../model/expense.dart';
+import '../model/month_budget.dart';
 
 class ExpenseController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -15,6 +15,8 @@ class ExpenseController extends GetxController {
   List<Expense> get expenses => _expenses;
   List<MonthBudget> get budgets => _budgets;
   int get selectedYear => _selectedYear.value;
+
+  RxInt monthDetailsTabIndex = 0.obs;
 
   @override
   void onInit() {
@@ -42,34 +44,23 @@ class ExpenseController extends GetxController {
         .orderBy('date', descending: true)
         .get();
 
-    _expenses.assignAll(
-      snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList(),
-    );
+    _expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
   }
 
   Future<void> loadBudgets(int year) async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
 
-    final snapshot = await _db
-        .collection('budgets')
-        .where('userId', isEqualTo: userId)
-        .where('year', isEqualTo: year)
-        .get();
+    final snapshot = await _db.collection('budgets').where('userId', isEqualTo: userId).where('year', isEqualTo: year).get();
 
-    _budgets.assignAll(
-      snapshot.docs.map((doc) => MonthBudget.fromFirestore(doc)).toList(),
-    );
+    _budgets.assignAll(snapshot.docs.map((doc) => MonthBudget.fromFirestore(doc)).toList());
   }
 
   Future<List<int>> getYearsWithExpenses() async {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return [DateTime.now().year];
 
-    final snapshot = await _db
-        .collection('expenses')
-        .where('userId', isEqualTo: userId)
-        .get();
+    final snapshot = await _db.collection('expenses').where('userId', isEqualTo: userId).get();
 
     if (snapshot.docs.isEmpty) {
       return [DateTime.now().year];
@@ -108,24 +99,12 @@ class ExpenseController extends GetxController {
     final userId = _auth.currentUser?.uid;
     if (userId == null) return;
 
-    final snapshot = await _db
-        .collection('budgets')
-        .where('userId', isEqualTo: userId)
-        .where('year', isEqualTo: year)
-        .where('month', isEqualTo: month)
-        .get();
+    final snapshot = await _db.collection('budgets').where('userId', isEqualTo: userId).where('year', isEqualTo: year).where('month', isEqualTo: month).get();
 
     if (snapshot.docs.isEmpty) {
-      await _db.collection('budgets').add({
-        'userId': userId,
-        'year': year,
-        'month': month,
-        'budget': budget,
-      });
+      await _db.collection('budgets').add({'userId': userId, 'year': year, 'month': month, 'budget': budget});
     } else {
-      await _db.collection('budgets').doc(snapshot.docs.first.id).update({
-        'budget': budget,
-      });
+      await _db.collection('budgets').doc(snapshot.docs.first.id).update({'budget': budget});
     }
 
     await loadBudgets(year);
@@ -138,13 +117,7 @@ class ExpenseController extends GetxController {
     try {
       final budget = _budgets.firstWhere(
         (b) => b.year == year && b.month == month,
-        orElse: () => MonthBudget(
-          id: '',
-          year: year,
-          month: month,
-          budget: 0,
-          userId: '',
-        ),
+        orElse: () => MonthBudget(id: '', year: year, month: month, budget: 0, userId: ''),
       );
       return budget.budget;
     } catch (e) {
@@ -153,9 +126,7 @@ class ExpenseController extends GetxController {
   }
 
   List<Expense> getExpensesForMonth(int year, int month) {
-    return _expenses
-        .where((e) => e.date.year == year && e.date.month == month)
-        .toList();
+    return _expenses.where((e) => e.date.year == year && e.date.month == month).toList();
   }
 
   double getTotalExpenseForMonth(int year, int month) {
@@ -168,8 +139,7 @@ class ExpenseController extends GetxController {
       if (expense.date.year == year) {
         // categoryId check?
         // Logic from provider:
-        categoryTotals[expense.categoryId] =
-            (categoryTotals[expense.categoryId] ?? 0) + expense.price;
+        categoryTotals[expense.categoryId] = (categoryTotals[expense.categoryId] ?? 0) + expense.price;
       }
     }
     return categoryTotals;

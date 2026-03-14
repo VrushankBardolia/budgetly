@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:budgetly/core/import_to_export.dart';
 
 class Expense {
   final String id;

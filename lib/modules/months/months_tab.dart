@@ -1,12 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:hugeicons/hugeicons.dart';
+import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
-import 'package:get/get.dart';
-
-import '../../core/app_colors.dart';
-import '../../controller/expense_controller.dart';
-import 'monthDetailsScreen.dart';
 
 class MonthsTab extends StatelessWidget {
   const MonthsTab({super.key});
@@ -69,12 +62,7 @@ class MonthsTab extends StatelessWidget {
 
             return GestureDetector(
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MonthDetailScreen(year: selectedYear, month: month),
-                  ),
-                );
+                Get.toNamed(Routes.MONTH_DETAILS, arguments: {'year': selectedYear, 'month': month});
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

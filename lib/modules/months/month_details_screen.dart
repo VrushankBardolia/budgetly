@@ -1,0 +1,194 @@
+import 'package:budgetly/core/import_to_export.dart';
+import 'package:flutter/cupertino.dart';
+
+class MonthDetailScreen extends StatelessWidget {
+  const MonthDetailScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = Get.put(MonthDetailController());
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.checkBudgetAndShowDialog();
+    });
+
+    return Scaffold(
+      backgroundColor: AppColors.black,
+      appBar: AppBar(
+        backgroundColor: AppColors.black,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(controller.formattedMonth, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 20)),
+        actions: [
+          IconButton(
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04, size: 20, color: Colors.white),
+            onPressed: controller.showBudgetDialog,
+          ),
+        ],
+      ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final ctrl = controller;
+        final formatter = ctrl.formatter;
+        final expenses = ctrl.expenses;
+
+        return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // ── Summary Cards ───────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(child: _buildInfoCard("Budget", formatter.format(ctrl.budget.value), Colors.white, icon: HugeIcons.strokeRoundedWallet01)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildInfoCard("Spent", formatter.format(ctrl.totalExpense), Colors.white, icon: HugeIcons.strokeRoundedMoney01)),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (ctrl.isCurrent) ...[
+                      Row(
+                        children: [
+                          Expanded(child: _buildInfoCard(ctrl.statusLabel, formatter.format(ctrl.remaining), ctrl.statusColor, icon: ctrl.statusIcon)),
+                          const SizedBox(width: 12),
+                          Expanded(child: _buildInfoCard("Safe / Day", formatter.format(ctrl.remainPerDay), Colors.blueAccent, icon: HugeIcons.strokeRoundedCoins01)),
+                        ],
+                      ),
+                    ] else ...[
+                      _buildInfoCard(ctrl.statusLabel, formatter.format(ctrl.remaining), ctrl.statusColor, icon: ctrl.statusIcon, isFullWidth: true),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Transactions Header ─────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Transactions",
+                      style: GoogleFonts.plusJakartaSans(color: Colors.grey[400], fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: 1),
+                    ),
+                    Text("${expenses.length}", style: GoogleFonts.plusJakartaSans(color: Colors.grey[600])),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Empty State ─────────────────────────────────────────────────
+            if (expenses.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+                        child: Icon(Icons.receipt_long_rounded, size: 50, color: Colors.white.withValues(alpha: 0.1)),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('No transactions', style: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.5))),
+                    ],
+                  ),
+                ),
+              )
+            else
+              // ── Expense List ───────────────────────────────────────────────
+              SliverList(
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final expense = expenses[index];
+                  final category = ctrl.getCategoryById(expense.categoryId);
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: GestureDetector(
+                      onLongPressStart: (details) {
+                        HapticFeedback.heavyImpact();
+                        showPullDownMenu(
+                          context: context,
+                          routeTheme: PullDownMenuRouteTheme(backgroundColor: AppColors.surfaceLight, width: 200),
+                          items: [
+                            PullDownMenuItem(
+                              onTap: () => controller.showEditExpenseDialog(expense),
+                              title: "Edit",
+                              icon: CupertinoIcons.pen,
+                              itemTheme: PullDownMenuItemTheme(textStyle: GoogleFonts.plusJakartaSans(color: Colors.white)),
+                            ),
+                            PullDownMenuItem(
+                              onTap: () => controller.showDeleteExpenseDialog(expense.id),
+                              title: "Delete",
+                              icon: CupertinoIcons.delete,
+                              isDestructive: true,
+                              itemTheme: PullDownMenuItemTheme(textStyle: GoogleFonts.plusJakartaSans()),
+                            ),
+                          ],
+                          position: Rect.fromLTRB(details.globalPosition.dx, details.globalPosition.dy, details.globalPosition.dx, details.globalPosition.dy),
+                        );
+                      },
+                      child: ExpenseTile(expense: expense, category: category!),
+                    ),
+                  );
+                }, childCount: expenses.length),
+              ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          ],
+        );
+      }),
+
+      // ── FAB ──────────────────────────────────────────────────────────────
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: controller.showAddExpenseDialog,
+        label: const Text("Add Expense"),
+        icon: HugeIcon(icon: HugeIcons.strokeRoundedMoneyAdd01),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  // ─── Info Card Widget ─────────────────────────────────────────────────────
+
+  Widget _buildInfoCard(String title, String value, Color valueColor, {dynamic icon, VoidCallback? onTap, bool isFullWidth = false}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 0))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(title, style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
+                HugeIcon(icon: icon, size: 20, color: valueColor),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: GoogleFonts.plusJakartaSans(color: valueColor, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: 0),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -12,9 +12,9 @@ class AppColors {
   static const Color brandDark = Color(0xFF001F42);
 
   // Functional Status Colors
-  static const Color success = Color(0xFF00E676);
+  static const Color success = Color.fromARGB(255, 18, 176, 100);
   static const Color warning = Color(0xFFFFAB40);
-  static const Color error = Color(0xFFFF1744);
+  static const Color error = Color.fromARGB(255, 218, 25, 25);
 
   // Surface & Borders
   static const Color surface = Color(0xFF1E1E1E);
