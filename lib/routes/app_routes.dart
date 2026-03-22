@@ -8,4 +8,5 @@ class Routes {
   static const SIGNUP = '/signup';
   static const MONTH_DETAILS = '/month-details';
   static const NOTIFICATIONS = '/notifications';
+  static const EXPENSE_FORM = '/expense-form';
 }

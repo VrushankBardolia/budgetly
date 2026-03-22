@@ -1,13 +1,4 @@
-import 'package:get/get.dart';
-
-import '../modules/home.dart';
-import '../modules/onboarding.dart';
-import '../modules/auth/view/login_screen.dart';
-import '../modules/auth/view/signup_screen.dart';
-import '../modules/months/month_details_screen.dart';
-import '../controller/month_details_controller.dart';
-import '../main.dart';
-import '../modules/settings/view/notification_screen.dart';
+import 'package:budgetly/core/import_to_export.dart';
 
 part 'app_routes.dart';
 
@@ -26,5 +17,12 @@ class AppPages {
       }),
     ),
     GetPage(name: Routes.NOTIFICATIONS, page: () => const NotificationScreen()),
+    GetPage(
+      name: Routes.EXPENSE_FORM,
+      page: () => const ExpenseFormScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(ExpenseFormController());
+      }),
+    ),
   ];
 }

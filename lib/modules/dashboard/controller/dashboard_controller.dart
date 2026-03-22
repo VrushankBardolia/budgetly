@@ -1,13 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:get/get.dart';
-
-import '../model/expense.dart';
-import '../model/category.dart';
+import 'package:budgetly/core/import_to_export.dart';
+import 'package:intl/intl.dart';
 
 class DashboardController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // ─── Reactive State ───────────────────────────────────────────────────────
   final RxList<Expense> expenses = <Expense>[].obs;
@@ -29,27 +24,23 @@ class DashboardController extends GetxController {
 
   Future<void> _init() async {
     isLoading.value = true;
-
     await Future.wait([loadAvailableYears(), loadCategories()]);
-
     if (availableYears.isNotEmpty) {
-      // Keep selectedYear valid
       if (!availableYears.contains(selectedYear.value)) {
         selectedYear.value = availableYears.first;
       }
       await loadExpenses(selectedYear.value);
     }
-
     isLoading.value = false;
   }
 
   // ─── Data Loading ─────────────────────────────────────────────────────────
 
   Future<void> loadAvailableYears() async {
-    final userId = _auth.currentUser?.uid;
+    final userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) return;
 
-    final snapshot = await _db.collection('expenses').where('userId', isEqualTo: userId).get();
+    final snapshot = await FirebaseHelper.getExpenses(userId, DateTime(2000), DateTime(2100));
 
     if (snapshot.docs.isEmpty) {
       availableYears.assignAll([DateTime.now().year]);
@@ -62,29 +53,19 @@ class DashboardController extends GetxController {
   }
 
   Future<void> loadExpenses(int year) async {
-    final userId = _auth.currentUser?.uid;
+    final userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) return;
 
-    final start = DateTime(year, 1, 1);
-    final end = DateTime(year, 12, 31, 23, 59, 59);
-
-    final snapshot = await _db
-        .collection('expenses')
-        .where('userId', isEqualTo: userId)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-        .where('date', isLessThanOrEqualTo: Timestamp.fromDate(end))
-        .orderBy('date', descending: true)
-        .get();
+    final snapshot = await FirebaseHelper.getExpenses(userId, DateTime(year, 1, 1), DateTime(year, 12, 31, 23, 59, 59));
 
     expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
   }
 
   Future<void> loadCategories() async {
-    final userId = _auth.currentUser?.uid;
+    final userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) return;
 
-    final snapshot = await _db.collection('categories').where('userId', isEqualTo: userId).orderBy('name').get();
-
+    final snapshot = await FirebaseHelper.getCategories(userId);
     categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
   }
 
@@ -95,9 +76,7 @@ class DashboardController extends GetxController {
     await loadExpenses(year);
   }
 
-  void toggleMonthlyYearly() {
-    showMonthly.value = !showMonthly.value;
-  }
+  void toggleMonthlyYearly() => showMonthly.value = !showMonthly.value;
 
   // ─── Category Helper ──────────────────────────────────────────────────────
 
@@ -109,18 +88,31 @@ class DashboardController extends GetxController {
     }
   }
 
-  // ─── Derived Getters ──────────────────────────────────────────────────────
+  int transactionCountForCategory(String categoryId) => expenses.where((e) => e.categoryId == categoryId).length;
 
-  /// Total spent across all categories for [selectedYear]
+  // ─── Total Card ───────────────────────────────────────────────────────────
+
   double get yearlyTotal => expenses.fold(0.0, (sum, e) => sum + e.price);
 
-  /// Total spent in the current month of [selectedYear]
   double get currentMonthTotal {
     final month = DateTime.now().month;
     return expenses.where((e) => e.date.month == month && e.date.year == selectedYear.value).fold(0.0, (sum, e) => sum + e.price);
   }
 
-  /// Category ID → total spent, filtered to [selectedYear]
+  double get displayTotal => showMonthly.value ? currentMonthTotal : yearlyTotal;
+
+  String get displayPeriodLabel {
+    final year = selectedYear.value;
+    if (showMonthly.value) {
+      final monthName = DateFormat.MMMM().format(DateTime.now());
+      return 'For $monthName $year';
+    }
+    return 'For $year';
+  }
+
+  // ─── Category List ────────────────────────────────────────────────────────
+
+  /// Raw category ID → total map
   Map<String, double> get categoryTotals {
     final totals = <String, double>{};
     for (final e in expenses) {
@@ -128,6 +120,34 @@ class DashboardController extends GetxController {
     }
     return totals;
   }
+
+  /// Sorted descending, capped at top 3 — ready for the list
+  List<MapEntry<String, double>> get topCategoryEntries {
+    final sorted = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return sorted.take(3).toList();
+  }
+
+  /// Highest value among all categories — used to compute progress bar %
+  double get categoryMaxValue {
+    if (categoryTotals.isEmpty) return 1.0;
+    return categoryTotals.values.reduce((a, b) => a > b ? a : b);
+  }
+
+  double categoryPercentage(double value) => categoryMaxValue > 0 ? value / categoryMaxValue : 0.0;
+
+  // ─── Pie Chart ────────────────────────────────────────────────────────────
+
+  /// All categories sorted descending — for the full pie
+  List<MapEntry<String, double>> get sortedCategoryEntries {
+    final sorted = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    return sorted;
+  }
+
+  double get categoryGrandTotal => categoryTotals.values.fold(0.0, (sum, v) => sum + v);
+
+  double piePercentage(double value) => categoryGrandTotal > 0 ? value / categoryGrandTotal * 100 : 0.0;
+
+  // ─── Monthly Chart ────────────────────────────────────────────────────────
 
   /// Month index (1–12) → total spent for [selectedYear]
   Map<int, double> get monthlyTotals {
@@ -138,6 +158,10 @@ class DashboardController extends GetxController {
     return totals;
   }
 
-  /// Transaction count per category ID for [selectedYear]
-  int transactionCountForCategory(String categoryId) => expenses.where((e) => e.categoryId == categoryId).length;
+  /// Y-axis ceiling for the line chart with 20% headroom
+  double get chartMaxY {
+    final values = monthlyTotals.values;
+    if (values.isEmpty) return 10000.0;
+    return values.reduce((a, b) => a > b ? a : b) * 1.2;
+  }
 }

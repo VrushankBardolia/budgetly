@@ -38,7 +38,13 @@ class InitialScreen extends StatelessWidget {
       if (authController.isLoading.value) {
         return Scaffold(body: Center(child: CircularProgressIndicator()));
       }
-      return FirebaseHelper.currentUser != null ? HomeScreen() : OnboardingScreen();
+      if (FirebaseHelper.currentUser != null) {
+        if (PreferenceHelper.isEnabledBiometric) {
+          return const AppLockScreen();
+        }
+        return const HomeScreen();
+      }
+      return const OnboardingScreen();
     });
   }
 }
@@ -49,5 +55,8 @@ void initControllers() {
   Get.put(ExpenseController());
   Get.put(DashboardController());
   Get.put(SettingController());
-  Get.put(NotificationController());
+  Get.lazyPut(() => NotificationController(), fenix: true);
+  Get.put(MonthController());
+  Get.put(HomeController());
+  Get.put(OnboardingController());
 }

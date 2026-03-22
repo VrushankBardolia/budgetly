@@ -1,17 +1,11 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:flutter/cupertino.dart';
 
-class MonthDetailScreen extends StatelessWidget {
+class MonthDetailScreen extends GetView<MonthDetailController> {
   const MonthDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(MonthDetailController());
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.checkBudgetAndShowDialog();
-    });
-
     return Scaffold(
       backgroundColor: AppColors.black,
       appBar: AppBar(
@@ -28,13 +22,8 @@ class MonthDetailScreen extends StatelessWidget {
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return _buildShimmerLoader();
         }
-
-        final ctrl = controller;
-        final formatter = ctrl.formatter;
-        final expenses = ctrl.expenses;
-
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
@@ -46,22 +35,32 @@ class MonthDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: _buildInfoCard("Budget", formatter.format(ctrl.budget.value), Colors.white, icon: HugeIcons.strokeRoundedWallet01)),
+                        Expanded(child: _buildInfoCard("Budget", controller.formatter.format(controller.budget.value), Colors.white, icon: HugeIcons.strokeRoundedWallet01)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildInfoCard("Spent", formatter.format(ctrl.totalExpense), Colors.white, icon: HugeIcons.strokeRoundedMoney01)),
+                        Expanded(child: _buildInfoCard("Spent", controller.formatter.format(controller.totalExpense), Colors.white, icon: HugeIcons.strokeRoundedMoney01)),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    if (ctrl.isCurrent) ...[
+                    if (controller.isCurrent) ...[
                       Row(
                         children: [
-                          Expanded(child: _buildInfoCard(ctrl.statusLabel, formatter.format(ctrl.remaining), ctrl.statusColor, icon: ctrl.statusIcon)),
+                          Expanded(
+                            child: _buildInfoCard(controller.statusLabel, controller.formatter.format(controller.remaining), controller.statusColor, icon: controller.statusIcon),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(child: _buildInfoCard("Safe / Day", formatter.format(ctrl.remainPerDay), Colors.blueAccent, icon: HugeIcons.strokeRoundedCoins01)),
+                          Expanded(
+                            child: _buildInfoCard("Safe / Day", controller.formatter.format(controller.remainPerDay), Colors.blueAccent, icon: HugeIcons.strokeRoundedCoins01),
+                          ),
                         ],
                       ),
                     ] else ...[
-                      _buildInfoCard(ctrl.statusLabel, formatter.format(ctrl.remaining), ctrl.statusColor, icon: ctrl.statusIcon, isFullWidth: true),
+                      _buildInfoCard(
+                        controller.statusLabel,
+                        controller.formatter.format(controller.remaining),
+                        controller.statusColor,
+                        icon: controller.statusIcon,
+                        isFullWidth: true,
+                      ),
                     ],
                   ],
                 ),
@@ -79,14 +78,14 @@ class MonthDetailScreen extends StatelessWidget {
                       "Transactions",
                       style: GoogleFonts.plusJakartaSans(color: Colors.grey[400], fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: 1),
                     ),
-                    Text("${expenses.length}", style: GoogleFonts.plusJakartaSans(color: Colors.grey[600])),
+                    Text("${controller.expenses.length}", style: GoogleFonts.plusJakartaSans(color: Colors.grey[600])),
                   ],
                 ),
               ),
             ),
 
             // ── Empty State ─────────────────────────────────────────────────
-            if (expenses.isEmpty)
+            if (controller.expenses.isEmpty)
               SliverFillRemaining(
                 child: Center(
                   child: Column(
@@ -107,8 +106,8 @@ class MonthDetailScreen extends StatelessWidget {
               // ── Expense List ───────────────────────────────────────────────
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
-                  final expense = expenses[index];
-                  final category = ctrl.getCategoryById(expense.categoryId);
+                  final expense = controller.expenses[index];
+                  final category = controller.getCategoryById(expense.categoryId);
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -120,7 +119,7 @@ class MonthDetailScreen extends StatelessWidget {
                           routeTheme: PullDownMenuRouteTheme(backgroundColor: AppColors.surfaceLight, width: 200),
                           items: [
                             PullDownMenuItem(
-                              onTap: () => controller.showEditExpenseDialog(expense),
+                              onTap: () => controller.goToEditExpense(expense),
                               title: "Edit",
                               icon: CupertinoIcons.pen,
                               itemTheme: PullDownMenuItemTheme(textStyle: GoogleFonts.plusJakartaSans(color: Colors.white)),
@@ -139,7 +138,7 @@ class MonthDetailScreen extends StatelessWidget {
                       child: ExpenseTile(expense: expense, category: category!),
                     ),
                   );
-                }, childCount: expenses.length),
+                }, childCount: controller.expenses.length),
               ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
@@ -149,7 +148,7 @@ class MonthDetailScreen extends StatelessWidget {
 
       // ── FAB ──────────────────────────────────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: controller.showAddExpenseDialog,
+        onPressed: controller.goToAddExpense,
         label: const Text("Add Expense"),
         icon: HugeIcon(icon: HugeIcons.strokeRoundedMoneyAdd01),
       ),
@@ -188,6 +187,143 @@ class MonthDetailScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // MARK:Shimmer Loader
+
+  Widget _buildShimmerLoader() {
+    return Shimmer.fromColors(
+      baseColor: AppColors.surface,
+      highlightColor: AppColors.surfaceLight,
+      child: CustomScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _buildShimmerCard()),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildShimmerCard()),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: _buildShimmerCard()),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildShimmerCard()),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    height: 20,
+                    width: 120,
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                  ),
+                  Container(
+                    height: 16,
+                    width: 24,
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              return Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: _buildShimmerExpenseTile());
+            }, childCount: 5),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerCard() {
+    return Container(
+      height: 92,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                height: 14,
+                width: 60,
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+              ),
+              Container(
+                height: 20,
+                width: 20,
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Container(
+            height: 24,
+            width: 80,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildShimmerExpenseTile() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          Container(
+            height: 48,
+            width: 48,
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 16,
+                  width: 120,
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 12,
+                  width: 80,
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: 18,
+            width: 60,
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+          ),
+        ],
       ),
     );
   }

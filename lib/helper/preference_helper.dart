@@ -75,8 +75,13 @@ class PreferenceHelper {
     await _prefs.setString(_keyFCMToken, value);
   }
 
+  // ─── Daily Reminder ──────────────────────────────────────────────────────────
+  static const String _dailyReminderKey = 'daily_reminder_enabled';
+
+  static bool get isDailyReminderEnabled => _prefs.getBool(_dailyReminderKey) ?? true;
+
+  static Future<void> setDailyReminderEnabled(bool value) async => await _prefs.setBool(_dailyReminderKey, value);
+
   // ─── Clear All ────────────────────────────────────────────────────────────
-  static Future<void> clearAll() async {
-    await _prefs.clear();
-  }
+  static Future<void> clearAll() async => await _prefs.clear();
 }

@@ -9,6 +9,9 @@ class SettingController extends GetxController {
   final RxBool isLoading = true.obs;
   final RxBool notificationsEnabled = false.obs;
   final RxBool isNotificationLoading = false.obs;
+  final RxBool isBiometricEnabled = false.obs;
+
+  final LocalAuthentication _localAuth = LocalAuthentication();
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -16,6 +19,7 @@ class SettingController extends GetxController {
   void onInit() {
     super.onInit();
     currentUser.value = PreferenceHelper.user;
+    isBiometricEnabled.value = PreferenceHelper.isEnabledBiometric;
     loadUserData();
   }
 
@@ -54,6 +58,40 @@ class SettingController extends GetxController {
     final parts = name.trim().split(' ');
     if (parts.length > 1) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     return parts[0][0].toUpperCase();
+  }
+
+  // ─── Biometric ────────────────────────────────────────────────────────────
+
+  Future<void> toggleBiometric(bool value) async {
+    if (value) {
+      // Trying to enable
+      try {
+        final canCheck = await _localAuth.canCheckBiometrics;
+        final isDeviceSupported = await _localAuth.isDeviceSupported();
+
+        if (!canCheck && !isDeviceSupported) {
+          Get.snackbar('Error', 'Biometric authentication is not supported on this device.', backgroundColor: AppColors.error, colorText: Colors.white);
+          return;
+        }
+
+        // final didAuthenticate = await _localAuth.authenticate(
+        //   localizedReason: 'Please authenticate to enable app lock',
+        //   // options: const AuthenticationOptions(stickyAuth: true, biometricOnly: false),
+        // );
+
+        // if (didAuthenticate) {
+        isBiometricEnabled.value = true;
+        await PreferenceHelper.setEnabledBiometric(true);
+        // }
+      } catch (e) {
+        debugPrint('Biometric Error: $e');
+        Get.snackbar('Error', 'Failed to authenticate.', backgroundColor: AppColors.error, colorText: Colors.white);
+      }
+    } else {
+      // Disabling
+      isBiometricEnabled.value = false;
+      await PreferenceHelper.setEnabledBiometric(false);
+    }
   }
 
   // ─── Change Phone ─────────────────────────────────────────────────────────
@@ -120,7 +158,9 @@ class SettingController extends GetxController {
         ),
         onPressed: () async {
           await NotificationService.disable();
+          PreferenceHelper.clearAll();
           await FirebaseHelper.signOut();
+          Get.find<HomeController>().currentIndex.value = 0;
           Get.offAllNamed(Routes.LOGIN);
         },
         child: const Text('Sign Out'),

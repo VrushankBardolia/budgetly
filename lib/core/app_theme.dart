@@ -57,7 +57,7 @@ ThemeData themeData = ThemeData(
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.focusedBorderColor, width: 2),
+      borderSide: const BorderSide(color: AppColors.focusedBorderColor),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
@@ -65,7 +65,7 @@ ThemeData themeData = ThemeData(
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppColors.focusedBorderColor, width: 2),
+      borderSide: const BorderSide(color: AppColors.focusedBorderColor),
     ),
     disabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),

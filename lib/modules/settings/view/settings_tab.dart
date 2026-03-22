@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+
 import '../../../core/import_to_export.dart';
 
 class SettingsTab extends GetView<SettingController> {
@@ -42,7 +44,7 @@ class SettingsTab extends GetView<SettingController> {
               onTap: () => controller.changePhone(),
             ),
           ),
-
+          // buildBiometricTile(),
           _buildSettingsTile(icon: HugeIcons.strokeRoundedNotification02, title: "Notifications", onTap: () => Get.toNamed(Routes.NOTIFICATIONS)),
 
           // const SizedBox(height: 20),
@@ -66,47 +68,42 @@ class SettingsTab extends GetView<SettingController> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
-      child: Row(
+      child: Column(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: Theme.of(Get.context!).colorScheme.secondary,
-            child: Obx(
-              () => Text(
-                controller.getInitials(controller.currentUser.value?.name ?? ""),
-                style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: Theme.of(Get.context!).colorScheme.primary),
-              ),
-            ),
-          ),
-          const SizedBox(width: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Obx(
-                () => Text(
-                  controller.currentUser.value?.name ?? "",
-                  style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: Theme.of(Get.context!).colorScheme.secondary,
+                child: Obx(
+                  () => Text(
+                    controller.getInitials(controller.currentUser.value?.name ?? ""),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.w900, color: Theme.of(Get.context!).colorScheme.primary),
+                  ),
                 ),
               ),
+              const SizedBox(width: 20),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Obx(
+                    () => Text(
+                      controller.currentUser.value?.name ?? "",
+                      style: GoogleFonts.plusJakartaSans(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ),
 
-              /// Only keep Obx where Rx is used
-              Obx(() => Text(controller.usingSince.value)),
+                  /// Only keep Obx where Rx is used
+                  Obx(() => Text(controller.usingSince.value)),
+                ],
+              ),
             ],
           ),
+          // SizedBox(height: 12),
+          // Divider(height: 1),
+          // SizedBox(height: 8),
+          // Text("Manage Profile", style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600)),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: GoogleFonts.plusJakartaSans(color: AppColors.brand, fontWeight: FontWeight.w700, fontSize: 16),
-        ),
       ),
     );
   }
@@ -132,6 +129,31 @@ class SettingsTab extends GetView<SettingController> {
           style: TextStyle(color: textColor, fontWeight: FontWeight.w600, fontSize: 16),
         ),
         trailing: onTap != null ? Icon(Icons.chevron_right_rounded, color: Colors.grey[600], size: 24) : null,
+      ),
+    );
+  }
+
+  Widget buildBiometricTile() {
+    return Container(
+      margin: const EdgeInsets.only(top: 12),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        splashColor: Colors.transparent,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(10)),
+          child: HugeIcon(icon: HugeIcons.strokeRoundedFingerPrintScan, color: Colors.white, size: 22),
+        ),
+        title: Text(
+          "Use biometric",
+          style: GoogleFonts.plusJakartaSans(color: AppColors.white, fontWeight: FontWeight.w600, fontSize: 16),
+        ),
+        trailing: Transform.scale(
+          scale: 0.9,
+          alignment: Alignment.centerRight,
+          child: Obx(() => CupertinoSwitch(value: controller.isBiometricEnabled.value, onChanged: (value) => controller.toggleBiometric(value), activeTrackColor: AppColors.brand)),
+        ),
       ),
     );
   }

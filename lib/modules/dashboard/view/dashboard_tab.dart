@@ -59,12 +59,12 @@ class DashboardTab extends GetView<DashboardController> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Year: ", style: TextStyle(color: Colors.grey)),
+                Text("Year: ", style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
                 DropdownButton<int>(
                   value: controller.selectedYear.value,
                   dropdownColor: AppColors.surface,
                   icon: HugeIcon(icon: HugeIcons.strokeRoundedArrowDown01, size: 24, color: Colors.white, strokeWidth: 2),
-                  underline: const SizedBox(),
+                  underline: SizedBox(),
                   isDense: true,
                   style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                   items: controller.availableYears.map((y) => DropdownMenuItem(value: y, child: Text(y.toString()))).toList(),
@@ -83,14 +83,8 @@ class DashboardTab extends GetView<DashboardController> {
   // ─── Total Card ───────────────────────────────────────────────────────────
 
   Widget _buildTotalCard() {
-    return Obx(() {
-      // final controller = controller;
-      final year = controller.selectedYear.value;
-      final month = DateTime.now().month;
-      final monthName = DateFormat.MMMM().format(DateTime.now());
-      final displayValue = controller.showMonthly.value ? controller.currentMonthTotal : controller.yearlyTotal;
-
-      return Container(
+    return Obx(
+      () => Container(
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -126,7 +120,7 @@ class DashboardTab extends GetView<DashboardController> {
               children: [
                 Text('₹', style: GoogleFonts.plusJakartaSans(fontSize: 40, color: Colors.white, height: 1.0)),
                 AnimatedDigitWidget(
-                  value: displayValue,
+                  value: controller.displayTotal,
                   textStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 40,
                     fontStyle: FontStyle.italic,
@@ -153,18 +147,14 @@ class DashboardTab extends GetView<DashboardController> {
                       child: child,
                     ),
                   ),
-                  child: Text(
-                    controller.showMonthly.value ? 'For $monthName $year' : 'For $year',
-                    key: ValueKey(controller.showMonthly.value),
-                    style: GoogleFonts.plusJakartaSans(fontSize: 16),
-                  ),
+                  child: Text(controller.displayPeriodLabel, key: ValueKey(controller.showMonthly.value), style: GoogleFonts.plusJakartaSans(fontSize: 16)),
                 ),
                 const Spacer(),
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 200),
                   opacity: controller.showMonthly.value ? 1 : 0,
                   child: GestureDetector(
-                    onTap: () => Get.toNamed(Routes.MONTH_DETAILS, arguments: {'year': year, 'month': month}),
+                    onTap: () => Get.toNamed(Routes.MONTH_DETAILS, arguments: {'year': controller.selectedYear.value, 'month': DateTime.now().month}),
                     child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight03),
                   ),
                 ),
@@ -172,18 +162,17 @@ class DashboardTab extends GetView<DashboardController> {
             ),
           ],
         ),
-      );
-    });
+      ),
+    );
   }
 
   // ─── Category List ────────────────────────────────────────────────────────
 
   Widget _buildCategoryList() {
     return Obx(() {
-      final totals = controller.categoryTotals;
       final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
 
-      if (totals.isEmpty) {
+      if (controller.topCategoryEntries.isEmpty) {
         return Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
@@ -195,24 +184,17 @@ class DashboardTab extends GetView<DashboardController> {
         );
       }
 
-      final sorted = totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-      final displayed = sorted.length > 3 ? sorted.take(3).toList() : sorted;
-      final maxVal = sorted.first.value;
-
       return Column(
-        children: displayed.map((entry) {
+        children: controller.topCategoryEntries.map((entry) {
           final category = controller.getCategoryById(entry.key);
-          final percentage = maxVal > 0 ? entry.value / maxVal : 0.0;
-          final txCount = controller.transactionCountForCategory(entry.key);
-
           return CategoryTile(
             margin: const EdgeInsets.only(top: 12),
             emoji: category?.emoji ?? '📦',
             name: category?.name ?? 'Unknown',
             showProgress: true,
-            percentage: percentage,
+            percentage: controller.categoryPercentage(entry.value),
             formattedAmount: formatter.format(entry.value),
-            transactionCount: txCount,
+            transactionCount: controller.transactionCountForCategory(entry.key),
           );
         }).toList(),
       );
@@ -229,12 +211,8 @@ class DashboardTab extends GetView<DashboardController> {
   }
 
   Widget _buildPieChart() {
-    // final controller = controller;
-    final totals = controller.categoryTotals;
-    if (totals.isEmpty) return const SizedBox();
-
-    final total = totals.values.fold(0.0, (sum, v) => sum + v);
-    final sorted = totals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final entries = controller.sortedCategoryEntries;
+    if (entries.isEmpty) return const SizedBox();
 
     const colors = [
       Color(0xFF42A5F5),
@@ -277,16 +255,12 @@ class DashboardTab extends GetView<DashboardController> {
                 borderData: FlBorderData(show: false),
                 sectionsSpace: 2,
                 centerSpaceRadius: 50,
-                sections: sorted.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final value = entry.value.value;
-                  final percentage = value / total * 100;
-                  final color = colors[index % colors.length];
-
+                sections: entries.asMap().entries.map((e) {
+                  final pct = controller.piePercentage(e.value.value);
                   return PieChartSectionData(
-                    color: color,
-                    value: value,
-                    title: percentage > 10 ? '${percentage.toStringAsFixed(0)}%' : '',
+                    color: colors[e.key % colors.length],
+                    value: e.value.value,
+                    title: pct > 10 ? '${pct.toStringAsFixed(0)}%' : '',
                     radius: 70,
                     titleStyle: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
                   );
@@ -298,19 +272,15 @@ class DashboardTab extends GetView<DashboardController> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: sorted.asMap().entries.map((entry) {
-              final index = entry.key;
-              final categoryId = entry.value.key;
-              final name = controller.getCategoryById(categoryId)?.name ?? '';
-              final color = colors[index % colors.length];
-
+            children: entries.asMap().entries.map((e) {
+              final name = controller.getCategoryById(e.value.key)?.name ?? '';
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
                     width: 10,
                     height: 10,
-                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                    decoration: BoxDecoration(color: colors[e.key % colors.length], shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 8),
                   Text(name, style: GoogleFonts.plusJakartaSans(fontSize: 12, color: Colors.white)),
@@ -324,9 +294,6 @@ class DashboardTab extends GetView<DashboardController> {
   }
 
   Widget _buildMonthlyChart() {
-    final monthlyData = controller.monthlyTotals;
-    final maxY = monthlyData.values.isEmpty ? 10000.0 : monthlyData.values.reduce((a, b) => a > b ? a : b) * 1.2;
-
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -353,7 +320,7 @@ class DashboardTab extends GetView<DashboardController> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: maxY / 4,
+                  horizontalInterval: controller.chartMaxY / 4,
                   getDrawingHorizontalLine: (_) => FlLine(color: AppColors.surfaceLight, strokeWidth: 1, dashArray: [5, 5]),
                 ),
                 titlesData: FlTitlesData(
@@ -380,10 +347,10 @@ class DashboardTab extends GetView<DashboardController> {
                 minX: 1,
                 maxX: 12,
                 minY: 0,
-                maxY: maxY,
+                maxY: controller.chartMaxY,
                 lineBarsData: [
                   LineChartBarData(
-                    spots: monthlyData.entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
+                    spots: controller.monthlyTotals.entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
                     isCurved: true,
                     preventCurveOverShooting: true,
                     color: AppColors.brand,
@@ -406,8 +373,8 @@ class DashboardTab extends GetView<DashboardController> {
                     getTooltipItems: (touchedSpots) {
                       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                       return touchedSpots.map((spot) {
-                        final monthIndex = spot.x.toInt() - 1;
-                        final name = (monthIndex >= 0 && monthIndex < 12) ? months[monthIndex] : '';
+                        final idx = spot.x.toInt() - 1;
+                        final name = (idx >= 0 && idx < 12) ? months[idx] : '';
                         return LineTooltipItem('$name  •  ₹${spot.y.toInt()}', GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold));
                       }).toList();
                     },
@@ -441,12 +408,12 @@ class DashboardTab extends GetView<DashboardController> {
             child: Icon(Icons.receipt_long, size: 60, color: Colors.grey[700]),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'No expenses yet',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: GoogleFonts.plusJakartaSans(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           const SizedBox(height: 8),
-          Text('Start tracking your expenses to see data here.', style: TextStyle(color: Colors.grey[500])),
+          Text('Start tracking your expenses to see data here.', style: GoogleFonts.plusJakartaSans(color: Colors.grey[500])),
         ],
       ),
     );

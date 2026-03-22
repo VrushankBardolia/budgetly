@@ -1,15 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:hugeicons/hugeicons.dart';
+import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
-
-import '../core/app_colors.dart';
-import '../helper/firebase_helper.dart';
-import '../model/category.dart';
-import '../model/expense.dart';
-import '../modules/months/add_expense_dialog.dart';
-import '../modules/months/edit_expense_dialog.dart';
 
 class MonthDetailController extends GetxController {
   // ─── Arguments via GetX ───────────────────────────────────────────────────
@@ -28,9 +18,12 @@ class MonthDetailController extends GetxController {
   void onInit() {
     super.onInit();
     loadAll();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkBudgetAndShowDialog());
   }
 
-  void checkBudgetAndShowDialog() {
+  // ─── Budget Dialog ────────────────────────────────────────────────────────
+
+  void _checkBudgetAndShowDialog() {
     if (!isLoading.value) {
       if (!hasBudget) showBudgetDialog();
     } else {
@@ -42,9 +35,8 @@ class MonthDetailController extends GetxController {
     }
   }
 
-  // ─── Dialogs ──────────────────────────────────────────────────────────────
   Future<void> showBudgetDialog() async {
-    final controllerField = TextEditingController(text: budget.value > 0 ? budget.value.toString() : '');
+    final budgetField = TextEditingController(text: budget.value > 0 ? budget.value.toString() : '');
 
     Get.dialog(
       AlertDialog(
@@ -62,7 +54,7 @@ class MonthDetailController extends GetxController {
             Text(formattedMonth, style: TextStyle(color: AppColors.grey)),
             const SizedBox(height: 16),
             TextField(
-              controller: controllerField,
+              controller: budgetField,
               keyboardType: TextInputType.number,
               autofocus: true,
               style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 18),
@@ -87,11 +79,11 @@ class MonthDetailController extends GetxController {
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text(controllerField.text.isEmpty ? 'Skip' : 'Cancel', style: TextStyle(color: Colors.grey[600])),
+            child: Text(budgetField.text.isEmpty ? 'Skip' : 'Cancel', style: TextStyle(color: Colors.grey[600])),
           ),
           ElevatedButton(
             onPressed: () async {
-              final value = int.tryParse(controllerField.text);
+              final value = int.tryParse(budgetField.text);
               if (value != null && value > 0) {
                 await setBudget(value);
                 Get.back();
@@ -111,15 +103,19 @@ class MonthDetailController extends GetxController {
     );
   }
 
-  Future<void> showAddExpenseDialog() async {
-    Get.dialog(AddExpenseDialog(year: year, month: month), barrierDismissible: false);
-    await loadExpenses();
+  // ─── Navigation to Expense Screen ─────────────────────────────────────────
+
+  Future<void> goToAddExpense() async {
+    final result = await Get.toNamed(Routes.EXPENSE_FORM, arguments: {'year': year, 'month': month});
+    if (result == true) await loadExpenses();
   }
 
-  Future<void> showEditExpenseDialog(Expense expense) async {
-    Get.dialog(EditExpenseDialog(expense: expense, year: year, month: month), barrierDismissible: false);
-    await loadExpenses();
+  Future<void> goToEditExpense(Expense expense) async {
+    final result = await Get.toNamed(Routes.EXPENSE_FORM, arguments: {'year': year, 'month': month, 'expense': expense});
+    if (result == true) await loadExpenses();
   }
+
+  // ─── Delete Dialog ────────────────────────────────────────────────────────
 
   Future<void> showDeleteExpenseDialog(String id) async {
     final confirmed = await Get.dialog<bool>(
@@ -141,9 +137,7 @@ class MonthDetailController extends GetxController {
       ),
     );
 
-    if (confirmed == true) {
-      await deleteExpense(id);
-    }
+    if (confirmed == true) await deleteExpense(id);
   }
 
   // ─── Data Loading ─────────────────────────────────────────────────────────
@@ -158,11 +152,7 @@ class MonthDetailController extends GetxController {
     final userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) return;
 
-    final start = DateTime(year, month, 1);
-    final end = DateTime(year, month + 1, 0, 23, 59, 59);
-
-    final snapshot = await FirebaseHelper.getExpenses(userId, start, end);
-
+    final snapshot = await FirebaseHelper.getExpenses(userId, DateTime(year, month, 1), DateTime(year, month + 1, 0, 23, 59, 59));
     expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
   }
 
@@ -171,10 +161,8 @@ class MonthDetailController extends GetxController {
     if (userId == null) return;
 
     final snapshot = await FirebaseHelper.getBudgetForMonth(userId, year, month);
-
     if (snapshot.docs.isNotEmpty) {
-      final data = snapshot.docs.first.data();
-      budget.value = (data['budget'] as num).toInt();
+      budget.value = (snapshot.docs.first.data()['budget'] as num).toInt();
     }
   }
 
@@ -183,39 +171,25 @@ class MonthDetailController extends GetxController {
     if (userId == null) return;
 
     final snapshot = await FirebaseHelper.getCategories(userId);
-
     categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
   }
 
-  // ─── Budget ───────────────────────────────────────────────────────────────
+  // ─── Budget CRUD ──────────────────────────────────────────────────────────
 
   Future<void> setBudget(int value) async {
     final userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) return;
 
     final snapshot = await FirebaseHelper.getBudgetForMonth(userId, year, month);
-
     if (snapshot.docs.isEmpty) {
-      Map<String, dynamic> budgetData = {'userId': userId, 'year': year, 'month': month, 'budget': value};
-      await FirebaseHelper.addBudget(budgetData);
+      await FirebaseHelper.addBudget({'userId': userId, 'year': year, 'month': month, 'budget': value});
     } else {
       await FirebaseHelper.updateBudget(snapshot.docs.first.id, value);
     }
-
     budget.value = value;
   }
 
-  // ─── Expenses CRUD ────────────────────────────────────────────────────────
-
-  Future<void> addExpense(Expense expense) async {
-    await FirebaseHelper.addExpense(expense);
-    await loadExpenses();
-  }
-
-  Future<void> updateExpense(String id, Expense expense) async {
-    await FirebaseHelper.updateExpense(id, expense);
-    await loadExpenses();
-  }
+  // ─── Expense CRUD ─────────────────────────────────────────────────────────
 
   Future<void> deleteExpense(String id) async {
     await FirebaseHelper.deleteExpense(id);
@@ -235,9 +209,7 @@ class MonthDetailController extends GetxController {
   // ─── Derived Getters ──────────────────────────────────────────────────────
 
   double get totalExpense => expenses.fold(0.0, (sum, e) => sum + e.price);
-
   double get remaining => budget.value - totalExpense;
-
   int get totalDays => DateTime(year, month + 1, 0).day;
 
   int get remainingDays {
@@ -246,7 +218,6 @@ class MonthDetailController extends GetxController {
   }
 
   double get remainPerDay => remainingDays > 0 ? remaining / remainingDays : 0.0;
-
   bool get hasBudget => budget.value > 0;
 
   bool get isCurrent {
@@ -264,9 +235,9 @@ class MonthDetailController extends GetxController {
   }
 
   String get statusLabel {
-    if (isBalanced) return "On Target";
-    if (isSaved) return isCurrent ? "Remaining" : "Saved";
-    return "Overspent";
+    if (isBalanced) return 'On Target';
+    if (isSaved) return isCurrent ? 'Remaining' : 'Saved';
+    return 'Overspent';
   }
 
   dynamic get statusIcon {
@@ -276,6 +247,5 @@ class MonthDetailController extends GetxController {
   }
 
   String get formattedMonth => DateFormat('MMMM yyyy').format(DateTime(year, month));
-
   NumberFormat get formatter => NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
 }
