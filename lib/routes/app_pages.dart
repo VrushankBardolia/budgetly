@@ -7,8 +7,6 @@ class AppPages {
     GetPage(name: Routes.INITIAL, page: () => const InitialScreen()),
     GetPage(name: Routes.HOME, page: () => const HomeScreen()),
     GetPage(name: Routes.ONBOARDING, page: () => const OnboardingScreen()),
-    GetPage(name: Routes.LOGIN, page: () => const LoginScreen()),
-    GetPage(name: Routes.SIGNUP, page: () => const SignupScreen()),
     GetPage(
       name: Routes.MONTH_DETAILS,
       page: () => const MonthDetailScreen(),

@@ -20,11 +20,12 @@ export 'package:animated_digit/animated_digit.dart';
 export 'package:fl_chart/fl_chart.dart';
 export 'package:permission_handler/permission_handler.dart';
 export 'package:local_auth/local_auth.dart';
+export 'package:flutter_svg/svg.dart';
 
 // ─── Core & Theme ──────────────────────────────────────────────────────────
 export 'package:budgetly/core/app_colors.dart';
 export 'package:budgetly/core/app_theme.dart';
-export 'package:budgetly/helper/preference_helper.dart';
+export 'package:budgetly/core/text_theme.dart';
 
 // ─── Components ────────────────────────────────────────────────────────────
 export 'package:budgetly/components/button.dart';
@@ -37,6 +38,7 @@ export 'package:budgetly/components/main_notification_tile.dart';
 export 'package:budgetly/helper/firebase_helper.dart';
 export 'package:budgetly/helper/firebase_options.dart';
 export 'package:budgetly/helper/notification_service.dart';
+export 'package:budgetly/helper/preference_helper.dart';
 
 // ─── Models ────────────────────────────────────────────────────────────────
 export 'package:budgetly/model/category.dart';
@@ -60,8 +62,6 @@ export 'package:budgetly/modules/home/view/home_screen.dart';
 export 'package:budgetly/modules/auth/controller/auth_controller.dart';
 export 'package:budgetly/modules/auth/view/app_lock_screen.dart';
 export 'package:budgetly/modules/auth/controller/onboarding_controller.dart';
-export 'package:budgetly/modules/auth/view/login_screen.dart';
-export 'package:budgetly/modules/auth/view/signup_screen.dart';
 export 'package:budgetly/modules/auth/view/onboarding_screen.dart';
 
 // ─── Modules (Categories) ──────────────────────────────────────────────────

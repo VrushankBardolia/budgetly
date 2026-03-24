@@ -7,7 +7,7 @@ class DashboardController extends GetxController {
   // ─── Reactive State ───────────────────────────────────────────────────────
   final RxList<Expense> expenses = <Expense>[].obs;
   final RxList<Category> categories = <Category>[].obs;
-  final RxList<int> availableYears = <int>[].obs;
+  final RxList<int> availableYears = <int>[DateTime.now().year].obs;
   final RxInt selectedYear = DateTime.now().year.obs;
   final RxBool isLoading = true.obs;
   final RxBool showMonthly = true.obs;

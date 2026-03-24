@@ -3,7 +3,7 @@ import 'package:budgetly/core/import_to_export.dart';
 class FirebaseHelper {
   static final FirebaseAuth auth = FirebaseAuth.instance;
   static final FirebaseFirestore db = FirebaseFirestore.instance;
-  static final GoogleSignIn _googleSignIn = GoogleSignIn();
+  static final GoogleSignIn googleSignIn = GoogleSignIn();
 
   // ==========================================
   // Authentication & User Data
@@ -12,16 +12,8 @@ class FirebaseHelper {
   static Stream<User?> get authStateChanges => auth.authStateChanges();
   static User? get currentUser => auth.currentUser;
 
-  static Future<UserCredential> signUpWithEmail(String email, String password) async {
-    return await auth.createUserWithEmailAndPassword(email: email, password: password);
-  }
-
-  static Future<UserCredential> signInWithEmail(String email, String password) async {
-    return await auth.signInWithEmailAndPassword(email: email, password: password);
-  }
-
   static Future<UserCredential?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
     if (googleUser == null) return null; // Cancelled by user
 
     final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -31,10 +23,7 @@ class FirebaseHelper {
   }
 
   static Future<void> signOut() async {
-    await auth.signOut();
-    if (await _googleSignIn.isSignedIn()) {
-      await _googleSignIn.signOut();
-    }
+    await googleSignIn.signOut();
   }
 
   static Future<void> saveUserData(String uid, Map<String, dynamic> data) async {

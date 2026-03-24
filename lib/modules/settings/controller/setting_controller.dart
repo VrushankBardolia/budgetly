@@ -73,22 +73,13 @@ class SettingController extends GetxController {
           Get.snackbar('Error', 'Biometric authentication is not supported on this device.', backgroundColor: AppColors.error, colorText: Colors.white);
           return;
         }
-
-        // final didAuthenticate = await _localAuth.authenticate(
-        //   localizedReason: 'Please authenticate to enable app lock',
-        //   // options: const AuthenticationOptions(stickyAuth: true, biometricOnly: false),
-        // );
-
-        // if (didAuthenticate) {
         isBiometricEnabled.value = true;
         await PreferenceHelper.setEnabledBiometric(true);
-        // }
       } catch (e) {
         debugPrint('Biometric Error: $e');
         Get.snackbar('Error', 'Failed to authenticate.', backgroundColor: AppColors.error, colorText: Colors.white);
       }
     } else {
-      // Disabling
       isBiometricEnabled.value = false;
       await PreferenceHelper.setEnabledBiometric(false);
     }
@@ -156,17 +147,19 @@ class SettingController extends GetxController {
           backgroundColor: AppColors.error,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
-        onPressed: () async {
-          await NotificationService.disable();
-          PreferenceHelper.clearAll();
-          await FirebaseHelper.signOut();
-          Get.find<HomeController>().currentIndex.value = 0;
-          Get.offAllNamed(Routes.LOGIN);
-        },
+        onPressed: signOut,
         child: const Text('Sign Out'),
       ),
       cancel: TextButton(onPressed: Get.back, child: const Text('Cancel')),
     );
+  }
+
+  void signOut() async {
+    await NotificationService.disable();
+    PreferenceHelper.clearAll();
+    await FirebaseHelper.signOut();
+    Get.find<HomeController>().currentIndex.value = 0;
+    Get.offAllNamed(Routes.ONBOARDING);
   }
 
   // ─── About ────────────────────────────────────────────────────────────────
