@@ -1,8 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../model/expense.dart';
-import '../model/category.dart';
+import 'package:budgetly/core/import_to_export.dart';
 
 class ExpenseTile extends StatelessWidget {
   final Expense expense;
@@ -27,13 +24,7 @@ class ExpenseTile extends StatelessWidget {
         color: cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4, offset: const Offset(0, 2))],
       ),
       child: Row(
         children: [
@@ -41,15 +32,9 @@ class ExpenseTile extends StatelessWidget {
           Container(
             width: 50,
             height: 50,
-            decoration: BoxDecoration(
-              color: Color(0xFF121212),
-              borderRadius: BorderRadius.circular(12),
-            ),
+            decoration: BoxDecoration(color: Color(0xFF121212), borderRadius: BorderRadius.circular(12)),
             alignment: Alignment.center,
-            child: Text(
-              category.emoji,
-              style: GoogleFonts.plusJakartaSans(fontSize: 24),
-            ),
+            child: Text(category.emoji, style: GoogleFonts.plusJakartaSans(fontSize: 24)),
           ),
 
           const SizedBox(width: 12),
@@ -63,21 +48,14 @@ class ExpenseTile extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
+                  style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
                     Text(
                       dateFormatter.format(expense.date),
-                      style: GoogleFonts.plusJakartaSans(
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      style: GoogleFonts.plusJakartaSans(color: Colors.grey, fontWeight: FontWeight.w800),
                     ),
                     if (hasDetail) ...[
                       Padding(
@@ -89,9 +67,7 @@ class ExpenseTile extends StatelessWidget {
                           category.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            color: Colors.grey,
-                          ),
+                          style: GoogleFonts.plusJakartaSans(color: Colors.grey),
                         ),
                       ),
                     ],
@@ -106,11 +82,7 @@ class ExpenseTile extends StatelessWidget {
           // 3. Price
           Text(
             formatter.format(expense.price),
-            style: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              color: Colors.white,
-            ),
+            style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 18, color: Colors.white),
           ),
         ],
       ),

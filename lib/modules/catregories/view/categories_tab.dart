@@ -40,14 +40,14 @@ class CategoriesTab extends GetView<CategoryController> {
     if (controller.categories.isEmpty) return _buildEmptyState();
 
     final belowPadding = controller.categoryCount == 10 ? 16 : 100;
-    final expenseController = Get.find<ExpenseController>();
+    final dashboardController = Get.find<DashboardController>();
 
     final Map<String, double> categoryTotals = {};
     for (var category in controller.categories) {
       categoryTotals[category.id] = 0.0;
     }
 
-    for (var expense in expenseController.expenses) {
+    for (var expense in dashboardController.expenses) {
       if (categoryTotals.containsKey(expense.categoryId)) {
         categoryTotals[expense.categoryId] = categoryTotals[expense.categoryId]! + expense.price;
       }
@@ -69,7 +69,7 @@ class CategoriesTab extends GetView<CategoryController> {
         final totalAmount = categoryTotals[category.id] ?? 0.0;
 
         int txCount = 0;
-        for (var expense in expenseController.expenses) {
+        for (var expense in dashboardController.expenses) {
           if (expense.categoryId == category.id) {
             txCount++;
           }

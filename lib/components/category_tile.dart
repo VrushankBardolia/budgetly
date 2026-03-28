@@ -1,7 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import '../core/app_colors.dart';
+import 'package:budgetly/core/import_to_export.dart';
 
 class CategoryTile extends StatelessWidget {
   final String emoji;

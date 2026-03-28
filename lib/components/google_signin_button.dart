@@ -6,7 +6,7 @@ class GoogleSigninButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.find<AuthController>().googleSignIn(),
+      onTap: () => Get.find<OnboardingController>().googleSignIn(),
       child: Container(
         padding: EdgeInsets.all(12),
         decoration: BoxDecoration(

@@ -32,10 +32,10 @@ class InitialScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AuthController authController = Get.find<AuthController>();
+    final OnboardingController onboardingController = Get.find<OnboardingController>();
 
     return Obx(() {
-      if (authController.isLoading.value) {
+      if (onboardingController.isLoading.value) {
         return Scaffold(body: Center(child: CircularProgressIndicator()));
       }
       if (FirebaseHelper.currentUser != null) {
@@ -50,13 +50,11 @@ class InitialScreen extends StatelessWidget {
 }
 
 void initControllers() {
-  Get.put(AuthController());
   Get.put(CategoryController());
-  Get.put(ExpenseController());
   Get.put(DashboardController());
   Get.put(SettingController());
-  Get.lazyPut(() => NotificationController(), fenix: true);
   Get.put(MonthController());
-  Get.put(HomeController());
+  // Note: OnboardingController is kept here because InitialScreen relies on it 
+  // immediately at startup before any routes are loaded. 
   Get.put(OnboardingController());
 }

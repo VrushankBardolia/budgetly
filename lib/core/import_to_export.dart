@@ -35,31 +35,26 @@ export 'package:budgetly/components/google_signin_button.dart';
 export 'package:budgetly/components/main_notification_tile.dart';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
-export 'package:budgetly/helper/firebase_helper.dart';
-export 'package:budgetly/helper/firebase_options.dart';
-export 'package:budgetly/helper/notification_service.dart';
-export 'package:budgetly/helper/preference_helper.dart';
+export 'package:budgetly/core/helper/firebase_helper.dart';
+export 'package:budgetly/core/helper/firebase_options.dart';
+export 'package:budgetly/core/helper/notification_service.dart';
+export 'package:budgetly/core/helper/preference_helper.dart';
 
 // ─── Models ────────────────────────────────────────────────────────────────
-export 'package:budgetly/model/category.dart';
-export 'package:budgetly/model/expense.dart';
-export 'package:budgetly/model/month_budget.dart';
-export 'package:budgetly/model/user_model.dart';
-export 'package:budgetly/model/month_summery.dart';
+export 'package:budgetly/core/model/category.dart';
+export 'package:budgetly/core/model/expense.dart';
+export 'package:budgetly/core/model/month_budget.dart';
+export 'package:budgetly/core/model/user_model.dart';
+export 'package:budgetly/core/model/month_summery.dart';
 
 // ─── Routes ────────────────────────────────────────────────────────────────
-export 'package:budgetly/routes/app_pages.dart';
-
-// ─── Controllers ───────────────────────────────────────────────────────────
-export 'package:budgetly/modules/dashboard/controller/dashboard_controller.dart';
-export 'package:budgetly/controller/expense_controller.dart';
+export 'package:budgetly/core/routes/app_pages.dart';
 
 // ─── Modules (Home) ────────────────────────────────────────────────────────
 export 'package:budgetly/modules/home/controller/home_controller.dart';
 export 'package:budgetly/modules/home/view/home_screen.dart';
 
 // ─── Modules (Auth) ────────────────────────────────────────────────────────
-export 'package:budgetly/modules/auth/controller/auth_controller.dart';
 export 'package:budgetly/modules/auth/view/app_lock_screen.dart';
 export 'package:budgetly/modules/auth/controller/onboarding_controller.dart';
 export 'package:budgetly/modules/auth/view/onboarding_screen.dart';
@@ -70,6 +65,7 @@ export 'package:budgetly/modules/catregories/view/categories_tab.dart';
 
 // ─── Modules (Dashboard) ───────────────────────────────────────────────────
 export 'package:budgetly/modules/dashboard/view/dashboard_tab.dart';
+export 'package:budgetly/modules/dashboard/controller/dashboard_controller.dart';
 
 // ─── Modules (Months) ──────────────────────────────────────────────────────
 export 'package:budgetly/modules/months/view/expense_form_screen.dart';

@@ -5,8 +5,20 @@ part 'app_routes.dart';
 class AppPages {
   static final routes = [
     GetPage(name: Routes.INITIAL, page: () => const InitialScreen()),
-    GetPage(name: Routes.HOME, page: () => const HomeScreen()),
-    GetPage(name: Routes.ONBOARDING, page: () => const OnboardingScreen()),
+    GetPage(
+      name: Routes.HOME,
+      page: () => const HomeScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(HomeController());
+      }),
+    ),
+    GetPage(
+      name: Routes.ONBOARDING,
+      page: () => const OnboardingScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(OnboardingController());
+      }),
+    ),
     GetPage(
       name: Routes.MONTH_DETAILS,
       page: () => const MonthDetailScreen(),
@@ -14,7 +26,13 @@ class AppPages {
         Get.put(MonthDetailController());
       }),
     ),
-    GetPage(name: Routes.NOTIFICATIONS, page: () => const NotificationScreen()),
+    GetPage(
+      name: Routes.NOTIFICATIONS,
+      page: () => const NotificationScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(NotificationController());
+      }),
+    ),
     GetPage(
       name: Routes.EXPENSE_FORM,
       page: () => const ExpenseFormScreen(),

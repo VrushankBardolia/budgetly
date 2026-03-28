@@ -17,12 +17,7 @@ class HomeController extends GetxController {
 
   Future<void> loadData() async {
     final categoryController = Get.find<CategoryController>();
-    final expenseController = Get.find<ExpenseController>();
-
     await categoryController.loadCategories();
-    await expenseController.loadExpenses(expenseController.selectedYear);
-    await expenseController.loadBudgets(expenseController.selectedYear);
-
     NotificationService.consumeInitialNotification();
   }
 }
