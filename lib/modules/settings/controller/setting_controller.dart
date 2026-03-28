@@ -180,10 +180,10 @@ class SettingController extends GetxController {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(color: Theme.of(context).colorScheme.secondary, shape: BoxShape.circle),
-              child: Icon(Icons.wallet, size: 56, color: Theme.of(context).colorScheme.onSecondary),
+              child: Icon(Icons.wallet, size: 60, color: Theme.of(context).colorScheme.onSecondary),
             ),
             const SizedBox(height: 16),
-            const Text('Budgetly', style: TextStyle(fontFamily: 'BBH Bogle', fontSize: 32, letterSpacing: 1)),
+            Text('Budgetly', style: GoogleFonts.staatliches(fontSize: 32)),
             const SizedBox(height: 8),
             const Text('Version 1.0.0', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 24),

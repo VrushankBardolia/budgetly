@@ -8,16 +8,24 @@ class HomeController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    loadData();
+    NotificationService.consumeInitialNotification();
   }
 
   void changeIndex(int index) {
+    switch (index) {
+      case 0: // DASHBOARD TAB
+        Get.find<DashboardController>().loadData();
+        break;
+      case 1: // MONTHS TAB
+        Get.find<MonthController>().loadData();
+        break;
+      case 2: // CATEGORIES TAB
+        Get.find<CategoryController>().loadCategories();
+        break;
+      case 3: // SETTINGS TAB
+        Get.find<SettingController>().loadUserData();
+        break;
+    }
     currentIndex.value = index;
-  }
-
-  Future<void> loadData() async {
-    final categoryController = Get.find<CategoryController>();
-    await categoryController.loadCategories();
-    NotificationService.consumeInitialNotification();
   }
 }

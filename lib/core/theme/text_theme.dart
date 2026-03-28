@@ -15,3 +15,7 @@ TextStyle semiBoldText(double size, {Color color = AppColors.white, double? heig
 TextStyle mediumText(double size, {Color color = AppColors.white, double? height}) {
   return GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: FontWeight.w500, color: color, height: height);
 }
+
+TextStyle customText(double size, FontWeight fontWeight, {Color color = AppColors.white, double? height}) {
+  return GoogleFonts.plusJakartaSans(fontSize: size, fontWeight: fontWeight, color: color, height: height);
+}

@@ -121,14 +121,7 @@ class DashboardTab extends GetView<DashboardController> {
                 Text('₹', style: GoogleFonts.plusJakartaSans(fontSize: 40, color: Colors.white, height: 1.0)),
                 AnimatedDigitWidget(
                   value: controller.displayTotal,
-                  textStyle: GoogleFonts.plusJakartaSans(
-                    fontSize: 40,
-                    fontStyle: FontStyle.italic,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.0,
-                    letterSpacing: -2,
-                  ),
+                  textStyle: GoogleFonts.plusJakartaSans(fontSize: 40, fontWeight: FontWeight.w800, color: Colors.white, height: 1.0, letterSpacing: -2),
                   enableSeparator: true,
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutCubic,

@@ -48,9 +48,9 @@ class OnboardingScreen extends GetView<OnboardingController> {
                             child: Opacity(opacity: value, child: child),
                           );
                         },
-                        child: const Text(
+                        child: Text(
                           'Welcome to Budgetly',
-                          style: TextStyle(fontSize: 48, fontFamily: 'BBH Bogle', fontWeight: FontWeight.bold, color: Colors.white, height: 1.2),
+                          style: GoogleFonts.staatliches(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white, height: 1),
                           textAlign: TextAlign.center,
                         ),
                       ),

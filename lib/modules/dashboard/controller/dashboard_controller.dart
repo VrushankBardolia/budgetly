@@ -34,6 +34,18 @@ class DashboardController extends GetxController {
     isLoading.value = false;
   }
 
+  Future<void> loadData() async {
+    isLoading.value = true;
+    await Future.wait([loadAvailableYears(), loadCategories()]);
+    if (availableYears.isNotEmpty) {
+      if (!availableYears.contains(selectedYear.value)) {
+        selectedYear.value = availableYears.first;
+      }
+      await loadExpenses(selectedYear.value);
+    }
+    isLoading.value = false;
+  }
+
   // ─── Data Loading ─────────────────────────────────────────────────────────
 
   Future<void> loadAvailableYears() async {

@@ -77,6 +77,12 @@ class MonthController extends GetxController {
 
   // ─── Public Actions ───────────────────────────────────────────────────────
 
+  Future<void> loadData() async {
+    isLoading.value = true;
+    await Future.wait([_loadExpenses(selectedYear.value), _loadBudgets(selectedYear.value)]);
+    isLoading.value = false;
+  }
+
   Future<void> changeYear(int year) async {
     selectedYear.value = year;
     await _loadAll(year);

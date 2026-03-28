@@ -23,9 +23,9 @@ export 'package:local_auth/local_auth.dart';
 export 'package:flutter_svg/svg.dart';
 
 // ─── Core & Theme ──────────────────────────────────────────────────────────
-export 'package:budgetly/core/app_colors.dart';
-export 'package:budgetly/core/app_theme.dart';
-export 'package:budgetly/core/text_theme.dart';
+export 'package:budgetly/core/theme/app_colors.dart';
+export 'package:budgetly/core/theme/app_theme.dart';
+export 'package:budgetly/core/theme/text_theme.dart';
 
 // ─── Components ────────────────────────────────────────────────────────────
 export 'package:budgetly/components/button.dart';
@@ -58,6 +58,7 @@ export 'package:budgetly/modules/home/view/home_screen.dart';
 export 'package:budgetly/modules/auth/view/app_lock_screen.dart';
 export 'package:budgetly/modules/auth/controller/onboarding_controller.dart';
 export 'package:budgetly/modules/auth/view/onboarding_screen.dart';
+export 'package:budgetly/modules/auth/view/initial_loader_screen.dart';
 
 // ─── Modules (Categories) ──────────────────────────────────────────────────
 export 'package:budgetly/modules/catregories/controller/category_controller.dart';

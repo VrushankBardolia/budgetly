@@ -75,13 +75,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
-    - assets/fonts/
     - assets/logo/
-
-  fonts:
-    - family: BBH Bogle
-      fonts:
-        - asset: assets/fonts/BBHBogle-Regular.ttf
 
   #
   # For details regarding fonts from package dependencies,

@@ -32,11 +32,9 @@ class InitialScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final OnboardingController onboardingController = Get.find<OnboardingController>();
-
     return Obx(() {
-      if (onboardingController.isLoading.value) {
-        return Scaffold(body: Center(child: CircularProgressIndicator()));
+      if (Get.find<OnboardingController>().isLoading.value) {
+        return const InitialLoaderScreen();
       }
       if (FirebaseHelper.currentUser != null) {
         if (PreferenceHelper.isEnabledBiometric) {
@@ -54,7 +52,8 @@ void initControllers() {
   Get.put(DashboardController());
   Get.put(SettingController());
   Get.put(MonthController());
-  // Note: OnboardingController is kept here because InitialScreen relies on it 
-  // immediately at startup before any routes are loaded. 
+  Get.put(HomeController());
+  // Note: OnboardingController is kept here because InitialScreen relies on it
+  // immediately at startup before any routes are loaded.
   Get.put(OnboardingController());
 }
