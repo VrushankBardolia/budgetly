@@ -45,21 +45,21 @@ class MonthDetailController extends GetxController {
         title: Text(
           'Set Budget',
           textAlign: TextAlign.center,
-          style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold),
+          style: boldText(14, color: Colors.white),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(formattedMonth, style: TextStyle(color: AppColors.grey)),
+            Text(formattedMonth, style: regularText(14, color: AppColors.grey)),
             const SizedBox(height: 16),
             TextField(
               controller: budgetField,
               keyboardType: TextInputType.number,
               autofocus: true,
-              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 18),
+              style: regularText(14),
               decoration: InputDecoration(
-                hintStyle: GoogleFonts.plusJakartaSans(color: Colors.grey.withValues(alpha: 0.5)),
+                hintStyle: regularText(14, color: Colors.grey.withValues(alpha: 0.5)),
                 filled: true,
                 fillColor: AppColors.surfaceLight,
                 prefixText: '₹',
@@ -78,8 +78,8 @@ class MonthDetailController extends GetxController {
         ),
         actions: [
           TextButton(
-            onPressed: () => Get.back(),
-            child: Text(budgetField.text.isEmpty ? 'Skip' : 'Cancel', style: TextStyle(color: Colors.grey[600])),
+            onPressed: Get.back,
+            child: Text(budgetField.text.isEmpty ? 'Skip' : 'Cancel', style: regularText(14, color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -93,10 +93,7 @@ class MonthDetailController extends GetxController {
               backgroundColor: AppColors.brand,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: Text(
-              'Save',
-              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
+            child: Text('Save', style: boldText(14)),
           ),
         ],
       ),
@@ -122,16 +119,16 @@ class MonthDetailController extends GetxController {
       AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Delete Expense', style: GoogleFonts.plusJakartaSans(color: Colors.white)),
-        content: Text('Are you sure you want to delete this expense?', style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
+        title: Text('Delete Expense', style: boldText(14)),
+        content: Text('Are you sure you want to delete this expense?', style: regularText(14, color: Colors.grey)),
         actions: [
           TextButton(
             onPressed: () => Get.back(result: false),
-            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
+            child: Text('Cancel', style: regularText(14, color: Colors.grey)),
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: Text('Delete', style: GoogleFonts.plusJakartaSans(color: AppColors.error)),
+            child: Text('Delete', style: regularText(14, color: AppColors.error)),
           ),
         ],
       ),
@@ -149,16 +146,16 @@ class MonthDetailController extends GetxController {
   }
 
   Future<void> loadExpenses() async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
+    final userId = PreferenceHelper.userId;
+    if (userId.isEmpty) return;
 
     final snapshot = await FirebaseHelper.getExpenses(userId, DateTime(year, month, 1), DateTime(year, month + 1, 0, 23, 59, 59));
     expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
   }
 
   Future<void> loadBudget() async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
+    final userId = PreferenceHelper.userId;
+    if (userId.isEmpty) return;
 
     final snapshot = await FirebaseHelper.getBudgetForMonth(userId, year, month);
     if (snapshot.docs.isNotEmpty) {
@@ -167,8 +164,8 @@ class MonthDetailController extends GetxController {
   }
 
   Future<void> loadCategories() async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
+    final userId = PreferenceHelper.userId;
+    if (userId.isEmpty) return;
 
     final snapshot = await FirebaseHelper.getCategories(userId);
     categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
@@ -177,8 +174,8 @@ class MonthDetailController extends GetxController {
   // ─── Budget CRUD ──────────────────────────────────────────────────────────
 
   Future<void> setBudget(int value) async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
+    final userId = PreferenceHelper.userId;
+    if (userId.isEmpty) return;
 
     final snapshot = await FirebaseHelper.getBudgetForMonth(userId, year, month);
     if (snapshot.docs.isEmpty) {

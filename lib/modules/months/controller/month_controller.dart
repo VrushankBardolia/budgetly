@@ -9,15 +9,11 @@ class MonthController extends GetxController {
   final RxBool isLoading = true.obs;
 
   // ─── Derived ──────────────────────────────────────────────────────────────
-
-  /// 12 ready-to-render month summaries for the grid.
-  /// Recomputed automatically whenever expenses, budgets, or selectedYear change.
   List<MonthSummary> get monthSummaries {
     final now = DateTime.now();
     return List.generate(12, (index) {
       final month = index + 1;
       final monthDate = DateTime(selectedYear.value, month);
-      // final monthName = DateFormat('MMMM').format(monthDate);
 
       final isCurrent = monthDate.year == now.year && monthDate.month == now.month;
       final isPast = monthDate.isBefore(DateTime(now.year, now.month));
@@ -111,8 +107,8 @@ class MonthController extends GetxController {
   }
 
   Future<void> _loadBudgets(int year) async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
+    final userId = PreferenceHelper.userId;
+    if (userId.isEmpty) return;
 
     final snapshot = await FirebaseHelper.getBudgets(userId, year);
 

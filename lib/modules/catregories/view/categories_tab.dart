@@ -13,17 +13,14 @@ class CategoriesTab extends GetView<CategoryController> {
         appBar: AppBar(
           backgroundColor: AppColors.black,
           elevation: 0,
-          title: Text('Categories', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 24)),
+          title: Text('Categories', style: boldText(24, color: Colors.white)),
           actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
           actions: [
             Tooltip(
               triggerMode: TooltipTriggerMode.tap,
               showDuration: Duration(seconds: 3),
               message: "You can make only 10 categories",
-              child: Text(
-                "${controller.categoryCount.toString()}/10",
-                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600),
-              ),
+              child: Text("${controller.categoryCount.toString()}/10", style: semiBoldText(14, color: Colors.white)),
             ),
           ],
         ),
@@ -88,14 +85,14 @@ class CategoriesTab extends GetView<CategoryController> {
                   onTap: () => controller.editCategory(context, category),
                   title: "Edit",
                   icon: CupertinoIcons.pen,
-                  itemTheme: PullDownMenuItemTheme(textStyle: GoogleFonts.plusJakartaSans(color: Colors.white)),
+                  itemTheme: PullDownMenuItemTheme(textStyle: regularText(14, color: Colors.white)),
                 ),
                 PullDownMenuItem(
                   onTap: () => controller.deleteCategory(context, category.id, category.name),
                   title: "Delete",
                   icon: CupertinoIcons.delete,
                   isDestructive: true,
-                  itemTheme: PullDownMenuItemTheme(textStyle: GoogleFonts.plusJakartaSans()),
+                  itemTheme: PullDownMenuItemTheme(textStyle: regularText(14, color: Colors.white)),
                 ),
               ],
               position: Rect.fromLTRB(details.globalPosition.dx, details.globalPosition.dy, details.globalPosition.dx, details.globalPosition.dy),
@@ -118,12 +115,9 @@ class CategoriesTab extends GetView<CategoryController> {
             child: Icon(Icons.category_outlined, size: 60, color: Colors.grey[700]),
           ),
           const SizedBox(height: 24),
-          Text(
-            'No categories yet',
-            style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+          Text('No categories yet', style: boldText(18, color: Colors.white)),
           const SizedBox(height: 8),
-          Text('Add categories to track expenses', style: GoogleFonts.plusJakartaSans(color: Colors.grey[500])),
+          Text('Add categories to track expenses', style: regularText(14, color: Colors.grey)),
         ],
       ),
     );

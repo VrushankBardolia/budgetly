@@ -10,7 +10,7 @@ class MonthsTab extends GetView<MonthController> {
       appBar: AppBar(
         backgroundColor: AppColors.black,
         elevation: 0,
-        title: Text('Monthly Overview', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+        title: Text('Monthly Overview', style: boldText(24)),
       ),
       body: Obx(() {
         if (controller.isLoading.value) {
@@ -20,9 +20,19 @@ class MonthsTab extends GetView<MonthController> {
         return GridView.builder(
           padding: const EdgeInsets.all(16),
           physics: const BouncingScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 1.3),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.3,
+          ),
           itemCount: controller.monthSummaries.length,
-          itemBuilder: (ctx, index) => MonthCard(summary: controller.monthSummaries[index], onTap: () => controller.navigateToMonth(controller.monthSummaries[index].month)),
+          itemBuilder: (ctx, index) => MonthCard(
+            summary: controller.monthSummaries[index],
+            onTap: () => controller.navigateToMonth(
+              controller.monthSummaries[index].month,
+            ),
+          ),
         );
       }),
     );
@@ -41,12 +51,20 @@ class MonthsTab extends GetView<MonthController> {
         child: GridView.builder(
           padding: const EdgeInsets.all(16),
           physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 1.3),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.3,
+          ),
           itemCount: 12,
           itemBuilder: (ctx, index) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(16)),
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -57,7 +75,10 @@ class MonthsTab extends GetView<MonthController> {
                       Container(
                         width: 20,
                         height: 20,
-                        decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -69,7 +90,10 @@ class MonthsTab extends GetView<MonthController> {
                   Container(
                     width: double.infinity,
                     height: 6,
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Container(width: 60, height: 10, color: Colors.white),
@@ -100,8 +124,16 @@ class MonthCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: summary.isCurrent ? Border.all(color: AppColors.brand, width: 2) : Border.all(color: Colors.white.withValues(alpha: 0.05)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4))],
+          border: summary.isCurrent
+              ? Border.all(color: AppColors.brand, width: 2)
+              : Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,9 +144,18 @@ class MonthCard extends StatelessWidget {
               children: [
                 Text(
                   summary.monthName,
-                  style: GoogleFonts.plusJakartaSans(color: summary.isCurrent ? AppColors.brand : Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: GoogleFonts.plusJakartaSans(
+                    color: summary.isCurrent ? AppColors.brand : Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-                if (summary.hasData) HugeIcon(icon: summary.statusIcon, color: summary.statusColor, size: 20),
+                if (summary.hasData)
+                  HugeIcon(
+                    icon: summary.statusIcon,
+                    color: summary.statusColor,
+                    size: 20,
+                  ),
               ],
             ),
 
@@ -122,28 +163,54 @@ class MonthCard extends StatelessWidget {
 
             // ── Body ────────────────────────────────────────────────────────
             if (summary.hasData) ...[
-              Text(summary.statusLabel, style: GoogleFonts.plusJakartaSans(color: AppColors.grey, fontSize: 12)),
+              Text(
+                summary.statusLabel,
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.grey,
+                  fontSize: 12,
+                ),
+              ),
               Text(
                 '₹${summary.difference.abs().toStringAsFixed(0)}',
-                style: GoogleFonts.plusJakartaSans(color: summary.statusColor, fontWeight: FontWeight.w800, fontSize: 20),
+                style: GoogleFonts.plusJakartaSans(
+                  color: summary.statusColor,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 20,
+                ),
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: summary.progressValue,
                   backgroundColor: Colors.grey[800],
-                  valueColor: AlwaysStoppedAnimation<Color>(summary.statusColor),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    summary.statusColor,
+                  ),
                   minHeight: 4,
                 ),
               ),
               const SizedBox(height: 4),
-              Text('Spent: ₹${summary.expense.toStringAsFixed(0)}', style: GoogleFonts.plusJakartaSans(color: AppColors.grey, fontSize: 12)),
+              Text(
+                'Spent: ₹${summary.expense.toStringAsFixed(0)}',
+                style: GoogleFonts.plusJakartaSans(
+                  color: AppColors.grey,
+                  fontSize: 12,
+                ),
+              ),
             ] else ...[
               Center(
-                child: HugeIcon(icon: HugeIcons.strokeRoundedCalendarMinus02, strokeWidth: 1.5, color: Colors.grey.shade800, size: 36),
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedCalendarMinus02,
+                  strokeWidth: 1.5,
+                  color: Colors.grey.shade800,
+                  size: 36,
+                ),
               ),
               const Spacer(),
-              Text('No Data', style: TextStyle(color: Colors.white.withValues(alpha: 0.2))),
+              Text(
+                'No Data',
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+              ),
             ],
           ],
         ),

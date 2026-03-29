@@ -7,7 +7,8 @@ enum NotificationPermissionState {
 
 class NotificationController extends GetxController {
   // ─── Reactive State ───────────────────────────────────────────────────────
-  final Rx<NotificationPermissionState> permissionState = NotificationPermissionState.denied.obs;
+  final Rx<NotificationPermissionState> permissionState =
+      NotificationPermissionState.denied.obs;
   final RxBool notificationsEnabled = false.obs;
   final RxBool dailyReminderEnabled = true.obs;
   final RxBool isLoading = false.obs;
@@ -59,8 +60,8 @@ class NotificationController extends GetxController {
       permissionState.value = NotificationPermissionState.granted;
       notificationsEnabled.value = true;
       dailyReminderEnabled.value = true;
-      PreferenceHelper.setNotificationEnabled(true);
-      PreferenceHelper.setDailyReminderEnabled(true);
+      PreferenceHelper.isNotificationEnabled = true;
+      PreferenceHelper.isDailyReminderEnabled = true;
     } else {
       permissionState.value = NotificationPermissionState.denied;
     }
@@ -79,18 +80,22 @@ class NotificationController extends GetxController {
         await NotificationService.disable();
         notificationsEnabled.value = false;
         dailyReminderEnabled.value = false;
-        PreferenceHelper.setNotificationEnabled(false);
-        PreferenceHelper.setDailyReminderEnabled(false);
+        PreferenceHelper.isNotificationEnabled = false;
+        PreferenceHelper.isDailyReminderEnabled = false;
       } else {
         notificationsEnabled.value = true;
         // Re-enable daily reminder by default when notifications are turned back on
         dailyReminderEnabled.value = true;
         await NotificationService.scheduleDailyReminder();
-        PreferenceHelper.setNotificationEnabled(true);
-        PreferenceHelper.setDailyReminderEnabled(true);
+        PreferenceHelper.isNotificationEnabled = true;
+        PreferenceHelper.isDailyReminderEnabled = true;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not update notification settings. Please try again.', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Could not update notification settings. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 
@@ -103,14 +108,18 @@ class NotificationController extends GetxController {
       if (dailyReminderEnabled.value) {
         await NotificationService.cancelDailyReminder();
         dailyReminderEnabled.value = false;
-        PreferenceHelper.setDailyReminderEnabled(false);
+        PreferenceHelper.isDailyReminderEnabled = false;
       } else {
         await NotificationService.scheduleDailyReminder();
         dailyReminderEnabled.value = true;
-        PreferenceHelper.setDailyReminderEnabled(true);
+        PreferenceHelper.isDailyReminderEnabled = true;
       }
     } catch (e) {
-      Get.snackbar('Error', 'Could not update reminder settings. Please try again.', snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar(
+        'Error',
+        'Could not update reminder settings. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 }

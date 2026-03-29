@@ -12,7 +12,7 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
         backgroundColor: AppColors.black,
         elevation: 0,
         centerTitle: true,
-        title: Text(controller.formattedMonth, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 20)),
+        title: Text(controller.formattedMonth, style: boldText(20)),
         actions: [
           IconButton(
             icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04, size: 20, color: Colors.white),
@@ -74,11 +74,8 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      "Transactions",
-                      style: GoogleFonts.plusJakartaSans(color: Colors.grey[400], fontSize: 18, fontWeight: FontWeight.w600, letterSpacing: 1),
-                    ),
-                    Text("${controller.expenses.length}", style: GoogleFonts.plusJakartaSans(color: Colors.grey[600])),
+                    Text("Transactions", style: semiBoldText(18, color: Colors.grey.shade400)),
+                    Text("${controller.expenses.length}", style: regularText(14, color: Colors.grey.shade600)),
                   ],
                 ),
               ),
@@ -97,7 +94,7 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                         child: Icon(Icons.receipt_long_rounded, size: 50, color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       const SizedBox(height: 16),
-                      Text('No transactions', style: GoogleFonts.plusJakartaSans(color: Colors.white.withValues(alpha: 0.5))),
+                      Text('No transactions', style: regularText(14, color: Colors.grey.shade600)),
                     ],
                   ),
                 ),
@@ -122,14 +119,14 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                               onTap: () => controller.goToEditExpense(expense),
                               title: "Edit",
                               icon: CupertinoIcons.pen,
-                              itemTheme: PullDownMenuItemTheme(textStyle: GoogleFonts.plusJakartaSans(color: Colors.white)),
+                              itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
                             ),
                             PullDownMenuItem(
                               onTap: () => controller.showDeleteExpenseDialog(expense.id),
                               title: "Delete",
                               icon: CupertinoIcons.delete,
                               isDestructive: true,
-                              itemTheme: PullDownMenuItemTheme(textStyle: GoogleFonts.plusJakartaSans()),
+                              itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
                             ),
                           ],
                           position: Rect.fromLTRB(details.globalPosition.dx, details.globalPosition.dy, details.globalPosition.dx, details.globalPosition.dy),
@@ -149,7 +146,7 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
       // ── FAB ──────────────────────────────────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
         onPressed: controller.goToAddExpense,
-        label: const Text("Add Expense"),
+        label: Text("Add Expense", style: regularText(14)),
         icon: HugeIcon(icon: HugeIcons.strokeRoundedMoneyAdd01),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -176,15 +173,12 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: GoogleFonts.plusJakartaSans(color: Colors.grey)),
+                Text(title, style: regularText(14, color: Colors.grey)),
                 HugeIcon(icon: icon, size: 20, color: valueColor),
               ],
             ),
             const SizedBox(height: 8),
-            Text(
-              value,
-              style: GoogleFonts.plusJakartaSans(color: valueColor, fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: 0),
-            ),
+            Text(value, style: boldText(24, color: valueColor)),
           ],
         ),
       ),

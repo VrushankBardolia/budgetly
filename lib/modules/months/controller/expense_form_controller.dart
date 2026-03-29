@@ -98,14 +98,13 @@ class ExpenseFormController extends GetxController {
 
     isSubmitting.value = true;
     try {
-      final userId = FirebaseHelper.currentUser!.uid;
       final expense = Expense(
         id: editingExpense?.id ?? '',
         date: selectedDate.value!,
         price: double.parse(priceController.text),
         categoryId: selectedCategoryId.value,
         detail: detailController.text.trim(),
-        userId: userId,
+        userId: PreferenceHelper.userId,
       );
 
       if (isEditing) {
@@ -113,8 +112,6 @@ class ExpenseFormController extends GetxController {
       } else {
         await FirebaseHelper.addExpense(expense);
       }
-
-      // Pass true back so MonthDetailController knows to reload
       Get.back(result: true);
     } finally {
       isSubmitting.value = false;

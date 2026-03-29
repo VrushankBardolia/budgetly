@@ -48,7 +48,10 @@ It helps users track expenses, manage budgets, and visualize spending patterns w
 
 ## Changelog
 
-### 1.3 (Latest Release)
+### 1.3.1 (Latest Release)
+- Fixed dashboard data not loading when user logins after installing app
+
+### 1.3 
 - Added daily notification reminders to log expenses on time
 - Removed traditional email-password authentication
 - Introduced initial loading screen for smoother app startup

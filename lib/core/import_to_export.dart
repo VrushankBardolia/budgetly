@@ -36,6 +36,7 @@ export 'package:budgetly/components/main_notification_tile.dart';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 export 'package:budgetly/core/helper/firebase_helper.dart';
+export 'package:budgetly/core/helper/firebase_logger.dart';
 export 'package:budgetly/core/helper/firebase_options.dart';
 export 'package:budgetly/core/helper/notification_service.dart';
 export 'package:budgetly/core/helper/preference_helper.dart';

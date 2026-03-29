@@ -50,15 +50,9 @@ class _AppLockScreenState extends State<AppLockScreen> {
               child: const HugeIcon(icon: HugeIcons.strokeRoundedFingerPrintScan, size: 64, color: AppColors.brand),
             ),
             const SizedBox(height: 32),
-            Text(
-              'Budgetly is Locked',
-              style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            Text('Budgetly is Locked', style: boldText(24, color: Colors.white)),
             const SizedBox(height: 16),
-            Text(
-              'Verify your identity to proceed.',
-              style: GoogleFonts.plusJakartaSans(color: Colors.grey[400], fontSize: 15),
-            ),
+            Text('Verify your identity to proceed.', style: regularText(15, color: Colors.grey)),
             const SizedBox(height: 48),
             ElevatedButton(
               onPressed: _authenticate,
@@ -67,10 +61,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: Text(
-                'Tap to Unlock',
-                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-              ),
+              child: Text('Tap to Unlock', style: semiBoldText(16, color: Colors.white)),
             ),
           ],
         ),

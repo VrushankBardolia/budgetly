@@ -8,7 +8,7 @@ class AppColors {
 
   // Brand / Main
   static const Color brand = Color(0xFF42A5F5);
-  static const Color accent = Color.fromARGB(255, 46, 217, 255);
+  static const Color accent = Color(0xFF2ED9FF);
   static const Color brandDark = Color(0xFF001F42);
 
   // Functional Status Colors

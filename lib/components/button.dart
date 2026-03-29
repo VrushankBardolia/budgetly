@@ -1,34 +1,23 @@
-import 'package:flutter/material.dart';
-
-enum ButtonVariant { darkBlue, white }
+import 'package:budgetly/core/import_to_export.dart';
 
 class Button extends StatelessWidget {
   final Widget child;
   final VoidCallback? onClick;
-  final ButtonVariant variant;
-  const Button({super.key, required this.child, required this.onClick, this.variant = ButtonVariant.darkBlue});
+
+  const Button({super.key, required this.child, required this.onClick});
 
   @override
   Widget build(BuildContext context) {
-    final white = variant == ButtonVariant.white;
-
     return GestureDetector(
       onTap: onClick,
       child: Container(
         padding: EdgeInsetsGeometry.all(16),
         width: double.infinity,
-        decoration: white
-            ? BoxDecoration(
-                // WHITE COLOR THEME
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-              )
-            : BoxDecoration(
-                // DARK BLUE COLOR THEME
-                color: Theme.of(context).colorScheme.secondary,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(100)),
-              ),
+        decoration: BoxDecoration(
+          color: AppColors.brandDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.brand.withValues(alpha: 0.2)),
+        ),
         child: Center(child: child),
       ),
     );

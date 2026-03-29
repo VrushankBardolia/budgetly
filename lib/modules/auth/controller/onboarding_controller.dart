@@ -4,6 +4,9 @@ class OnboardingController extends GetxController {
   // ─── Reactive State ───────────────────────────────────────────────────────
   RxBool isLoading = true.obs;
 
+  // Add a reactive variable to hold the logged-in user's data
+  Rxn<UserModel> currentUser = Rxn<UserModel>();
+
   @override
   void onInit() {
     super.onInit();
@@ -11,10 +14,13 @@ class OnboardingController extends GetxController {
   }
 
   // ─── Auth State ───────────────────────────────────────────────────────────
-
   void _initializeAuth() {
     FirebaseHelper.authStateChanges.listen((user) async {
-      if (user != null) await _fetchAndStoreUserData();
+      if (user != null) {
+        await _fetchAndStoreUserData();
+      } else {
+        currentUser.value = null; // Clear data if user logs out
+      }
       isLoading.value = false;
     });
   }
@@ -30,7 +36,10 @@ class OnboardingController extends GetxController {
         data['uid'] = user.uid;
 
         final userModel = UserModel.fromJson(data);
-        await PreferenceHelper.setUser(userModel);
+        PreferenceHelper.user = userModel;
+
+        // Update the reactive variable so the UI can display the data
+        currentUser.value = userModel;
       }
     } catch (e) {
       debugPrint('Error fetching user data: $e');
@@ -44,13 +53,13 @@ class OnboardingController extends GetxController {
 
       final credential = await FirebaseHelper.signInWithGoogle();
       if (credential == null) {
-        Get.back();
+        _closeDialogIfOpen();
         return;
       }
 
       final user = credential.user;
       if (user == null) {
-        Get.back();
+        _closeDialogIfOpen();
         return;
       }
 
@@ -69,10 +78,17 @@ class OnboardingController extends GetxController {
 
       await _fetchAndStoreUserData();
 
-      Get.back();
-      Get.offAllNamed(Routes.HOME);
+      _closeDialogIfOpen();
+
+      // Navigate to Home only if we successfully have user data
+      if (currentUser.value != null) {
+        // The dashboard controller was instantiated before the user logged in,
+        // so we must manually tell it to load data now that we have a valid userId.
+        Get.find<DashboardController>().loadData();
+        Get.offAllNamed(Routes.HOME);
+      }
     } catch (e) {
-      Get.back();
+      _closeDialogIfOpen();
       _showErrorDialog();
     } finally {
       isLoading.value = false;
@@ -82,7 +98,8 @@ class OnboardingController extends GetxController {
   Future<void> signOut() async {
     try {
       await FirebaseHelper.signOut();
-      await PreferenceHelper.setUser(null);
+      PreferenceHelper.user = null;
+      currentUser.value = null; // Clear the user from memory
     } catch (e) {
       debugPrint('Sign out error: $e');
     }
@@ -90,17 +107,24 @@ class OnboardingController extends GetxController {
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
 
+  // Safe helper to close the loading dialog without accidentally popping screens
+  void _closeDialogIfOpen() {
+    if (Get.isDialogOpen ?? false) {
+      Get.back();
+    }
+  }
+
   void _showErrorDialog() {
     Get.defaultDialog(
       content: Column(
         mainAxisSize: MainAxisSize.min,
-        spacing: 12,
         children: [
           CircleAvatar(
             backgroundColor: Colors.red.withValues(alpha: 0.1),
             radius: 60,
             child: const Icon(Icons.error, size: 100, color: Colors.red),
           ),
+          const SizedBox(height: 12),
           const Text('Failed to sign in', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         ],
       ),

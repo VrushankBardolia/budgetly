@@ -1,8 +1,8 @@
 import 'package:budgetly/core/import_to_export.dart';
 
 class CategoryController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  // final FirebaseFirestore _db = FirebaseFirestore.instance;
+  // final FirebaseAuth _auth = FirebaseAuth.instance;
 
   final RxList<Category> _categories = <Category>[].obs;
 
@@ -12,8 +12,8 @@ class CategoryController extends GetxController {
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
       hintText: hint,
-      labelStyle: const TextStyle(color: Colors.grey),
-      hintStyle: TextStyle(color: Colors.grey.withValues(alpha: 0.5)),
+      labelStyle: regularText(14, color: Colors.grey),
+      hintStyle: regularText(14, color: Colors.grey.withValues(alpha: 0.5)),
       filled: true,
       fillColor: const Color(0xFF2C2C2C),
       enabledBorder: OutlineInputBorder(
@@ -35,10 +35,10 @@ class CategoryController extends GetxController {
   }
 
   Future<void> loadCategories() async {
-    final userId = _auth.currentUser?.uid;
-    if (userId == null) return;
+    final userId = PreferenceHelper.userId;
+    if (userId.isEmpty) return;
 
-    final snapshot = await _db.collection('categories').where('userId', isEqualTo: userId).orderBy('name').get();
+    final snapshot = await FirebaseHelper.getCategories(userId);
 
     _categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
   }
@@ -52,20 +52,20 @@ class CategoryController extends GetxController {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Add Category', style: TextStyle(color: Colors.white)),
+        title: Text('Add Category', style: regularText(14, color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: emojiController,
-              style: const TextStyle(color: Colors.white),
+              style: regularText(14, color: Colors.white),
               decoration: _inputDecoration('Emoji'),
               maxLength: 1,
             ),
             const SizedBox(height: 16),
             TextField(
               controller: nameController,
-              style: const TextStyle(color: Colors.white),
+              style: regularText(14, color: Colors.white),
               decoration: _inputDecoration('Name'),
               textCapitalization: TextCapitalization.words,
             ),
@@ -73,27 +73,25 @@ class CategoryController extends GetxController {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[500])),
+            onPressed: Get.back,
+            child: Text('Cancel', style: regularText(14, color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
               if (nameController.text.isNotEmpty && emojiController.text.isNotEmpty) {
                 try {
-                  final userId = _auth.currentUser?.uid;
-                  if (userId == null) return;
-                  await _db.collection('categories').add({'name': nameController.text, 'emoji': emojiController.text, 'userId': userId});
+                  await FirebaseHelper.addCategory(nameController.text, emojiController.text);
                   await loadCategories();
-                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                  if (dialogContext.mounted) Get.back();
                 } catch (e) {
                   if (dialogContext.mounted) {
-                    Navigator.pop(dialogContext);
+                    Get.back();
                     showDialog(
                       context: dialogContext,
                       builder: (context) => AlertDialog(
                         title: Text("Error"),
                         content: Text(e.toString()),
-                        actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text("Okay"))],
+                        actions: [TextButton(onPressed: Get.back, child: Text("Okay"))],
                       ),
                     );
                   }
@@ -104,7 +102,7 @@ class CategoryController extends GetxController {
               backgroundColor: AppColors.brand,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Add', style: TextStyle(color: Colors.white)),
+            child: Text('Add', style: regularText(14, color: Colors.white)),
           ),
         ],
       ),
@@ -120,20 +118,20 @@ class CategoryController extends GetxController {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Edit Category', style: TextStyle(color: Colors.white)),
+        title: Text('Edit Category', style: regularText(14, color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: emojiController,
-              style: const TextStyle(color: Colors.white),
+              style: regularText(14, color: Colors.white),
               decoration: _inputDecoration('Emoji'),
               maxLength: 1,
             ),
             const SizedBox(height: 16),
             TextField(
               controller: nameController,
-              style: const TextStyle(color: Colors.white),
+              style: regularText(14, color: Colors.white),
               decoration: _inputDecoration('Name'),
               textCapitalization: TextCapitalization.words,
             ),
@@ -141,17 +139,17 @@ class CategoryController extends GetxController {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[500])),
+            onPressed: Get.back,
+            child: Text('Cancel', style: regularText(14, color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
               if (nameController.text.isNotEmpty && emojiController.text.isNotEmpty) {
                 try {
                   final updatedCategory = Category(id: category.id, name: nameController.text.trim(), emoji: emojiController.text.trim(), userId: category.userId);
-                  await _db.collection('categories').doc(category.id).update(updatedCategory.toFirestore());
+                  await FirebaseHelper.updateCategory(updatedCategory);
                   await loadCategories();
-                  if (dialogContext.mounted) Navigator.pop(dialogContext);
+                  if (dialogContext.mounted) Get.back();
                 } catch (e) {
                   // Error handling
                 }
@@ -161,7 +159,7 @@ class CategoryController extends GetxController {
               backgroundColor: AppColors.brand,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Save', style: TextStyle(color: Colors.white)),
+            child: Text('Save', style: regularText(14, color: Colors.white)),
           ),
         ],
       ),
@@ -174,39 +172,30 @@ class CategoryController extends GetxController {
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Category', style: TextStyle(color: Colors.white)),
-        content: Text('Are you sure you want to delete "$name"?\nThis cannot be undone.', style: TextStyle(color: Colors.grey[400])),
+        title: Text('Delete Category', style: regularText(14, color: Colors.white)),
+        content: Text('Are you sure you want to delete "$name"?\nThis cannot be undone.', style: regularText(14, color: Colors.grey)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle(color: Colors.grey[500])),
+            onPressed: Get.back,
+            child: Text('Cancel', style: regularText(14, color: Colors.grey)),
           ),
           ElevatedButton(
             onPressed: () async {
-              await _db.collection('categories').doc(id).delete();
+              await FirebaseHelper.deleteCategory(id);
               await loadCategories();
-              Navigator.pop(context, true);
+              Get.back();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            child: const Text('Delete'),
+            child: Text('Delete', style: regularText(14, color: Colors.white)),
           ),
         ],
       ),
     );
   }
-
-  // Future<void> delete(String id) async {
-
-  // }
-
-  // Future<void> updateCategory(String id, Category category) async {
-  //   await _db.collection('categories').doc(id).update(category.toFirestore());
-  //   await loadCategories();
-  // }
 
   Category? getCategoryById(String id) {
     try {

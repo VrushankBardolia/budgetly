@@ -33,7 +33,7 @@ class InitialScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (Get.find<OnboardingController>().isLoading.value) {
+      if (Get.find<DashboardController>().isLoading.value) {
         return const InitialLoaderScreen();
       }
       if (FirebaseHelper.currentUser != null) {

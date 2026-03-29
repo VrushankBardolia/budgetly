@@ -23,64 +23,66 @@ class PreferenceHelper {
     return null;
   }
 
-  static Future<void> setUser(UserModel? userModel) async {
+  static set user(UserModel? userModel) {
     if (userModel == null) {
-      await _prefs.remove(_keyUser);
+      _prefs.remove(_keyUser);
     } else {
-      await _prefs.setString(_keyUser, jsonEncode(userModel.toJson()));
+      _prefs.setString(_keyUser, jsonEncode(userModel.toJson()));
+    }
+  }
+
+  // ─── User ID ─────────────────────────────────────────────────────────
+  static const String _keyUserId = 'userId';
+
+  static String get userId => _prefs.getString(_keyUserId) ?? '';
+
+  static set userId(String? userId) {
+    if (userId == null) {
+      _prefs.remove(_keyUserId);
+    } else {
+      _prefs.setString(_keyUserId, userId);
     }
   }
 
   // ─── Biometric ────────────────────────────────────────────────────────────
   static const String _keyBiometric = 'isEnabledBiometric';
 
-  static bool get isEnabledBiometric {
-    return _prefs.getBool(_keyBiometric) ?? false;
-  }
+  static bool get isEnabledBiometric => _prefs.getBool(_keyBiometric) ?? false;
 
-  static Future<void> setEnabledBiometric(bool value) async {
-    await _prefs.setBool(_keyBiometric, value);
-  }
+  static set isEnabledBiometric(bool value) =>
+      _prefs.setBool(_keyBiometric, value);
 
   // ─── Notification ─────────────────────────────────────────────────────────
   static const String _keyNotification = 'isNotificationEnabled';
 
-  static bool get isNotificationEnabled {
-    return _prefs.getBool(_keyNotification) ?? false;
-  }
+  static bool get isNotificationEnabled =>
+      _prefs.getBool(_keyNotification) ?? false;
 
-  static Future<void> setNotificationEnabled(bool value) async {
-    await _prefs.setBool(_keyNotification, value);
-  }
+  static set isNotificationEnabled(bool value) =>
+      _prefs.setBool(_keyNotification, value);
 
   // ─── Google User ──────────────────────────────────────────────────────────
   static const String _keyGoogleUser = 'isGoogleUser';
 
-  static bool get isGoogleUser {
-    return _prefs.getBool(_keyGoogleUser) ?? false;
-  }
+  static bool get isGoogleUser => _prefs.getBool(_keyGoogleUser) ?? false;
 
-  static Future<void> setGoogleUser(bool value) async {
-    await _prefs.setBool(_keyGoogleUser, value);
-  }
+  static set isGoogleUser(bool value) => _prefs.setBool(_keyGoogleUser, value);
 
   // ─── FCM Token ──────────────────────────────────────────────────────────
   static const String _keyFCMToken = 'fcmToken';
 
-  static String get fcmToken {
-    return _prefs.getString(_keyFCMToken) ?? '';
-  }
+  static String get fcmToken => _prefs.getString(_keyFCMToken) ?? '';
 
-  static Future<void> setFCMToken(String value) async {
-    await _prefs.setString(_keyFCMToken, value);
-  }
+  static set fcmToken(String value) => _prefs.setString(_keyFCMToken, value);
 
   // ─── Daily Reminder ──────────────────────────────────────────────────────────
   static const String _dailyReminderKey = 'daily_reminder_enabled';
 
-  static bool get isDailyReminderEnabled => _prefs.getBool(_dailyReminderKey) ?? true;
+  static bool get isDailyReminderEnabled =>
+      _prefs.getBool(_dailyReminderKey) ?? true;
 
-  static Future<void> setDailyReminderEnabled(bool value) async => await _prefs.setBool(_dailyReminderKey, value);
+  static set isDailyReminderEnabled(bool value) =>
+      _prefs.setBool(_dailyReminderKey, value);
 
   // ─── Clear All ────────────────────────────────────────────────────────────
   static Future<void> clearAll() async => await _prefs.clear();

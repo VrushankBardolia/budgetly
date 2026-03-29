@@ -13,17 +13,20 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class NotificationService {
   NotificationService._();
 
-  static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _plugin =
+      FlutterLocalNotificationsPlugin();
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   // ─── Channels ─────────────────────────────────────────────────────────────
   static const String _dailyReminderChannelId = 'daily_expense_channel';
   static const String _dailyReminderChannelName = 'Daily Expense Reminder';
-  static const String _dailyReminderChannelDesc = 'Reminds you to add daily expenses';
+  static const String _dailyReminderChannelDesc =
+      'Reminds you to add daily expenses';
 
   static const String _monthlyReminderChannelId = 'monthly_expense_channel';
   static const String _monthlyReminderChannelName = 'Monthly Expense Reminder';
-  static const String _monthlyReminderChannelDesc = 'Reminds you to add monthly expenses';
+  static const String _monthlyReminderChannelDesc =
+      'Reminds you to add monthly expenses';
 
   // ─── Scheduled notification ID ────────────────────────────────────────────
   static const int _dailyReminderId = 1001;
@@ -48,27 +51,47 @@ class NotificationService {
   }
 
   static Future<void> _initLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(requestAlertPermission: false, requestBadgePermission: false, requestSoundPermission: false);
+    const androidSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
+    const iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
 
     await _plugin.initialize(
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
       onDidReceiveNotificationResponse: (_) => navigateToCurrentMonth(),
     );
 
-    await _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(
-      const AndroidNotificationChannel(_dailyReminderChannelId, _dailyReminderChannelName, description: _dailyReminderChannelDesc, importance: Importance.max, showBadge: true),
-    );
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _dailyReminderChannelId,
+            _dailyReminderChannelName,
+            description: _dailyReminderChannelDesc,
+            importance: Importance.max,
+            showBadge: true,
+          ),
+        );
 
-    await _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(
-      const AndroidNotificationChannel(
-        _monthlyReminderChannelId,
-        _monthlyReminderChannelName,
-        description: _monthlyReminderChannelDesc,
-        importance: Importance.max,
-        showBadge: true,
-      ),
-    );
+    await _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >()
+        ?.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _monthlyReminderChannelId,
+            _monthlyReminderChannelName,
+            description: _monthlyReminderChannelDesc,
+            importance: Importance.max,
+            showBadge: true,
+          ),
+        );
   }
 
   static void _registerBackgroundHandler() {
@@ -82,7 +105,9 @@ class NotificationService {
   }
 
   static void _listenNotificationTaps() {
-    FirebaseMessaging.onMessageOpenedApp.listen((_) => navigateToCurrentMonth());
+    FirebaseMessaging.onMessageOpenedApp.listen(
+      (_) => navigateToCurrentMonth(),
+    );
   }
 
   static Future<void> _captureInitialMessage() async {
@@ -102,11 +127,18 @@ class NotificationService {
 
   static Future<bool> enable() async {
     // 1. Request FCM permission
-    final status = await _messaging.requestPermission(alert: true, badge: true, sound: true);
+    final status = await _messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
     if (status.authorizationStatus == AuthorizationStatus.denied) return false;
 
     // 2. Android 13+ explicit permission
-    final android = _plugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     final granted = await android?.requestNotificationsPermission();
     if (granted == false) return false;
 
@@ -114,23 +146,25 @@ class NotificationService {
     final token = await _messaging.getToken();
     if (token == null) return false;
     log('FCM Token: $token');
-    PreferenceHelper.setFCMToken(token);
+    PreferenceHelper.fcmToken = token;
 
     // Keep token fresh
-    _messaging.onTokenRefresh.listen(PreferenceHelper.setFCMToken);
+    _messaging.onTokenRefresh.listen(
+      (token) => PreferenceHelper.fcmToken = token,
+    );
 
     // 4. Schedule daily local notification at 11:30 PM
     await scheduleDailyReminder();
 
     // 5. Persist preference
-    PreferenceHelper.setNotificationEnabled(true);
+    PreferenceHelper.isNotificationEnabled = true;
 
     return true;
   }
 
   static Future<void> disable() async {
     await cancelDailyReminder();
-    PreferenceHelper.setNotificationEnabled(false);
+    PreferenceHelper.isNotificationEnabled = false;
   }
 
   // ─── Daily Reminder Scheduling ────────────────────────────────────────────
@@ -155,7 +189,11 @@ class NotificationService {
           icon: '@mipmap/ic_launcher',
           showWhen: true,
         ),
-        iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       // ↓ This is what makes it repeat every day at the same time
@@ -174,7 +212,14 @@ class NotificationService {
   /// If the time has already passed today, schedules for tomorrow.
   static tz.TZDateTime _nextInstanceOf(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
@@ -209,6 +254,9 @@ class NotificationService {
 
   static void navigateToCurrentMonth() {
     final now = DateTime.now();
-    Get.toNamed(Routes.MONTH_DETAILS, arguments: {'year': now.year, 'month': now.month});
+    Get.toNamed(
+      Routes.MONTH_DETAILS,
+      arguments: {'year': now.year, 'month': now.month},
+    );
   }
 }

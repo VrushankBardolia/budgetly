@@ -16,8 +16,8 @@ class HomeScreen extends GetView<HomeController> {
               controller.changeIndex(value);
             },
             type: BottomNavigationBarType.fixed,
-            selectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 14, fontWeight: FontWeight.bold),
-            unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontSize: 14),
+            selectedLabelStyle: boldText(14, color: Colors.white),
+            unselectedLabelStyle: regularText(14, color: Colors.grey),
             currentIndex: controller.currentIndex.value,
             unselectedItemColor: Colors.grey.shade700,
             backgroundColor: Theme.of(context).colorScheme.background,

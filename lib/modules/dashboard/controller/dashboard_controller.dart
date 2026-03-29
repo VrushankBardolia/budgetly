@@ -2,12 +2,10 @@ import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
 
 class DashboardController extends GetxController {
-  // final FirebaseAuth _auth = FirebaseAuth.instance;
-
   // ─── Reactive State ───────────────────────────────────────────────────────
   final RxList<Expense> expenses = <Expense>[].obs;
   final RxList<Category> categories = <Category>[].obs;
-  final RxList<int> availableYears = <int>[DateTime.now().year].obs;
+  final RxList<int> availableYears = <int>[].obs;
   final RxInt selectedYear = DateTime.now().year.obs;
   final RxBool isLoading = true.obs;
   final RxBool showMonthly = true.obs;
@@ -17,41 +15,43 @@ class DashboardController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _init();
+    // Use addPostFrameCallback to ensure the widget tree is fully built
+    // before kicking off the heavy lifting.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadData();
+    });
   }
 
   // ─── Initialisation ───────────────────────────────────────────────────────
 
-  Future<void> _init() async {
-    isLoading.value = true;
-    await Future.wait([loadAvailableYears(), loadCategories()]);
-    if (availableYears.isNotEmpty) {
-      if (!availableYears.contains(selectedYear.value)) {
-        selectedYear.value = availableYears.first;
-      }
-      await loadExpenses(selectedYear.value);
-    }
-    isLoading.value = false;
-  }
-
   Future<void> loadData() async {
     isLoading.value = true;
-    await Future.wait([loadAvailableYears(), loadCategories()]);
+    // 1. Give the Firebase Auth token a moment to propagate on fresh login.
+    String? userId = FirebaseHelper.currentUser?.uid;
+    await Future.delayed(const Duration(milliseconds: 300));
+    userId = FirebaseHelper.currentUser?.uid;
+    // If it's still null after retrying, stop loading.
+    if (userId == null) {
+      isLoading.value = false;
+      return;
+    }
+
+    // 2. Pass the guaranteed userId to the fetch methods
+    await Future.wait([loadAvailableYears(userId), loadCategories(userId)]);
+
     if (availableYears.isNotEmpty) {
       if (!availableYears.contains(selectedYear.value)) {
         selectedYear.value = availableYears.first;
       }
-      await loadExpenses(selectedYear.value);
+      await loadExpenses(userId, selectedYear.value);
     }
     isLoading.value = false;
   }
 
   // ─── Data Loading ─────────────────────────────────────────────────────────
 
-  Future<void> loadAvailableYears() async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
-
+  // Updated to accept userId as a parameter
+  Future<void> loadAvailableYears(String userId) async {
     final snapshot = await FirebaseHelper.getExpenses(userId, DateTime(2000), DateTime(2100));
 
     if (snapshot.docs.isEmpty) {
@@ -64,19 +64,15 @@ class DashboardController extends GetxController {
     availableYears.assignAll(years.isEmpty ? [DateTime.now().year] : years);
   }
 
-  Future<void> loadExpenses(int year) async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
-
+  // Updated to accept userId as a parameter
+  Future<void> loadExpenses(String userId, int year) async {
     final snapshot = await FirebaseHelper.getExpenses(userId, DateTime(year, 1, 1), DateTime(year, 12, 31, 23, 59, 59));
 
     expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
   }
 
-  Future<void> loadCategories() async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
-
+  // Updated to accept userId as a parameter
+  Future<void> loadCategories(String userId) async {
     final snapshot = await FirebaseHelper.getCategories(userId);
     categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
   }
@@ -85,7 +81,14 @@ class DashboardController extends GetxController {
 
   Future<void> changeYear(int year) async {
     selectedYear.value = year;
-    await loadExpenses(year);
+
+    // Quick check to grab the user ID for the year change
+    final userId = FirebaseHelper.currentUser?.uid;
+    if (userId != null) {
+      isLoading.value = true;
+      await loadExpenses(userId, year);
+      isLoading.value = false;
+    }
   }
 
   void toggleMonthlyYearly() => showMonthly.value = !showMonthly.value;

@@ -11,7 +11,7 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
         backgroundColor: AppColors.black,
         elevation: 0,
         centerTitle: true,
-        title: Text(controller.title, style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 20)),
+        title: Text(controller.title, style: boldText(20)),
         leading: IconButton(icon: const Icon(Icons.close), onPressed: Get.back),
       ),
       body: Obx(() {
@@ -59,10 +59,7 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
   Widget buildSectionLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: Text(
-        label,
-        style: GoogleFonts.plusJakartaSans(color: AppColors.grey, fontSize: 13, fontWeight: FontWeight.w500, letterSpacing: 0.5),
-      ),
+      child: Text(label, style: mediumText(13, color: AppColors.grey)),
     );
   }
 
@@ -77,7 +74,7 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
             children: [
               HugeIcon(icon: HugeIcons.strokeRoundedCalendar04, size: 20, color: AppColors.grey),
               const SizedBox(width: 12),
-              Text(controller.formattedSelectedDate, style: GoogleFonts.plusJakartaSans(color: AppColors.white)),
+              Text(controller.formattedSelectedDate, style: regularText(14)),
             ],
           ),
         ),
@@ -90,10 +87,10 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
       controller: controller.priceController,
       decoration: InputDecoration(hintText: 'Enter amount', prefixIcon: const Icon(Icons.currency_rupee, size: 20), border: OutlineInputBorder()),
       keyboardType: TextInputType.number,
-      style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 16),
+      style: regularText(16),
       validator: controller.validatePrice,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      onTapOutside: (event) => FocusScope.of(Get.context!).unfocus(),
+      onTapOutside: (_) => FocusScope.of(Get.context!).unfocus(),
     );
   }
 
@@ -103,7 +100,7 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
-          child: Text('No categories found. Please add categories first.', style: GoogleFonts.plusJakartaSans(color: Colors.grey, fontSize: 14)),
+          child: Text('No categories found. Please add categories first.', style: regularText(14, color: Colors.grey)),
         );
       }
 
@@ -119,9 +116,9 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
             value: category.id,
             child: Row(
               children: [
-                Text(category.emoji, style: const TextStyle(fontSize: 18)),
+                Text(category.emoji, style: regularText(18)),
                 const SizedBox(width: 12),
-                Text(category.name, style: GoogleFonts.plusJakartaSans(color: AppColors.white)),
+                Text(category.name, style: regularText(14)),
               ],
             ),
           );
@@ -150,8 +147,9 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
       ),
       minLines: 3,
       maxLines: 5,
-      style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 14),
+      style: regularText(14),
       textCapitalization: TextCapitalization.sentences,
+      onTapOutside: (_) => FocusScope.of(Get.context!).unfocus(),
     );
   }
 
@@ -161,10 +159,7 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
         onClick: controller.isSubmitting.value ? null : controller.submit,
         child: controller.isSubmitting.value
             ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-            : Text(
-                controller.submitLabel,
-                style: GoogleFonts.plusJakartaSans(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-              ),
+            : Text(controller.submitLabel, style: semiBoldText(16)),
       ),
     );
   }

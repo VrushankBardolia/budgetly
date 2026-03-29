@@ -28,14 +28,23 @@ class MainNotificationTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: value ? iconColor.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(
+          color: value
+              ? iconColor.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.05),
+        ),
       ),
       child: Row(
         children: [
           // Icon
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: value ? iconColor.withValues(alpha: 0.15) : AppColors.surfaceLight, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: value
+                  ? iconColor.withValues(alpha: 0.15)
+                  : AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, size: 20, color: value ? iconColor : Colors.grey),
           ),
           const SizedBox(width: 14),
@@ -45,12 +54,9 @@ class MainNotificationTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.plusJakartaSans(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
-                ),
+                Text(title, style: semiBoldText(15)),
                 const SizedBox(height: 3),
-                Text(subtitle, style: GoogleFonts.plusJakartaSans(color: Colors.grey[500], fontSize: 12, height: 1.4)),
+                Text(subtitle, style: regularText(12, color: Colors.grey)),
               ],
             ),
           ),
@@ -59,7 +65,11 @@ class MainNotificationTile extends StatelessWidget {
           Transform.scale(
             scale: 0.9,
             alignment: Alignment.centerRight,
-            child: CupertinoSwitch(value: value, onChanged: onChanged, activeTrackColor: iconColor),
+            child: CupertinoSwitch(
+              value: value,
+              onChanged: onChanged,
+              activeTrackColor: iconColor,
+            ),
           ),
         ],
       ),

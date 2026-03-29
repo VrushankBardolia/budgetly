@@ -35,9 +35,12 @@ class CategoryTile extends StatelessWidget {
           Container(
             width: 50,
             height: 50,
-            decoration: BoxDecoration(color: AppColors.black, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: AppColors.black,
+              borderRadius: BorderRadius.circular(12),
+            ),
             alignment: Alignment.center,
-            child: Text(emoji, style: GoogleFonts.plusJakartaSans(fontSize: 24)),
+            child: Text(emoji, style: regularText(24)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -48,19 +51,13 @@ class CategoryTile extends StatelessWidget {
                       Row(
                         // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            name,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-                          ),
+                          Text(name, style: semiBoldText(16)),
                           Spacer(),
                           Text(
                             "$transactionCount • ",
-                            style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.grey),
+                            style: boldText(16, color: AppColors.grey),
                           ),
-                          Text(
-                            formattedAmount,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                          ),
+                          Text(formattedAmount, style: boldText(16)),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -69,7 +66,9 @@ class CategoryTile extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: percentage ?? 0.0,
                           backgroundColor: Colors.white10,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.brand),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.brand,
+                          ),
                           minHeight: 6,
                         ),
                       ),
@@ -82,17 +81,14 @@ class CategoryTile extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          Text(name, style: semiBoldText(18)),
                           Text(
-                            name,
-                            style: GoogleFonts.plusJakartaSans(fontSize: 18, fontWeight: FontWeight.w600, color: Colors.white),
+                            '$transactionCount transactions',
+                            style: regularText(12, color: AppColors.grey),
                           ),
-                          Text('$transactionCount transactions', style: GoogleFonts.plusJakartaSans(fontSize: 12, color: AppColors.grey)),
                         ],
                       ),
-                      Text(
-                        formattedAmount,
-                        style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
-                      ),
+                      Text(formattedAmount, style: boldText(16)),
                     ],
                   ),
           ),

@@ -42,7 +42,11 @@ ThemeData themeData = ThemeData(
       elevation: 0,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      textStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 0.5),
+      textStyle: GoogleFonts.plusJakartaSans(
+        fontWeight: FontWeight.bold,
+        fontSize: 16,
+        letterSpacing: 0.5,
+      ),
     ),
   ),
 
@@ -73,11 +77,23 @@ ThemeData themeData = ThemeData(
     ),
   ),
 
-  floatingActionButtonTheme: const FloatingActionButtonThemeData(backgroundColor: AppColors.brandDark, foregroundColor: Colors.white, elevation: 2),
+  floatingActionButtonTheme: const FloatingActionButtonThemeData(
+    backgroundColor: AppColors.brandDark,
+    foregroundColor: Colors.white,
+    elevation: 2,
+  ),
 
-  dividerTheme: const DividerThemeData(color: AppColors.surfaceLight, thickness: 1),
+  dividerTheme: const DividerThemeData(
+    color: AppColors.surfaceLight,
+    thickness: 1,
+  ),
 
-  bottomSheetTheme: const BottomSheetThemeData(backgroundColor: AppColors.surface, modalBackgroundColor: AppColors.surface),
+  bottomSheetTheme: const BottomSheetThemeData(
+    backgroundColor: AppColors.surface,
+    modalBackgroundColor: AppColors.surface,
+  ),
 
-  textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: AppColors.brand)),
+  textButtonTheme: TextButtonThemeData(
+    style: TextButton.styleFrom(foregroundColor: AppColors.brand),
+  ),
 );
