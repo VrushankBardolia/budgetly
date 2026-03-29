@@ -2,7 +2,8 @@ import 'package:budgetly/core/import_to_export.dart';
 
 class OnboardingController extends GetxController {
   // ─── Reactive State ───────────────────────────────────────────────────────
-  RxBool isLoading = true.obs;
+  RxBool isCheckingAuth = true.obs; // Tracks initial auth state resolution
+  RxBool isLoading = false.obs; // Tracks Google Sign-In progress
 
   // Add a reactive variable to hold the logged-in user's data
   Rxn<UserModel> currentUser = Rxn<UserModel>();
@@ -21,7 +22,7 @@ class OnboardingController extends GetxController {
       } else {
         currentUser.value = null; // Clear data if user logs out
       }
-      isLoading.value = false;
+      isCheckingAuth.value = false;
     });
   }
 
@@ -49,7 +50,10 @@ class OnboardingController extends GetxController {
   Future<void> googleSignIn() async {
     try {
       isLoading.value = true;
-      Get.dialog(const Center(child: CircularProgressIndicator(color: Colors.white)), barrierDismissible: false);
+      Get.dialog(
+        const Center(child: CircularProgressIndicator(color: Colors.white)),
+        barrierDismissible: false,
+      );
 
       final credential = await FirebaseHelper.signInWithGoogle();
       if (credential == null) {
@@ -73,7 +77,9 @@ class OnboardingController extends GetxController {
           'createdAt': FieldValue.serverTimestamp(),
         });
       } else {
-        await FirebaseHelper.updateUserData(user.email!, {'lastLoginAt': FieldValue.serverTimestamp()});
+        await FirebaseHelper.updateUserData(user.email!, {
+          'lastLoginAt': FieldValue.serverTimestamp(),
+        });
       }
 
       await _fetchAndStoreUserData();
@@ -125,7 +131,10 @@ class OnboardingController extends GetxController {
             child: const Icon(Icons.error, size: 100, color: Colors.red),
           ),
           const SizedBox(height: 12),
-          const Text('Failed to sign in', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          const Text(
+            'Failed to sign in',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );

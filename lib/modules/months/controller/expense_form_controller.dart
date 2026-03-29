@@ -57,11 +57,10 @@ class ExpenseFormController extends GetxController {
   }
 
   Future<void> _loadCategories() async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
-
-    final snapshot = await FirebaseHelper.getCategories(userId);
-    categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
+    final snapshot = await FirebaseHelper.getCategories();
+    categories.assignAll(
+      snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList(),
+    );
   }
 
   // ─── Field Actions ────────────────────────────────────────────────────────
@@ -71,7 +70,7 @@ class ExpenseFormController extends GetxController {
       context: Get.context!,
       initialDate: selectedDate.value ?? DateTime(year, month),
       firstDate: DateTime(year, month, 1),
-      lastDate: DateTime(year, month + 1, 0),
+      lastDate: DateTime.now(),
     );
     if (picked != null) selectedDate.value = picked;
   }
@@ -120,7 +119,9 @@ class ExpenseFormController extends GetxController {
 
   // ─── Derived Getters ─────────────────────────────────────────────────────
 
-  String get formattedSelectedDate => selectedDate.value != null ? DateFormat('MMM dd, yyyy').format(selectedDate.value!) : 'Select date';
+  String get formattedSelectedDate => selectedDate.value != null
+      ? DateFormat('MMM dd, yyyy').format(selectedDate.value!)
+      : 'Select date';
 
   String get title => isEditing ? 'Edit Expense' : 'Add Expense';
   String get submitLabel => isEditing ? 'Update Expense' : 'Add Expense';

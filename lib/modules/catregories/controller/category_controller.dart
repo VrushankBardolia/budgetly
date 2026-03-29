@@ -1,13 +1,43 @@
 import 'package:budgetly/core/import_to_export.dart';
 
 class CategoryController extends GetxController {
-  // final FirebaseFirestore _db = FirebaseFirestore.instance;
-  // final FirebaseAuth _auth = FirebaseAuth.instance;
-
   final RxList<Category> _categories = <Category>[].obs;
 
   List<Category> get categories => _categories;
   int get categoryCount => _categories.length;
+
+  DashboardController get _dashboardController => Get.find<DashboardController>();
+
+  Map<String, double> get categoryTotals {
+    final totals = <String, double>{};
+    for (var category in _categories) {
+      totals[category.id] = 0.0;
+    }
+    for (var expense in _dashboardController.expenses) {
+      if (totals.containsKey(expense.categoryId)) {
+        totals[expense.categoryId] = totals[expense.categoryId]! + expense.price;
+      }
+    }
+    return totals;
+  }
+
+  List<Category> get sortedCategories {
+    final totals = categoryTotals;
+    return _categories.toList()
+      ..sort((a, b) {
+        final amountA = totals[a.id] ?? 0.0;
+        final amountB = totals[b.id] ?? 0.0;
+        return amountB.compareTo(amountA);
+      });
+  }
+
+  int getTransactionCount(String categoryId) {
+    return _dashboardController.expenses.where((e) => e.categoryId == categoryId).length;
+  }
+
+  double getCategoryTotal(String categoryId) {
+    return categoryTotals[categoryId] ?? 0.0;
+  }
 
   InputDecoration _inputDecoration(String hint) {
     return InputDecoration(
@@ -28,19 +58,11 @@ class CategoryController extends GetxController {
     );
   }
 
-  @override
-  void onInit() {
-    super.onInit();
-    loadCategories();
-  }
-
   Future<void> loadCategories() async {
-    final userId = PreferenceHelper.userId;
-    if (userId.isEmpty) return;
-
-    final snapshot = await FirebaseHelper.getCategories(userId);
-
-    _categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
+    final snapshot = await FirebaseHelper.getCategories();
+    _categories.assignAll(
+      snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList(),
+    );
   }
 
   Future<void> addCategory(BuildContext context) async {
@@ -52,7 +74,7 @@ class CategoryController extends GetxController {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Add Category', style: regularText(14, color: Colors.white)),
+        title: Text('Add Category', style: regularText(14)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -78,9 +100,13 @@ class CategoryController extends GetxController {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.isNotEmpty && emojiController.text.isNotEmpty) {
+              if (nameController.text.isNotEmpty &&
+                  emojiController.text.isNotEmpty) {
                 try {
-                  await FirebaseHelper.addCategory(nameController.text, emojiController.text);
+                  await FirebaseHelper.addCategory(
+                    nameController.text,
+                    emojiController.text,
+                  );
                   await loadCategories();
                   if (dialogContext.mounted) Get.back();
                 } catch (e) {
@@ -91,7 +117,9 @@ class CategoryController extends GetxController {
                       builder: (context) => AlertDialog(
                         title: Text("Error"),
                         content: Text(e.toString()),
-                        actions: [TextButton(onPressed: Get.back, child: Text("Okay"))],
+                        actions: [
+                          TextButton(onPressed: Get.back, child: Text("Okay")),
+                        ],
                       ),
                     );
                   }
@@ -100,7 +128,9 @@ class CategoryController extends GetxController {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brand,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text('Add', style: regularText(14, color: Colors.white)),
           ),
@@ -118,7 +148,10 @@ class CategoryController extends GetxController {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Edit Category', style: regularText(14, color: Colors.white)),
+        title: Text(
+          'Edit Category',
+          style: regularText(14, color: Colors.white),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -144,9 +177,15 @@ class CategoryController extends GetxController {
           ),
           ElevatedButton(
             onPressed: () async {
-              if (nameController.text.isNotEmpty && emojiController.text.isNotEmpty) {
+              if (nameController.text.isNotEmpty &&
+                  emojiController.text.isNotEmpty) {
                 try {
-                  final updatedCategory = Category(id: category.id, name: nameController.text.trim(), emoji: emojiController.text.trim(), userId: category.userId);
+                  final updatedCategory = Category(
+                    id: category.id,
+                    name: nameController.text.trim(),
+                    emoji: emojiController.text.trim(),
+                    userId: category.userId,
+                  );
                   await FirebaseHelper.updateCategory(updatedCategory);
                   await loadCategories();
                   if (dialogContext.mounted) Get.back();
@@ -157,7 +196,9 @@ class CategoryController extends GetxController {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brand,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text('Save', style: regularText(14, color: Colors.white)),
           ),
@@ -166,14 +207,24 @@ class CategoryController extends GetxController {
     );
   }
 
-  Future<void> deleteCategory(BuildContext context, String id, String name) async {
+  Future<void> deleteCategory(
+    BuildContext context,
+    String id,
+    String name,
+  ) async {
     await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Delete Category', style: regularText(14, color: Colors.white)),
-        content: Text('Are you sure you want to delete "$name"?\nThis cannot be undone.', style: regularText(14, color: Colors.grey)),
+        title: Text(
+          'Delete Category',
+          style: regularText(14, color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to delete "$name"?\nThis cannot be undone.',
+          style: regularText(14, color: Colors.grey),
+        ),
         actions: [
           TextButton(
             onPressed: Get.back,
@@ -188,7 +239,9 @@ class CategoryController extends GetxController {
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.redAccent,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text('Delete', style: regularText(14, color: Colors.white)),
           ),

@@ -34,6 +34,7 @@ class FirebaseHelper {
         userId: result.user?.uid,
         email: result.user?.email,
       );
+      PreferenceHelper.userId = result.user?.uid;
       return result;
     } catch (e, stackTrace) {
       FirebaseLogger.error('signInWithGoogle', e, stackTrace);
@@ -117,19 +118,18 @@ class FirebaseHelper {
   // ==========================================
 
   static Future<QuerySnapshot<Map<String, dynamic>>> getExpenses(
-    String userId,
     DateTime startDate,
     DateTime endDate,
   ) async {
     FirebaseLogger.request('getExpenses', {
-      'userId': userId,
+      'userId': PreferenceHelper.userId,
       'startDate': startDate,
       'endDate': endDate,
     });
     try {
       final result = await db
           .collection('expenses')
-          .where('userId', isEqualTo: userId)
+          .where('userId', isEqualTo: PreferenceHelper.userId)
           .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
           .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
           .orderBy('date', descending: true)
@@ -145,14 +145,15 @@ class FirebaseHelper {
     }
   }
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getYearsWithExpenses(
-    String userId,
-  ) async {
-    FirebaseLogger.request('getYearsWithExpenses', {'userId': userId});
+  static Future<QuerySnapshot<Map<String, dynamic>>>
+  getYearsWithExpenses() async {
+    FirebaseLogger.request('getYearsWithExpenses', {
+      'userId': PreferenceHelper.userId,
+    });
     try {
       final result = await db
           .collection('expenses')
-          .where('userId', isEqualTo: userId)
+          .where('userId', isEqualTo: PreferenceHelper.userId)
           .get();
       FirebaseLogger.response(
         'getYearsWithExpenses',
@@ -212,14 +213,16 @@ class FirebaseHelper {
   // ==========================================
 
   static Future<QuerySnapshot<Map<String, dynamic>>> getBudgets(
-    String userId,
     int year,
   ) async {
-    FirebaseLogger.request('getBudgets', {'userId': userId, 'year': year});
+    FirebaseLogger.request('getBudgets', {
+      'userId': PreferenceHelper.userId,
+      'year': year,
+    });
     try {
       final result = await db
           .collection('budgets')
-          .where('userId', isEqualTo: userId)
+          .where('userId', isEqualTo: PreferenceHelper.userId)
           .where('year', isEqualTo: year)
           .get();
       FirebaseLogger.response(
@@ -234,19 +237,18 @@ class FirebaseHelper {
   }
 
   static Future<QuerySnapshot<Map<String, dynamic>>> getBudgetForMonth(
-    String userId,
     int year,
     int month,
   ) async {
     FirebaseLogger.request('getBudgetForMonth', {
-      'userId': userId,
+      'userId': PreferenceHelper.userId,
       'year': year,
       'month': month,
     });
     try {
       final result = await db
           .collection('budgets')
-          .where('userId', isEqualTo: userId)
+          .where('userId', isEqualTo: PreferenceHelper.userId)
           .where('year', isEqualTo: year)
           .where('month', isEqualTo: month)
           .get();
@@ -293,14 +295,14 @@ class FirebaseHelper {
   // Categories
   // ==========================================
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getCategories(
-    String userId,
-  ) async {
-    FirebaseLogger.request('getCategories', {'userId': userId});
+  static Future<QuerySnapshot<Map<String, dynamic>>> getCategories() async {
+    FirebaseLogger.request('getCategories', {
+      'userId': PreferenceHelper.userId,
+    });
     try {
       final result = await db
           .collection('categories')
-          .where('userId', isEqualTo: userId)
+          .where('userId', isEqualTo: PreferenceHelper.userId)
           .orderBy('name')
           .get();
       FirebaseLogger.response(
@@ -318,8 +320,11 @@ class FirebaseHelper {
     String name,
     String emoji,
   ) async {
-    final userId = PreferenceHelper.userId;
-    final categoryData = {'name': name, 'emoji': emoji, 'userId': userId};
+    final categoryData = {
+      'name': name,
+      'emoji': emoji,
+      'userId': PreferenceHelper.userId,
+    };
     FirebaseLogger.request('addCategory', categoryData);
     try {
       final result = await db.collection('categories').add(categoryData);

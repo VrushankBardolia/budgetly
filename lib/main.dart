@@ -33,15 +33,22 @@ class InitialScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      if (Get.find<DashboardController>().isLoading.value) {
+      final onboardingCtrl = Get.find<OnboardingController>();
+
+      // If we are still checking the initial auth state, show the loader
+      if (onboardingCtrl.isCheckingAuth.value) {
         return const InitialLoaderScreen();
       }
+
+      // If securely authenticated, proceed to Home/AppLock
       if (FirebaseHelper.currentUser != null) {
         if (PreferenceHelper.isEnabledBiometric) {
           return const AppLockScreen();
         }
         return const HomeScreen();
       }
+
+      // Otherwise, show onboarding screen
       return const OnboardingScreen();
     });
   }

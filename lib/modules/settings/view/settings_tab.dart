@@ -103,7 +103,7 @@ class SettingsTab extends GetView<SettingController> {
                     style: customText(
                       24,
                       FontWeight.w900,
-                      color: AppColors.brandDark,
+                      color: AppColors.brand,
                     ),
                   ),
                 ),

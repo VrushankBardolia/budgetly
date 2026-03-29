@@ -15,15 +15,19 @@ class MonthController extends GetxController {
       final month = index + 1;
       final monthDate = DateTime(selectedYear.value, month);
 
-      final isCurrent = monthDate.year == now.year && monthDate.month == now.month;
+      final isCurrent =
+          monthDate.year == now.year && monthDate.month == now.month;
       final isPast = monthDate.isBefore(DateTime(now.year, now.month));
 
       final budget = _getBudgetForMonth(selectedYear.value, month);
       final expense = _getTotalExpenseForMonth(selectedYear.value, month);
       final difference = budget - expense;
-      final progressValue = budget > 0 ? (expense / budget).clamp(0.0, 1.0) : 0.0;
+      final progressValue = budget > 0
+          ? (expense / budget).clamp(0.0, 1.0)
+          : 0.0;
 
-      final hasData = (isPast && budget > 0) || (isCurrent && (budget > 0 || expense > 0));
+      final hasData =
+          (isPast && budget > 0) || (isCurrent && (budget > 0 || expense > 0));
 
       final isBalanced = difference == 0;
       final isSaved = difference > 0;
@@ -63,19 +67,14 @@ class MonthController extends GetxController {
     });
   }
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  @override
-  void onInit() {
-    super.onInit();
-    _loadAll(selectedYear.value);
-  }
-
   // ─── Public Actions ───────────────────────────────────────────────────────
 
   Future<void> loadData() async {
     isLoading.value = true;
-    await Future.wait([_loadExpenses(selectedYear.value), _loadBudgets(selectedYear.value)]);
+    await Future.wait([
+      _loadExpenses(selectedYear.value),
+      _loadBudgets(selectedYear.value),
+    ]);
     isLoading.value = false;
   }
 
@@ -85,7 +84,10 @@ class MonthController extends GetxController {
   }
 
   Future<void> navigateToMonth(int month) async {
-    await Get.toNamed(Routes.MONTH_DETAILS, arguments: {'year': selectedYear.value, 'month': month});
+    await Get.toNamed(
+      Routes.MONTH_DETAILS,
+      arguments: {'year': selectedYear.value, 'month': month},
+    );
     await _loadAll(selectedYear.value);
   }
 
@@ -101,18 +103,22 @@ class MonthController extends GetxController {
     final userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) return;
 
-    final snapshot = await FirebaseHelper.getExpenses(userId, DateTime(year, 1, 1), DateTime(year, 12, 31, 23, 59, 59));
+    final snapshot = await FirebaseHelper.getExpenses(
+      DateTime(year, 1, 1),
+      DateTime(year, 12, 31, 23, 59, 59),
+    );
 
-    expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
+    expenses.assignAll(
+      snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList(),
+    );
   }
 
   Future<void> _loadBudgets(int year) async {
-    final userId = PreferenceHelper.userId;
-    if (userId.isEmpty) return;
+    final snapshot = await FirebaseHelper.getBudgets(year);
 
-    final snapshot = await FirebaseHelper.getBudgets(userId, year);
-
-    budgets.assignAll(snapshot.docs.map((doc) => MonthBudget.fromFirestore(doc)).toList());
+    budgets.assignAll(
+      snapshot.docs.map((doc) => MonthBudget.fromFirestore(doc)).toList(),
+    );
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────
@@ -122,7 +128,13 @@ class MonthController extends GetxController {
       return budgets
           .firstWhere(
             (b) => b.year == year && b.month == month,
-            orElse: () => MonthBudget(id: '', year: year, month: month, budget: 0, userId: ''),
+            orElse: () => MonthBudget(
+              id: '',
+              year: year,
+              month: month,
+              budget: 0,
+              userId: '',
+            ),
           )
           .budget;
     } catch (_) {
@@ -131,6 +143,8 @@ class MonthController extends GetxController {
   }
 
   double _getTotalExpenseForMonth(int year, int month) {
-    return expenses.where((e) => e.date.year == year && e.date.month == month).fold(0.0, (sum, e) => sum + e.price);
+    return expenses
+        .where((e) => e.date.year == year && e.date.month == month)
+        .fold(0.0, (sum, e) => sum + e.price);
   }
 }

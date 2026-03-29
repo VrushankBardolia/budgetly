@@ -48,7 +48,12 @@ It helps users track expenses, manage budgets, and visualize spending patterns w
 
 ## Changelog
 
-### 1.3.1 (Latest Release)
+### 1.3.2 (Latest Release)
+- Restricted selecting future dates while adding or editing expenses
+- Fixed issue where user initials were not displaying in the settings tab
+- Fixed minor bugs and improved overall stability
+
+### 1.3.1
 - Fixed dashboard data not loading when user logins after installing app
 
 ### 1.3 

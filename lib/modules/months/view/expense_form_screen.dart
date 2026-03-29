@@ -69,10 +69,17 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
         onTap: controller.pickDate,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+          ),
           child: Row(
             children: [
-              HugeIcon(icon: HugeIcons.strokeRoundedCalendar04, size: 20, color: AppColors.grey),
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedCalendar04,
+                size: 20,
+                color: AppColors.grey,
+              ),
               const SizedBox(width: 12),
               Text(controller.formattedSelectedDate, style: regularText(14)),
             ],
@@ -85,7 +92,11 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
   Widget buildPriceField() {
     return TextFormField(
       controller: controller.priceController,
-      decoration: InputDecoration(hintText: 'Enter amount', prefixIcon: const Icon(Icons.currency_rupee, size: 20), border: OutlineInputBorder()),
+      decoration: InputDecoration(
+        hintText: 'Enter amount',
+        prefixIcon: const Icon(Icons.currency_rupee, size: 20),
+        border: OutlineInputBorder(),
+      ),
       keyboardType: TextInputType.number,
       style: regularText(16),
       validator: controller.validatePrice,
@@ -99,13 +110,21 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
       if (controller.categories.isEmpty) {
         return Container(
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
-          child: Text('No categories found. Please add categories first.', style: regularText(14, color: Colors.grey)),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            'No categories found. Please add categories first.',
+            style: regularText(14, color: Colors.grey),
+          ),
         );
       }
 
       return DropdownButtonFormField<String>(
-        initialValue: controller.selectedCategoryId.value.isEmpty ? null : controller.selectedCategoryId.value,
+        initialValue: controller.selectedCategoryId.value.isEmpty
+            ? null
+            : controller.selectedCategoryId.value,
         decoration: InputDecoration(
           hintText: 'Select a category',
           border: OutlineInputBorder(borderSide: BorderSide.none),
@@ -116,7 +135,7 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
             value: category.id,
             child: Row(
               children: [
-                Text(category.emoji, style: regularText(18)),
+                Text(category.emoji, style: regularText(16)),
                 const SizedBox(width: 12),
                 Text(category.name, style: regularText(14)),
               ],
@@ -139,7 +158,10 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
         hintText: 'Add a note (optional)',
         filled: true,
         fillColor: AppColors.surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.brand, width: 2),
@@ -158,7 +180,14 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
       () => Button(
         onClick: controller.isSubmitting.value ? null : controller.submit,
         child: controller.isSubmitting.value
-            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
             : Text(controller.submitLabel, style: semiBoldText(16)),
       ),
     );
@@ -183,7 +212,10 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
             const SizedBox(height: 40),
             Container(
               height: 52,
-              decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
           ],
         ),
@@ -198,12 +230,18 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
         Container(
           height: 8,
           width: 80,
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+          ),
         ),
         const SizedBox(height: 8),
         Container(
           height: height,
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       ],
     );
