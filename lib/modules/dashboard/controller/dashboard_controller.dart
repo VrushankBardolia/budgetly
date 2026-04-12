@@ -9,6 +9,7 @@ class DashboardController extends GetxController {
   final RxInt selectedYear = DateTime.now().year.obs;
   final RxBool isLoading = true.obs;
   final RxBool showMonthly = true.obs;
+  final RxString donutCenterText = ''.obs;
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -49,22 +50,15 @@ class DashboardController extends GetxController {
 
   // Updated to accept userId as a parameter
   Future<void> loadAvailableYears() async {
-    final snapshot = await FirebaseHelper.getExpenses(
-      DateTime(2000),
-      DateTime(2100),
-    );
+    final snapshot = await FirebaseHelper.getExpenses(DateTime(2000), DateTime(2100));
 
     if (snapshot.docs.isEmpty) {
       availableYears.assignAll([DateTime.now().year]);
       return;
     }
 
-    final years =
-        snapshot.docs
-            .map((doc) => Expense.fromFirestore(doc).date.year)
-            .toSet()
-            .toList()
-          ..sort((a, b) => b.compareTo(a));
+    final years = snapshot.docs.map((doc) => Expense.fromFirestore(doc).date.year).toSet().toList()
+      ..sort((a, b) => b.compareTo(a));
 
     availableYears.assignAll(years.isEmpty ? [DateTime.now().year] : years);
   }
@@ -76,17 +70,13 @@ class DashboardController extends GetxController {
       DateTime(year, 12, 31, 23, 59, 59),
     );
 
-    expenses.assignAll(
-      snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList(),
-    );
+    expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
   }
 
   // Updated to accept userId as a parameter
   Future<void> loadCategories() async {
     final snapshot = await FirebaseHelper.getCategories();
-    categories.assignAll(
-      snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList(),
-    );
+    categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
   }
 
   // ─── Actions ──────────────────────────────────────────────────────────────
@@ -125,14 +115,11 @@ class DashboardController extends GetxController {
   double get currentMonthTotal {
     final month = DateTime.now().month;
     return expenses
-        .where(
-          (e) => e.date.month == month && e.date.year == selectedYear.value,
-        )
+        .where((e) => e.date.month == month && e.date.year == selectedYear.value)
         .fold(0.0, (sum, e) => sum + e.price);
   }
 
-  double get displayTotal =>
-      showMonthly.value ? currentMonthTotal : yearlyTotal;
+  double get displayTotal => showMonthly.value ? currentMonthTotal : yearlyTotal;
 
   String get displayPeriodLabel {
     final year = selectedYear.value;
@@ -156,8 +143,7 @@ class DashboardController extends GetxController {
 
   /// Sorted descending, capped at top 3 — ready for the list
   List<MapEntry<String, double>> get topCategoryEntries {
-    final sorted = categoryTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final sorted = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
     return sorted.take(3).toList();
   }
 
@@ -167,23 +153,33 @@ class DashboardController extends GetxController {
     return categoryTotals.values.reduce((a, b) => a > b ? a : b);
   }
 
-  double categoryPercentage(double value) =>
-      categoryMaxValue > 0 ? value / categoryMaxValue : 0.0;
+  double categoryPercentage(double value) => categoryMaxValue > 0 ? value / categoryMaxValue : 0.0;
 
   // ─── Pie Chart ────────────────────────────────────────────────────────────
 
   /// All categories sorted descending — for the full pie
   List<MapEntry<String, double>> get sortedCategoryEntries {
-    final sorted = categoryTotals.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final sorted = categoryTotals.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
     return sorted;
   }
 
-  double get categoryGrandTotal =>
-      categoryTotals.values.fold(0.0, (sum, v) => sum + v);
+  double get categoryGrandTotal => categoryTotals.values.fold(0.0, (sum, v) => sum + v);
 
-  double piePercentage(double value) =>
-      categoryGrandTotal > 0 ? value / categoryGrandTotal * 100 : 0.0;
+  String piePercentage(double value) =>
+      categoryGrandTotal > 0 ? (value / categoryGrandTotal * 100).toStringAsFixed(2) : "0";
+
+  void onDonutSectionTap(ChartPointDetails details) {
+    if (details.pointIndex != null) {
+      final tappedEntry = sortedCategoryEntries[details.pointIndex!];
+      final value = (tappedEntry).value;
+      final pct = piePercentage(value);
+      if ('$pct%' == donutCenterText.value) {
+        donutCenterText.value = '';
+      } else {
+        donutCenterText.value = '$pct%';
+      }
+    }
+  }
 
   // ─── Monthly Chart ────────────────────────────────────────────────────────
 

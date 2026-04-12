@@ -7,4 +7,7 @@ class Routes {
   static const MONTH_DETAILS = '/month-details';
   static const NOTIFICATIONS = '/notifications';
   static const EXPENSE_FORM = '/expense-form';
+  static const PROFILE = '/profile';
+  static const ABOUT = '/about';
+  static const CATEGORY_DETAILS = '/category-details';
 }

@@ -40,5 +40,19 @@ class AppPages {
         Get.put(ExpenseFormController());
       }),
     ),
+    GetPage(
+      name: Routes.PROFILE,
+      page: () => const ProfileScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(ProfileController());
+      }),
+    ),
+    GetPage(
+      name: Routes.CATEGORY_DETAILS,
+      page: () => const CategoryDetailsScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(CategoryDetailsController());
+      }),
+    ),
   ];
 }

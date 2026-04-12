@@ -10,7 +10,21 @@ class MonthDetailController extends GetxController {
   final RxList<Expense> expenses = <Expense>[].obs;
   final RxList<Category> categories = <Category>[].obs;
   final RxInt budget = 0.obs;
+  final RxInt selectedCategoryTotal = 0.obs;
   final RxBool isLoading = true.obs;
+
+  // ─── Sort ────────────────────────────────────────────────────────────
+  final List sortOptions = [
+    'Date (Newest first)',
+    'Date (Oldest first)',
+    'Amount (High to Low)',
+    'Amount (Low to High)',
+  ];
+  final RxString selectedSortOption = 'Date (Newest first)'.obs;
+
+  // ─── Filter ────────────────────────────────────────────────────────────
+  final RxList<String> filterOptions = ['All'].obs;
+  final RxString selectedFilterOption = 'All'.obs;
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
@@ -18,9 +32,7 @@ class MonthDetailController extends GetxController {
   void onInit() {
     super.onInit();
     loadAll();
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _checkBudgetAndShowDialog(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkBudgetAndShowDialog());
   }
 
   // ─── Budget Dialog ────────────────────────────────────────────────────────
@@ -63,19 +75,14 @@ class MonthDetailController extends GetxController {
               autofocus: true,
               style: regularText(14),
               decoration: InputDecoration(
-                hintStyle: regularText(
-                  14,
-                  color: Colors.grey.withValues(alpha: 0.5),
-                ),
+                hintStyle: regularText(14, color: Colors.grey.withValues(alpha: 0.5)),
                 filled: true,
                 fillColor: AppColors.surfaceLight,
                 prefixText: '₹',
                 hintText: 'Enter amount',
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.1),
-                  ),
+                  borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -103,9 +110,7 @@ class MonthDetailController extends GetxController {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brand,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: Text('Save', style: boldText(14)),
           ),
@@ -151,10 +156,7 @@ class MonthDetailController extends GetxController {
           ),
           TextButton(
             onPressed: () => Get.back(result: true),
-            child: Text(
-              'Delete',
-              style: regularText(14, color: AppColors.error),
-            ),
+            child: Text('Delete', style: regularText(14, color: AppColors.error)),
           ),
         ],
       ),
@@ -176,9 +178,8 @@ class MonthDetailController extends GetxController {
       DateTime(year, month, 1),
       DateTime(year, month + 1, 0, 23, 59, 59),
     );
-    expenses.assignAll(
-      snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList(),
-    );
+    _allExpenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
+    applyFiltersAndSorts();
   }
 
   Future<void> loadBudget() async {
@@ -190,9 +191,7 @@ class MonthDetailController extends GetxController {
 
   Future<void> loadCategories() async {
     final snapshot = await FirebaseHelper.getCategories();
-    categories.assignAll(
-      snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList(),
-    );
+    categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
   }
 
   // ─── Budget CRUD ──────────────────────────────────────────────────────────
@@ -229,9 +228,198 @@ class MonthDetailController extends GetxController {
     }
   }
 
+  // ─── Sortring ────────────────────────────────────────────────────────
+
+  void showSortDialog() {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Center(child: Text('Sort by', style: semiBoldText(20))),
+        titlePadding: EdgeInsets.only(top: 16, bottom: 0),
+        content: SizedBox(
+          width: Get.width,
+          child: Obx(
+            () => Column(
+              mainAxisSize: MainAxisSize.min,
+              children: sortOptions.map((option) {
+                bool isSelected = option == selectedSortOption.value;
+                return GestureDetector(
+                  onTap: () => onSortOptionSelected(option),
+                  child: AnimatedContainer(
+                    margin: EdgeInsets.only(top: 12),
+                    duration: const Duration(milliseconds: 200),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.brandDark.withValues(alpha: 0.2)
+                          : AppColors.black,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected ? AppColors.brand : Colors.transparent,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          option,
+                          style: isSelected
+                              ? semiBoldText(15, color: AppColors.brand)
+                              : regularText(15),
+                        ),
+                        // Add a smooth scale animation to the checkmark
+                        AnimatedScale(
+                          scale: isSelected ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOutBack,
+                          child: HugeIcon(
+                            icon: HugeIcons.strokeRoundedCheckmarkCircle01,
+                            size: 22,
+                            color: AppColors.brand,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void onSortOptionSelected(String option) {
+    selectedSortOption.value = option;
+    Get.back();
+    applyFiltersAndSorts();
+  }
+
+  // ─── Filter ────────────────────────────────────────────────────────────
+  // _allExpenses keeps the raw data from firestore so we can filter multiple times
+  final RxList<Expense> _allExpenses = <Expense>[].obs;
+
+  // We store the selected Category ID (or 'All')
+  final RxString selectedFilterCategoryId = 'All'.obs;
+
+  void showCategoryFilterDialog() {
+    Get.dialog(
+      AlertDialog(
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        contentPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Center(child: Text('Filter by Category', style: semiBoldText(20))),
+        titlePadding: EdgeInsets.only(top: 16, bottom: 0),
+        content: SizedBox(
+          width: Get.width,
+          child: Obx(() {
+            final activeCategoryIds = _allExpenses.map((e) => e.categoryId).toSet();
+            final activeCategories = categories
+                .where((c) => activeCategoryIds.contains(c.id))
+                .toList();
+            final options = [null, ...activeCategories];
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: options.map((category) {
+                final String id = category?.id ?? 'All';
+                final String name = category?.name ?? 'All';
+                bool isSelected = selectedFilterCategoryId.value == id;
+
+                return GestureDetector(
+                  onTap: () => onCategorySelected(id, name),
+                  child: AnimatedContainer(
+                    margin: EdgeInsets.only(top: 12),
+                    duration: const Duration(milliseconds: 200),
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.brandDark.withValues(alpha: 0.2)
+                          : AppColors.black,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isSelected ? AppColors.brand : Colors.transparent,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          name,
+                          style: isSelected
+                              ? semiBoldText(15, color: AppColors.brand)
+                              : regularText(15),
+                        ),
+                        AnimatedScale(
+                          scale: isSelected ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOutBack,
+                          child: HugeIcon(
+                            icon: HugeIcons.strokeRoundedCheckmarkCircle01,
+                            size: 22,
+                            color: AppColors.brand,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  void onCategorySelected(String categoryId, String categoryName) {
+    selectedFilterCategoryId.value = categoryId;
+    selectedFilterOption.value = categoryName;
+    Get.back();
+    applyFiltersAndSorts();
+  }
+
+  void applyFiltersAndSorts() {
+    List<Expense> result = _allExpenses.toList();
+
+    // 1. Filter
+    if (selectedFilterCategoryId.value != 'All') {
+      result = result.where((e) => e.categoryId == selectedFilterCategoryId.value).toList();
+      selectedCategoryTotal.value = result.fold(0, (sum, item) => sum + item.price.toInt());
+    }
+
+    // 2. Sort
+    switch (selectedSortOption.value) {
+      case 'Date (Newest first)':
+        result.sort((a, b) => b.date.compareTo(a.date));
+        break;
+      case 'Date (Oldest first)':
+        result.sort((a, b) => a.date.compareTo(b.date));
+        break;
+      case 'Amount (High to Low)':
+        result.sort((a, b) => b.price.compareTo(a.price));
+        break;
+      case 'Amount (Low to High)':
+        result.sort((a, b) => a.price.compareTo(b.price));
+        break;
+    }
+
+    expenses.assignAll(result);
+  }
+
   // ─── Derived Getters ──────────────────────────────────────────────────────
 
-  double get totalExpense => expenses.fold(0.0, (sum, e) => sum + e.price);
+  double get totalExpense => _allExpenses.fold(0.0, (sum, e) => sum + e.price);
+  double get filteredExpenseTotal => expenses.fold(0.0, (sum, e) => sum + e.price);
   double get remaining => budget.value - totalExpense;
   int get totalDays => DateTime(year, month + 1, 0).day;
 
@@ -240,8 +428,7 @@ class MonthDetailController extends GetxController {
     return diff > 0 ? diff : 0;
   }
 
-  double get remainPerDay =>
-      remainingDays > 0 ? remaining / remainingDays : 0.0;
+  double get remainPerDay => remainingDays > 0 ? remaining / remainingDays : 0.0;
   bool get hasBudget => budget.value > 0;
 
   bool get isCurrent {
@@ -270,8 +457,6 @@ class MonthDetailController extends GetxController {
     return HugeIcons.strokeRoundedCancelCircle;
   }
 
-  String get formattedMonth =>
-      DateFormat('MMMM yyyy').format(DateTime(year, month));
-  NumberFormat get formatter =>
-      NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
+  String get formattedMonth => DateFormat('MMMM yyyy').format(DateTime(year, month));
+  NumberFormat get formatter => NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
 }

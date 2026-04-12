@@ -19,9 +19,7 @@ class SettingsTab extends GetView<SettingController> {
           duration: const Duration(milliseconds: 300),
           switchInCurve: Curves.easeIn,
           switchOutCurve: Curves.easeIn,
-          child: controller.isLoading.value
-              ? buildSettingShimmer()
-              : _buildMainContent(),
+          child: controller.isLoading.value ? buildSettingShimmer() : _buildMainContent(),
         );
       }),
     );
@@ -33,41 +31,33 @@ class SettingsTab extends GetView<SettingController> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildProfileHeader(),
-          Obx(
-            () => _buildSettingsTile(
-              icon: HugeIcons.strokeRoundedMail02,
-              title: controller.currentUser.value?.email ?? "",
-            ),
-          ),
+          buildProfileHeader(),
 
-          Obx(
-            () => _buildSettingsTile(
-              icon: HugeIcons.strokeRoundedCall02,
-              title: controller.currentUser.value?.phone.isNotEmpty == true
-                  ? controller.currentUser.value!.phone
-                  : "Add Phone",
-              onTap: () => controller.changePhone(),
-            ),
-          ),
-          // buildBiometricTile(),
-          _buildSettingsTile(
+          buildSettingsTile(
             icon: HugeIcons.strokeRoundedNotification02,
             title: "Notifications",
             onTap: () => Get.toNamed(Routes.NOTIFICATIONS),
           ),
 
-          // const SizedBox(height: 20),
-          // _buildSectionTitle("Support"),
-          _buildSettingsTile(
-            icon: HugeIcons.strokeRoundedFile02,
-            title: "About Budgetly",
-            onTap: () => controller.showAboutAppDialog(),
+          buildSettingsTile(
+            icon: HugeIcons.strokeRoundedFingerPrintScan,
+            title: "Use biometric",
+            trailing: Obx(
+              () => CupertinoSwitch(
+                value: controller.isBiometricEnabled.value,
+                onChanged: (value) => controller.toggleBiometric(value),
+                activeTrackColor: AppColors.brand,
+              ),
+            ),
           ),
 
-          // const SizedBox(height: 20),
-          // _buildSectionTitle("Account"),
-          _buildSettingsTile(
+          buildSettingsTile(
+            icon: HugeIcons.strokeRoundedFile02,
+            title: "About Budgetly",
+            onTap: controller.showAboutAppDialog,
+          ),
+
+          buildSettingsTile(
             icon: HugeIcons.strokeRoundedLogoutSquare01,
             title: "Sign Out",
             color: AppColors.error,
@@ -80,7 +70,7 @@ class SettingsTab extends GetView<SettingController> {
     );
   }
 
-  Widget _buildProfileHeader() {
+  Widget buildProfileHeader() {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -93,50 +83,54 @@ class SettingsTab extends GetView<SettingController> {
           Row(
             children: [
               CircleAvatar(
-                radius: 28,
+                radius: 40,
                 backgroundColor: Theme.of(Get.context!).colorScheme.secondary,
                 child: Obx(
                   () => Text(
-                    controller.getInitials(
-                      controller.currentUser.value?.name ?? "",
-                    ),
-                    style: customText(
-                      24,
-                      FontWeight.w900,
-                      color: AppColors.brand,
-                    ),
+                    controller.initials,
+                    style: customText(32, FontWeight.w900, color: AppColors.brand),
                   ),
                 ),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 12),
               Obx(
                 () => Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       controller.currentUser.value?.name ?? "",
                       style: boldText(24),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(controller.usingSince.value),
+                    Text(
+                      controller.usingSince.value,
+                      style: regularText(14, color: AppColors.grey),
+                    ),
                   ],
                 ),
               ),
             ],
           ),
-          // SizedBox(height: 12),
-          // Divider(height: 1),
-          // SizedBox(height: 8),
-          // Text("Manage Profile", style: GoogleFonts.plusJakartaSans(fontSize: 16, fontWeight: FontWeight.w600)),
+          SizedBox(height: 12),
+          Divider(height: 1),
+          SizedBox(height: 8),
+          InkWell(
+            onTap: () => Get.toNamed(Routes.PROFILE),
+            child: Text("Manage Profile", style: semiBoldText(16, color: AppColors.brand)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSettingsTile({
+  Widget buildSettingsTile({
     required dynamic icon,
     required String title,
     VoidCallback? onTap,
     Color? color,
+    Widget? trailing,
     bool isDestructive = false,
   }) {
     final iconColor = color ?? Colors.white;
@@ -144,10 +138,7 @@ class SettingsTab extends GetView<SettingController> {
 
     return Container(
       margin: const EdgeInsets.only(top: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         onTap: onTap,
         splashColor: Colors.transparent,
@@ -155,59 +146,17 @@ class SettingsTab extends GetView<SettingController> {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: isDestructive
-                ? AppColors.error.withValues(alpha: 0.1)
-                : AppColors.black,
+            color: isDestructive ? AppColors.error.withValues(alpha: 0.1) : AppColors.black,
             borderRadius: BorderRadius.circular(10),
           ),
           child: HugeIcon(icon: icon, color: iconColor, size: 22),
         ),
         title: Text(title, style: semiBoldText(16, color: textColor)),
-        trailing: onTap != null
-            ? Icon(
-                Icons.chevron_right_rounded,
-                color: Colors.grey[600],
-                size: 24,
-              )
-            : null,
-      ),
-    );
-  }
-
-  Widget buildBiometricTile() {
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        splashColor: Colors.transparent,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.black,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: HugeIcon(
-            icon: HugeIcons.strokeRoundedFingerPrintScan,
-            color: Colors.white,
-            size: 22,
-          ),
-        ),
-        title: Text("Use biometric", style: semiBoldText(16)),
-        trailing: Transform.scale(
-          scale: 0.9,
-          alignment: Alignment.centerRight,
-          child: Obx(
-            () => CupertinoSwitch(
-              value: controller.isBiometricEnabled.value,
-              onChanged: (value) => controller.toggleBiometric(value),
-              activeTrackColor: AppColors.brand,
-            ),
-          ),
-        ),
+        trailing:
+            trailing ??
+            (onTap != null
+                ? Icon(Icons.chevron_right_rounded, color: Colors.grey[600], size: 24)
+                : null),
       ),
     );
   }
@@ -240,10 +189,7 @@ class SettingsTab extends GetView<SettingController> {
                     Container(
                       width: 56,
                       height: 56,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 20),
                     // Name and Date lines
@@ -299,10 +245,7 @@ class SettingsTab extends GetView<SettingController> {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       height: 64,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(12)),
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
@@ -320,10 +263,7 @@ class SettingsTab extends GetView<SettingController> {
           Container(
             width: 24,
             height: 24,
-            decoration: BoxDecoration(
-              color: AppColors.black,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: AppColors.black, shape: BoxShape.circle),
           ),
         ],
       ),

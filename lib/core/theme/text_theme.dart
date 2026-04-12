@@ -1,10 +1,6 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-TextStyle regularText(
-  double size, {
-  Color color = AppColors.white,
-  double? height,
-}) {
+TextStyle regularText(double size, {Color color = AppColors.white, double? height}) {
   return GoogleFonts.plusJakartaSans(
     fontSize: size,
     fontWeight: FontWeight.w500,
@@ -13,11 +9,7 @@ TextStyle regularText(
   );
 }
 
-TextStyle boldText(
-  double size, {
-  Color color = AppColors.white,
-  double? height,
-}) {
+TextStyle boldText(double size, {Color color = AppColors.white, double? height}) {
   return GoogleFonts.plusJakartaSans(
     fontSize: size,
     fontWeight: FontWeight.bold,
@@ -26,11 +18,7 @@ TextStyle boldText(
   );
 }
 
-TextStyle semiBoldText(
-  double size, {
-  Color color = AppColors.white,
-  double? height,
-}) {
+TextStyle semiBoldText(double size, {Color color = AppColors.white, double? height}) {
   return GoogleFonts.plusJakartaSans(
     fontSize: size,
     fontWeight: FontWeight.w600,
@@ -39,11 +27,7 @@ TextStyle semiBoldText(
   );
 }
 
-TextStyle mediumText(
-  double size, {
-  Color color = AppColors.white,
-  double? height,
-}) {
+TextStyle mediumText(double size, {Color color = AppColors.white, double? height}) {
   return GoogleFonts.plusJakartaSans(
     fontSize: size,
     fontWeight: FontWeight.w500,

@@ -35,9 +35,23 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                   children: [
                     Row(
                       children: [
-                        Expanded(child: _buildInfoCard("Budget", controller.formatter.format(controller.budget.value), Colors.white, icon: HugeIcons.strokeRoundedWallet01)),
+                        Expanded(
+                          child: _buildInfoCard(
+                            "Budget",
+                            controller.formatter.format(controller.budget.value),
+                            Colors.white,
+                            icon: HugeIcons.strokeRoundedWallet01,
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildInfoCard("Spent", controller.formatter.format(controller.totalExpense), Colors.white, icon: HugeIcons.strokeRoundedMoney01)),
+                        Expanded(
+                          child: _buildInfoCard(
+                            "Spent",
+                            controller.formatter.format(controller.totalExpense),
+                            Colors.white,
+                            icon: HugeIcons.strokeRoundedMoney01,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -45,11 +59,21 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildInfoCard(controller.statusLabel, controller.formatter.format(controller.remaining), controller.statusColor, icon: controller.statusIcon),
+                            child: _buildInfoCard(
+                              controller.statusLabel,
+                              controller.formatter.format(controller.remaining),
+                              controller.statusColor,
+                              icon: controller.statusIcon,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: _buildInfoCard("Safe / Day", controller.formatter.format(controller.remainPerDay), Colors.blueAccent, icon: HugeIcons.strokeRoundedCoins01),
+                            child: _buildInfoCard(
+                              "Safe / Day",
+                              controller.formatter.format(controller.remainPerDay),
+                              Colors.blueAccent,
+                              icon: HugeIcons.strokeRoundedCoins01,
+                            ),
                           ),
                         ],
                       ),
@@ -67,6 +91,32 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
               ),
             ),
 
+            SliverToBoxAdapter(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  TextButton.icon(
+                    onPressed: controller.showSortDialog,
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedArrowUpDown,
+                      color: AppColors.white,
+                      size: 20,
+                    ),
+                    label: Text('Sort by', style: boldText(16)),
+                  ),
+                  TextButton.icon(
+                    onPressed: controller.showCategoryFilterDialog,
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedFilter,
+                      color: AppColors.white,
+                      size: 20,
+                    ),
+                    label: Text('Category Filter', style: boldText(16)),
+                  ),
+                ],
+              ),
+            ),
+
             // ── Transactions Header ─────────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
@@ -75,7 +125,10 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text("Transactions", style: semiBoldText(18, color: Colors.grey.shade400)),
-                    Text("${controller.expenses.length}", style: regularText(14, color: Colors.grey.shade600)),
+                    Text(
+                      "${controller.expenses.length}",
+                      style: regularText(14, color: Colors.grey.shade600),
+                    ),
                   ],
                 ),
               ),
@@ -91,7 +144,11 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
-                        child: Icon(Icons.receipt_long_rounded, size: 50, color: Colors.white.withValues(alpha: 0.1)),
+                        child: Icon(
+                          Icons.receipt_long_rounded,
+                          size: 50,
+                          color: Colors.white.withValues(alpha: 0.1),
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text('No transactions', style: regularText(14, color: Colors.grey.shade600)),
@@ -99,7 +156,7 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                   ),
                 ),
               )
-            else
+            else ...[
               // ── Expense List ───────────────────────────────────────────────
               SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
@@ -113,7 +170,10 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                         HapticFeedback.heavyImpact();
                         showPullDownMenu(
                           context: context,
-                          routeTheme: PullDownMenuRouteTheme(backgroundColor: AppColors.surfaceLight, width: 200),
+                          routeTheme: PullDownMenuRouteTheme(
+                            backgroundColor: AppColors.surfaceLight,
+                            width: 200,
+                          ),
                           items: [
                             PullDownMenuItem(
                               onTap: () => controller.goToEditExpense(expense),
@@ -129,7 +189,12 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                               itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
                             ),
                           ],
-                          position: Rect.fromLTRB(details.globalPosition.dx, details.globalPosition.dy, details.globalPosition.dx, details.globalPosition.dy),
+                          position: Rect.fromLTRB(
+                            details.globalPosition.dx,
+                            details.globalPosition.dy,
+                            details.globalPosition.dx,
+                            details.globalPosition.dy,
+                          ),
                         );
                       },
                       child: ExpenseTile(expense: expense, category: category!),
@@ -137,6 +202,19 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                   );
                 }, childCount: controller.expenses.length),
               ),
+              controller.selectedFilterCategoryId.value == "All"
+                  ? SliverToBoxAdapter(child: SizedBox())
+                  : SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          "${controller.selectedFilterOption.value} Total : ${controller.formatter.format(controller.filteredExpenseTotal)}",
+                          style: regularText(14, color: AppColors.grey),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+            ],
 
             const SliverToBoxAdapter(child: SizedBox(height: 80)),
           ],
@@ -155,7 +233,14 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
 
   // ─── Info Card Widget ─────────────────────────────────────────────────────
 
-  Widget _buildInfoCard(String title, String value, Color valueColor, {dynamic icon, VoidCallback? onTap, bool isFullWidth = false}) {
+  Widget _buildInfoCard(
+    String title,
+    String value,
+    Color valueColor, {
+    dynamic icon,
+    VoidCallback? onTap,
+    bool isFullWidth = false,
+  }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -165,7 +250,13 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 12, offset: const Offset(0, 0))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 0),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,12 +318,18 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                   Container(
                     height: 20,
                     width: 120,
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                   Container(
                     height: 16,
                     width: 24,
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
                 ],
               ),
@@ -240,7 +337,10 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
           ),
           SliverList(
             delegate: SliverChildBuilderDelegate((context, index) {
-              return Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), child: _buildShimmerExpenseTile());
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: _buildShimmerExpenseTile(),
+              );
             }, childCount: 5),
           ),
         ],
@@ -262,12 +362,18 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
               Container(
                 height: 14,
                 width: 60,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
               Container(
                 height: 20,
                 width: 20,
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
             ],
           ),
@@ -301,13 +407,19 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                 Container(
                   height: 16,
                   width: 120,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Container(
                   height: 12,
                   width: 80,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
                 ),
               ],
             ),

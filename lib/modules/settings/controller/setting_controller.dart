@@ -1,8 +1,8 @@
+import 'package:flutter/cupertino.dart';
+
 import '../../../core/import_to_export.dart';
 
 class SettingController extends GetxController {
-  // final Globals globals = Get.put(Globals());
-
   // ─── Reactive State ───────────────────────────────────────────────────────
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
   final RxString usingSince = ''.obs;
@@ -10,6 +10,7 @@ class SettingController extends GetxController {
   final RxBool notificationsEnabled = false.obs;
   final RxBool isNotificationLoading = false.obs;
   final RxBool isBiometricEnabled = false.obs;
+  final RxString version = '1.0.0'.obs;
 
   final LocalAuthentication _localAuth = LocalAuthentication();
 
@@ -21,6 +22,7 @@ class SettingController extends GetxController {
     currentUser.value = PreferenceHelper.user;
     isBiometricEnabled.value = PreferenceHelper.isEnabledBiometric;
     loadUserData();
+    loadVersionInfo();
   }
 
   // ─── User Data ────────────────────────────────────────────────────────────
@@ -55,12 +57,12 @@ class SettingController extends GetxController {
     }
   }
 
-  String getInitials(String name) {
-    if (name.isEmpty) return 'U';
-    final parts = name.trim().split(' ');
-    if (parts.length > 1) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return parts[0][0].toUpperCase();
-  }
+  String get initials => currentUser.value?.name.isNotEmpty == true
+      ? currentUser.value!.name.trim().split(' ').length > 1
+            ? '${currentUser.value!.name.trim().split(' ')[0][0]}${currentUser.value!.name.trim().split(' ')[1][0]}'
+                  .toUpperCase()
+            : currentUser.value!.name.trim().split(' ')[0][0].toUpperCase()
+      : 'U';
 
   // ─── Biometric ────────────────────────────────────────────────────────────
 
@@ -97,75 +99,25 @@ class SettingController extends GetxController {
     }
   }
 
-  // ─── Change Phone ─────────────────────────────────────────────────────────
-
-  void changePhone() {
-    HapticFeedback.heavyImpact();
-    final controller = TextEditingController(text: currentUser.value?.phone);
-    Get.bottomSheet(
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Change Phone', style: regularText(20)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: controller,
-                keyboardType: TextInputType.phone,
-                style: regularText(14),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => updatePhone(controller.text.trim()),
-                child: const Text('Update'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void updatePhone(String phone) async {
-    final user = FirebaseHelper.currentUser;
-    if (user == null) return;
-
-    if (!phone.contains('+91 ')) {
-      phone = '+91 $phone';
-    }
-    await FirebaseHelper.updateUserPhone(user.email!, phone);
-
-    if (currentUser.value != null) {
-      final updatedUserModel = currentUser.value!.copyWith(phone: phone);
-      currentUser.value = updatedUserModel;
-      PreferenceHelper.user = updatedUserModel;
-      Get.back();
-      Get.snackbar('Success', 'Phone number updated successfully!');
-    }
-  }
-
   // ─── Sign Out ─────────────────────────────────────────────────────────────
 
   Future<void> handleSignOut() async {
     HapticFeedback.heavyImpact();
-    Get.defaultDialog(
-      contentPadding: const EdgeInsets.all(24),
-      titlePadding: const EdgeInsets.only(top: 24, left: 24, right: 24),
-      title: 'Sign Out',
-      middleText: 'Are you sure you want to sign out?',
-      confirm: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.error,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        onPressed: signOut,
-        child: const Text('Sign Out'),
+    Get.dialog(
+      AlertDialog(
+        title: Text('Sign Out'),
+        content: Text('Are you sure you want to sign out?'),
+        actions: [
+          TextButton(onPressed: Get.back, child: Text('Cancel')),
+          TextButton(
+            onPressed: () {
+              Get.back();
+              signOut();
+            },
+            child: Text('Sign Out', style: TextStyle(color: Colors.red)),
+          ),
+        ],
       ),
-      cancel: TextButton(onPressed: Get.back, child: const Text('Cancel')),
     );
   }
 
@@ -181,56 +133,18 @@ class SettingController extends GetxController {
 
   void showAboutAppDialog() {
     HapticFeedback.heavyImpact();
-    showModalBottomSheet(
-      context: Get.context!,
-      backgroundColor: AppColors.surface,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          16,
-          24,
-          MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.secondary,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.wallet,
-                size: 60,
-                color: Theme.of(context).colorScheme.onSecondary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('Budgetly', style: GoogleFonts.staatliches(fontSize: 32)),
-            const SizedBox(height: 8),
-            Text('Version 1.3.1', style: regularText(14)),
-            const SizedBox(height: 24),
-            Text(
-              'A simple and effective personal expense tracking application designed to help you save money.',
-              textAlign: TextAlign.center,
-              style: regularText(15, color: Colors.grey.shade400),
-            ),
-            const SizedBox(height: 32),
-            Button(
-              onClick: Get.back,
-              child: Text('Close', style: regularText(16)),
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
-    );
+    AboutSheet.show(version.value);
+  }
+
+  Future<void> loadVersionInfo() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      version.value = info.version;
+    } catch (e) {
+      debugPrint('Error loading package info: $e');
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────

@@ -11,7 +11,10 @@ class DashboardTab extends GetView<DashboardController> {
       appBar: AppBar(
         backgroundColor: AppColors.black,
         elevation: 0,
-        title: Text('Budgetly', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 24)),
+        title: Text(
+          'Budgetly',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 24),
+        ),
       ),
       body: Obx(() {
         if (controller.isLoading.value) return _buildShimmerLoader();
@@ -63,11 +66,18 @@ class DashboardTab extends GetView<DashboardController> {
                 DropdownButton<int>(
                   value: controller.selectedYear.value,
                   dropdownColor: AppColors.surface,
-                  icon: HugeIcon(icon: HugeIcons.strokeRoundedArrowDown01, size: 24, color: Colors.white, strokeWidth: 2),
+                  icon: HugeIcon(
+                    icon: HugeIcons.strokeRoundedArrowDown01,
+                    size: 24,
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
                   underline: SizedBox(),
                   isDense: true,
                   style: semiBoldText(16, color: Colors.white),
-                  items: controller.availableYears.map((y) => DropdownMenuItem(value: y, child: Text(y.toString()))).toList(),
+                  items: controller.availableYears
+                      .map((y) => DropdownMenuItem(value: y, child: Text(y.toString())))
+                      .toList(),
                   onChanged: (year) {
                     if (year != null) controller.changeYear(year);
                   },
@@ -88,9 +98,19 @@ class DashboardTab extends GetView<DashboardController> {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF1565C0), Color(0xFF1E88E5)]),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
+          ),
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: const Color(0xFF1565C0).withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10))],
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1565C0).withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,15 +119,24 @@ class DashboardTab extends GetView<DashboardController> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: const Icon(Icons.wallet, color: Colors.white, size: 20),
                 ),
                 const SizedBox(width: 12),
-                Text('Total Expenses', style: semiBoldText(18, color: Colors.white.withValues(alpha: 0.9))),
+                Text(
+                  'Total Expenses',
+                  style: semiBoldText(18, color: Colors.white.withValues(alpha: 0.9)),
+                ),
                 const Spacer(),
                 GestureDetector(
                   onTap: controller.toggleMonthlyYearly,
-                  child: Text(controller.showMonthly.value ? "Show Yearly" : "Monthly", style: regularText(13, color: Colors.white70)),
+                  child: Text(
+                    controller.showMonthly.value ? "Show Yearly" : "Monthly",
+                    style: regularText(13, color: Colors.white70),
+                  ),
                 ),
               ],
             ),
@@ -115,10 +144,23 @@ class DashboardTab extends GetView<DashboardController> {
             Row(
               spacing: 4,
               children: [
-                Text('₹', style: GoogleFonts.plusJakartaSans(fontSize: 40, color: Colors.white, height: 1.0)),
+                Text(
+                  '₹',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 40,
+                    color: Colors.white,
+                    height: 1.0,
+                  ),
+                ),
                 AnimatedDigitWidget(
                   value: controller.displayTotal,
-                  textStyle: GoogleFonts.plusJakartaSans(fontSize: 40, fontWeight: FontWeight.w800, color: Colors.white, height: 1.0, letterSpacing: -2),
+                  textStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 40,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1.0,
+                    letterSpacing: -2,
+                  ),
                   enableSeparator: true,
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutCubic,
@@ -133,18 +175,31 @@ class DashboardTab extends GetView<DashboardController> {
                   transitionBuilder: (child, animation) => FadeTransition(
                     opacity: animation,
                     child: SlideTransition(
-                      position: Tween<Offset>(begin: const Offset(-0.1, 0), end: Offset.zero).animate(animation),
+                      position: Tween<Offset>(
+                        begin: const Offset(-0.1, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
                       child: child,
                     ),
                   ),
-                  child: Text(controller.displayPeriodLabel, key: ValueKey(controller.showMonthly.value), style: GoogleFonts.plusJakartaSans(fontSize: 16)),
+                  child: Text(
+                    controller.displayPeriodLabel,
+                    key: ValueKey(controller.showMonthly.value),
+                    style: GoogleFonts.plusJakartaSans(fontSize: 16),
+                  ),
                 ),
                 const Spacer(),
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 200),
                   opacity: controller.showMonthly.value ? 1 : 0,
                   child: GestureDetector(
-                    onTap: () => Get.toNamed(Routes.MONTH_DETAILS, arguments: {'year': controller.selectedYear.value, 'month': DateTime.now().month}),
+                    onTap: () => Get.toNamed(
+                      Routes.MONTH_DETAILS,
+                      arguments: {
+                        'year': controller.selectedYear.value,
+                        'month': DateTime.now().month,
+                      },
+                    ),
                     child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight03),
                   ),
                 ),
@@ -165,7 +220,10 @@ class DashboardTab extends GetView<DashboardController> {
       if (controller.topCategoryEntries.isEmpty) {
         return Container(
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Text(
             'No expenses recorded',
             style: regularText(14, color: Colors.grey),
@@ -185,6 +243,7 @@ class DashboardTab extends GetView<DashboardController> {
             percentage: controller.categoryPercentage(entry.value),
             formattedAmount: formatter.format(entry.value),
             transactionCount: controller.transactionCountForCategory(entry.key),
+            onTap: () => Get.toNamed(Routes.CATEGORY_DETAILS, arguments: {'category': category}),
           );
         }).toList(),
       );
@@ -218,7 +277,6 @@ class DashboardTab extends GetView<DashboardController> {
     ];
 
     return Container(
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -227,53 +285,60 @@ class DashboardTab extends GetView<DashboardController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            spacing: 8,
-            children: [
-              HugeIcon(icon: HugeIcons.strokeRoundedPieChart08, size: 20, color: AppColors.accent),
-              Text('Distribution', style: boldText(16, color: Colors.white)),
-            ],
-          ),
-          const SizedBox(height: 32),
-          SizedBox(
-            height: 200,
-            child: PieChart(
-              PieChartData(
-                borderData: FlBorderData(show: false),
-                sectionsSpace: 2,
-                centerSpaceRadius: 50,
-                sections: entries.asMap().entries.map((e) {
-                  final pct = controller.piePercentage(e.value.value);
-                  return PieChartSectionData(
-                    color: colors[e.key % colors.length],
-                    value: e.value.value,
-                    title: pct > 10 ? '${pct.toStringAsFixed(0)}%' : '',
-                    radius: 70,
-                    titleStyle: boldText(14, color: Colors.white),
-                  );
-                }).toList(),
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              spacing: 8,
+              children: [
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedPieChart08,
+                  size: 20,
+                  color: AppColors.accent,
+                ),
+                Text('Distribution', style: boldText(16, color: Colors.white)),
+              ],
             ),
           ),
-          const SizedBox(height: 32),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: entries.asMap().entries.map((e) {
-              final name = controller.getCategoryById(e.value.key)?.name ?? '';
-              return Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(color: colors[e.key % colors.length], shape: BoxShape.circle),
+          SizedBox(
+            height: 360,
+            child: SfCircularChart(
+              palette: colors,
+              legend: Legend(
+                isVisible: true,
+                isResponsive: true,
+                position: LegendPosition.bottom,
+                overflowMode: LegendItemOverflowMode.wrap,
+                itemPadding: 8,
+                padding: 4,
+                textStyle: regularText(12, color: Colors.white),
+              ),
+              annotations: <CircularChartAnnotation>[
+                CircularChartAnnotation(
+                  widget: Obx(
+                    () => Text(controller.donutCenterText.value, style: semiBoldText(18)),
                   ),
-                  const SizedBox(width: 8),
-                  Text(name, style: regularText(12, color: Colors.white)),
-                ],
-              );
-            }).toList(),
+                ),
+              ],
+              series: <CircularSeries>[
+                DoughnutSeries<dynamic, String>(
+                  animationDuration: 1000,
+                  dataSource: entries,
+                  xValueMapper: (dynamic entry, _) =>
+                      controller.getCategoryById((entry as MapEntry<String, double>).key)?.name ??
+                      '',
+                  yValueMapper: (dynamic entry, _) => (entry as MapEntry<String, double>).value,
+                  innerRadius: '50%',
+                  radius: '100%',
+                  selectionBehavior: SelectionBehavior(enable: true),
+                  dataLabelMapper: (dynamic entry, _) {
+                    final pct = controller.piePercentage((entry as MapEntry<String, double>).value);
+                    return '$pct%';
+                  },
+                  legendIconType: LegendIconType.seriesType,
+                  onPointTap: controller.onDonutSectionTap,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -282,7 +347,7 @@ class DashboardTab extends GetView<DashboardController> {
 
   Widget _buildMonthlyChart() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      // padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
@@ -290,81 +355,95 @@ class DashboardTab extends GetView<DashboardController> {
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              HugeIcon(icon: HugeIcons.strokeRoundedChartEvaluation, size: 20, color: AppColors.accent),
-              const SizedBox(width: 8),
-              Text('Monthly Trend', style: boldText(16, color: Colors.white)),
-            ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Row(
+              children: [
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedChartEvaluation,
+                  size: 20,
+                  color: AppColors.accent,
+                ),
+                const SizedBox(width: 8),
+                Text('Monthly Trend', style: boldText(16, color: Colors.white)),
+              ],
+            ),
           ),
+          const SizedBox(height: 16),
           SizedBox(
-            height: 200,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: controller.chartMaxY / 4,
-                  getDrawingHorizontalLine: (_) => FlLine(color: AppColors.surfaceLight, strokeWidth: 1, dashArray: [5, 5]),
+            height: 360,
+            child: SfCartesianChart(
+              plotAreaBorderWidth: 0,
+              trackballBehavior: TrackballBehavior(
+                enable: true,
+                activationMode: ActivationMode.singleTap,
+                lineType: TrackballLineType.vertical,
+                tooltipSettings: InteractiveTooltip(
+                  enable: true,
+                  borderColor: AppColors.accent,
+                  borderRadius: 12,
+                  canShowMarker: false,
+                  borderWidth: 2,
+                  color: AppColors.brandDark,
+                  textStyle: regularText(12, color: Colors.white),
+                  format: 'Month point.x \n point.y',
                 ),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 1,
-                      reservedSize: 28,
-                      getTitlesWidget: (value, meta) {
-                        final m = value.toInt();
-                        if (m < 1 || m > 12) return const SizedBox();
-                        return SideTitleWidget(
-                          axisSide: meta.axisSide,
-                          child: Text(m.toString(), style: regularText(12, color: Colors.grey.shade600)),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                borderData: FlBorderData(show: false),
-                minX: 1,
-                maxX: 12,
-                minY: 0,
-                maxY: controller.chartMaxY,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: controller.monthlyTotals.entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList(),
-                    isCurved: true,
-                    preventCurveOverShooting: true,
-                    color: AppColors.brand,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: [AppColors.brand.withValues(alpha: 0.3), AppColors.brand.withValues(alpha: 0.0)],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
-                  ),
-                ],
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    tooltipRoundedRadius: 8,
-                    getTooltipItems: (touchedSpots) {
-                      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                      return touchedSpots.map((spot) {
-                        final idx = spot.x.toInt() - 1;
-                        final name = (idx >= 0 && idx < 12) ? months[idx] : '';
-                        return LineTooltipItem('$name  •  ₹${spot.y.toInt()}', boldText(14, color: Colors.white));
-                      }).toList();
-                    },
-                  ),
+                markerSettings: const TrackballMarkerSettings(
+                  markerVisibility: TrackballVisibilityMode.visible,
+                  height: 10,
+                  width: 10,
+                  color: AppColors.brand,
+                  borderColor: AppColors.brandDark,
+                  borderWidth: 2,
                 ),
               ),
+              primaryXAxis: CategoryAxis(
+                labelPlacement: LabelPlacement.onTicks,
+                edgeLabelPlacement: EdgeLabelPlacement.shift,
+                desiredIntervals: 10,
+                majorGridLines: const MajorGridLines(width: 0),
+                axisLine: const AxisLine(width: 0),
+                majorTickLines: const MajorTickLines(width: 0),
+                labelStyle: regularText(12, color: AppColors.grey),
+              ),
+              primaryYAxis: NumericAxis(
+                majorGridLines: MajorGridLines(
+                  width: 1,
+                  color: AppColors.borderColor,
+                  dashArray: const <double>[5, 5],
+                ),
+                axisLine: const AxisLine(width: 0),
+                majorTickLines: const MajorTickLines(width: 0),
+                labelStyle: regularText(12, color: AppColors.grey),
+                labelFormat: '₹{value}',
+              ),
+              series: <CartesianSeries>[
+                SplineAreaSeries<MapEntry<int, double>, String>(
+                  dataSource: controller.monthlyTotals.entries.toList(),
+                  xValueMapper: (entry, _) => entry.key.toString(),
+                  yValueMapper: (entry, _) => entry.value,
+                  animationDuration: 1000,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.accent.withValues(alpha: 0.2),
+                      AppColors.accent.withValues(alpha: 0.0),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                  borderColor: AppColors.accent,
+                  borderWidth: 3,
+                  markerSettings: const MarkerSettings(
+                    isVisible: true,
+                    height: 8,
+                    width: 8,
+                    shape: DataMarkerType.circle,
+                    borderWidth: 2,
+                    borderColor: AppColors.accent, // Outer ring color
+                    color: Colors.white, // Inner dot color
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -391,7 +470,10 @@ class DashboardTab extends GetView<DashboardController> {
           const SizedBox(height: 24),
           Text('No expenses yet', style: boldText(20, color: Colors.white)),
           const SizedBox(height: 8),
-          Text('Start tracking your expenses to see data here.', style: regularText(14, color: Colors.grey)),
+          Text(
+            'Start tracking your expenses to see data here.',
+            style: regularText(14, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -420,14 +502,20 @@ class DashboardTab extends GetView<DashboardController> {
                   Container(
                     width: 100,
                     height: 40,
-                    decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(30)),
+                    decoration: BoxDecoration(
+                      color: baseColor,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
               Container(
                 height: 180,
-                decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(20)),
+                decoration: BoxDecoration(
+                  color: baseColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               const SizedBox(height: 24),
               Row(
@@ -455,7 +543,10 @@ class DashboardTab extends GetView<DashboardController> {
                         Container(
                           width: 50,
                           height: 50,
-                          decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(12)),
+                          decoration: BoxDecoration(
+                            color: backgroundColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -469,7 +560,12 @@ class DashboardTab extends GetView<DashboardController> {
                             ],
                           ),
                         ),
-                        Container(width: 80, height: 20, margin: const EdgeInsets.only(right: 16), color: baseColor),
+                        Container(
+                          width: 80,
+                          height: 20,
+                          margin: const EdgeInsets.only(right: 16),
+                          color: baseColor,
+                        ),
                       ],
                     ),
                   ),
@@ -480,7 +576,10 @@ class DashboardTab extends GetView<DashboardController> {
               const SizedBox(height: 16),
               Container(
                 height: 250,
-                decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(24)),
+                decoration: BoxDecoration(
+                  color: baseColor,
+                  borderRadius: BorderRadius.circular(24),
+                ),
               ),
             ],
           ),

@@ -1,6 +1,6 @@
-import 'package:budgetly/core/import_to_export.dart';
 import 'dart:developer';
 
+import 'package:budgetly/core/import_to_export.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -13,25 +13,19 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 class NotificationService {
   NotificationService._();
 
-  static final FlutterLocalNotificationsPlugin _plugin =
-      FlutterLocalNotificationsPlugin();
+  static final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
 
   // ─── Channels ─────────────────────────────────────────────────────────────
   static const String _dailyReminderChannelId = 'daily_expense_channel';
   static const String _dailyReminderChannelName = 'Daily Expense Reminder';
-  static const String _dailyReminderChannelDesc =
-      'Reminds you to add daily expenses';
+  static const String _dailyReminderChannelDesc = 'Reminds you to add daily expenses';
 
   static const String _monthlyReminderChannelId = 'monthly_expense_channel';
   static const String _monthlyReminderChannelName = 'Monthly Expense Reminder';
-  static const String _monthlyReminderChannelDesc =
-      'Reminds you to add monthly expenses';
+  static const String _monthlyReminderChannelDesc = 'Reminds you to add monthly expenses';
 
-  // ─── Scheduled notification ID ────────────────────────────────────────────
   static const int _dailyReminderId = 1001;
-
-  // ─── Reminder time ────────────────────────────────────────────────────────
   static const int _reminderHour = 23;
   static const int _reminderMinute = 30;
 
@@ -46,14 +40,12 @@ class NotificationService {
     await _initLocalNotifications();
     _registerBackgroundHandler();
     _listenForegroundMessages();
-    _listenNotificationTaps();
-    await _captureInitialMessage();
+    _listenBackgroundTap();
+    await _captureTerminatedTap();
   }
 
   static Future<void> _initLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -62,13 +54,17 @@ class NotificationService {
 
     await _plugin.initialize(
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
-      onDidReceiveNotificationResponse: (_) => navigateToCurrentMonth(),
+      // ✅ FIX 1 — local notification tap (foreground + background)
+      // Use addPostFrameCallback so the navigator is guaranteed to be ready.
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          navigateToCurrentMonth();
+        });
+      },
     );
 
     await _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(
           const AndroidNotificationChannel(
             _dailyReminderChannelId,
@@ -80,9 +76,7 @@ class NotificationService {
         );
 
     await _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(
           const AndroidNotificationChannel(
             _monthlyReminderChannelId,
@@ -99,64 +93,57 @@ class NotificationService {
   }
 
   static void _listenForegroundMessages() {
-    FirebaseMessaging.onMessage.listen((message) {
-      showLocalNotification(message);
+    FirebaseMessaging.onMessage.listen(showLocalNotification);
+  }
+
+  // ✅ FIX 2 — FCM notification tap when app is in background (not killed)
+  // Same addPostFrameCallback trick — the app is resuming, navigator may
+  // not have processed the route stack yet.
+  static void _listenBackgroundTap() {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        navigateToCurrentMonth();
+      });
     });
   }
 
-  static void _listenNotificationTaps() {
-    FirebaseMessaging.onMessageOpenedApp.listen(
-      (_) => navigateToCurrentMonth(),
-    );
-  }
-
-  static Future<void> _captureInitialMessage() async {
+  // ✅ FIX 3 — app opened from terminated state via notification
+  // Don't navigate here — save the message and let the home screen
+  // call consumeInitialNotification() once the widget tree is built.
+  static Future<void> _captureTerminatedTap() async {
     _initialMessage = await _messaging.getInitialMessage();
   }
 
-  // ─── Called from home screen after UI is ready ────────────────────────────
-
+  // ─── Called from HomeScreen.initState / onInit after first frame ──────────
+  // This is the correct place to handle the terminated-state tap because
+  // the navigator and route stack are fully ready by then.
   static void consumeInitialNotification() {
     if (_initialMessage != null) {
-      navigateToCurrentMonth();
-      _initialMessage = null;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        navigateToCurrentMonth();
+        _initialMessage = null;
+      });
     }
   }
 
   // ─── Enable / Disable ─────────────────────────────────────────────────────
 
   static Future<bool> enable() async {
-    // 1. Request FCM permission
-    final status = await _messaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    final status = await _messaging.requestPermission(alert: true, badge: true, sound: true);
     if (status.authorizationStatus == AuthorizationStatus.denied) return false;
 
-    // 2. Android 13+ explicit permission
     final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     final granted = await android?.requestNotificationsPermission();
     if (granted == false) return false;
 
-    // 3. Save FCM token
     final token = await _messaging.getToken();
     if (token == null) return false;
     log('FCM Token: $token');
     PreferenceHelper.fcmToken = token;
+    _messaging.onTokenRefresh.listen((token) => PreferenceHelper.fcmToken = token);
 
-    // Keep token fresh
-    _messaging.onTokenRefresh.listen(
-      (token) => PreferenceHelper.fcmToken = token,
-    );
-
-    // 4. Schedule daily local notification at 11:30 PM
     await scheduleDailyReminder();
-
-    // 5. Persist preference
     PreferenceHelper.isNotificationEnabled = true;
 
     return true;
@@ -167,11 +154,8 @@ class NotificationService {
     PreferenceHelper.isNotificationEnabled = false;
   }
 
-  // ─── Daily Reminder Scheduling ────────────────────────────────────────────
+  // ─── Scheduling ───────────────────────────────────────────────────────────
 
-  /// Schedules (or re-schedules) a notification every day at 11:30 PM.
-  /// Safe to call on every app launch — it replaces the previous schedule
-  /// because the same [_dailyReminderId] is reused.
   static Future<void> scheduleDailyReminder() async {
     await _plugin.zonedSchedule(
       _dailyReminderId,
@@ -189,14 +173,9 @@ class NotificationService {
           icon: '@mipmap/ic_launcher',
           showWhen: true,
         ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-        ),
+        iOS: DarwinNotificationDetails(presentAlert: true, presentBadge: true, presentSound: true),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      // ↓ This is what makes it repeat every day at the same time
       matchDateTimeComponents: DateTimeComponents.time,
     );
 
@@ -208,25 +187,16 @@ class NotificationService {
     log('Daily reminder cancelled');
   }
 
-  /// Returns the next 11:30 PM from now in IST.
-  /// If the time has already passed today, schedules for tomorrow.
   static tz.TZDateTime _nextInstanceOf(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minute,
-    );
+    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
     return scheduled;
   }
 
-  // ─── Show local notification (foreground + background FCM) ───────────────
+  // ─── Show local notification ──────────────────────────────────────────────
 
   static Future<void> showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
@@ -242,8 +212,8 @@ class NotificationService {
           _dailyReminderChannelName,
           channelDescription: _dailyReminderChannelDesc,
           importance: Importance.max,
-          category: AndroidNotificationCategory.reminder,
           priority: Priority.max,
+          category: AndroidNotificationCategory.reminder,
           icon: '@mipmap/ic_launcher',
         ),
       ),
@@ -254,9 +224,14 @@ class NotificationService {
 
   static void navigateToCurrentMonth() {
     final now = DateTime.now();
-    Get.toNamed(
-      Routes.MONTH_DETAILS,
-      arguments: {'year': now.year, 'month': now.month},
-    );
+
+    if (Get.context == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        navigateToCurrentMonth();
+      });
+      return;
+    }
+
+    Get.toNamed(Routes.MONTH_DETAILS, arguments: {'year': now.year, 'month': now.month});
   }
 }

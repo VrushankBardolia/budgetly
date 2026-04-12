@@ -17,10 +17,11 @@ export 'package:firebase_auth/firebase_auth.dart';
 export 'package:google_sign_in/google_sign_in.dart';
 export 'package:pull_down_button/pull_down_button.dart';
 export 'package:animated_digit/animated_digit.dart';
-export 'package:fl_chart/fl_chart.dart';
+export 'package:syncfusion_flutter_charts/charts.dart';
 export 'package:permission_handler/permission_handler.dart';
 export 'package:local_auth/local_auth.dart';
 export 'package:flutter_svg/svg.dart';
+export 'package:package_info_plus/package_info_plus.dart';
 
 // ─── Core & Theme ──────────────────────────────────────────────────────────
 export 'package:budgetly/core/theme/app_colors.dart';
@@ -63,7 +64,9 @@ export 'package:budgetly/modules/auth/view/initial_loader_screen.dart';
 
 // ─── Modules (Categories) ──────────────────────────────────────────────────
 export 'package:budgetly/modules/catregories/controller/category_controller.dart';
+export 'package:budgetly/modules/catregories/controller/category_details_controller.dart';
 export 'package:budgetly/modules/catregories/view/categories_tab.dart';
+export 'package:budgetly/modules/catregories/view/category_details_screen.dart';
 
 // ─── Modules (Dashboard) ───────────────────────────────────────────────────
 export 'package:budgetly/modules/dashboard/view/dashboard_tab.dart';
@@ -80,8 +83,11 @@ export 'package:budgetly/modules/months/controller/month_details_controller.dart
 // ─── Modules (Settings) ────────────────────────────────────────────────────
 export 'package:budgetly/modules/settings/controller/notification_controller.dart';
 export 'package:budgetly/modules/settings/controller/setting_controller.dart';
+export 'package:budgetly/modules/settings/controller/profile_controller.dart';
 export 'package:budgetly/modules/settings/view/notification_screen.dart';
 export 'package:budgetly/modules/settings/view/settings_shimmer_loader.dart';
+export 'package:budgetly/modules/settings/view/profile_screen.dart';
+export 'package:budgetly/modules/settings/view/about_sheet.dart';
 export 'package:budgetly/modules/settings/view/settings_tab.dart';
 
 // ─── Modules (Root) ────────────────────────────────────────────────────────
