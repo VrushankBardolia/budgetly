@@ -7,33 +7,45 @@ It helps users track expenses, manage budgets, and visualize spending patterns w
 
 ## Features
 
-- **Track Expenses**
-  - Add, edit, and delete daily expenses
-  - Categorize expenses for better organization
+* **Secure Access**
 
-- **Category Management**
-  - Custom expense categories with emoji support
-  - View top spending categories
+  * Unlock the app using biometric authentication (fingerprint/face)
 
-- **Year & Month-wise Tracking**
-  - Switch between different years
-  - Monthly expense breakdown
+* **Track Expenses**
 
-- **Analytics & Insights**
-  - Pie chart for category-wise distribution
-  - Line chart for monthly spending trends
+  * Add, edit, and delete daily expenses
+  * Organize expenses with categories
 
-- **Budget Management**
-  - Set yearly / monthly budgets
-  - Compare expenses against budgets
+* **Categories**
 
-- **Firebase Integration**
-  - Cloud Firestore for real-time data storage
-  - Firebase Authentication (optional / extendable)
+  * Create custom categories with emojis
+  * View detailed spending for each category
 
-- **Modern UI**
-  - Dark theme optimized UI
-  - Clean dashboard layout with cards and charts
+* **Monthly Tracking**
+
+  * View monthly expense breakdown
+  * Sort and filter transactions easily
+
+* **Insights**
+
+  * Visual charts to understand your spending better
+
+* **Budget**
+
+  * Set budgets and track your spending against them
+
+* **Profile**
+
+  * Manage your profile
+  * Delete your account anytime
+
+* **Reminders**
+
+  * Get daily reminders to log your expenses
+
+* **Experience**
+
+  * Clean, modern UI with smooth performance
 
 ---
 
@@ -48,7 +60,15 @@ It helps users track expenses, manage budgets, and visualize spending patterns w
 
 ## Changelog
 
-### 1.3.2 (Latest Release)
+### 1.4 (Latest Release)
+* Added biometric authentication for secure app access
+* Added sort and filter options in month details screen
+* Introduced Manage Profile screen
+* Added Delete Account functionality
+* Added Category Details screen for better insights
+* Updated dashboard charts for improved visualization
+
+### 1.3.2
 - Restricted selecting future dates while adding or editing expenses
 - Fixed issue where user initials were not displaying in the settings tab
 - Fixed minor bugs and improved overall stability
