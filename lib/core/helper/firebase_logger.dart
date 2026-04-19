@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 /// Note: Logs are only emitted when the application is running in [kDebugMode] to avoid spamming
 /// or leaking data in production builds.
 class FirebaseLogger {
-  static const String _name = 'FirebaseLogger';
+  static const String _name = 'FB_Log';
 
   // ─── ANSI Color Codes ───────────────────────────────────────────────────
   static const String _reset = '\x1B[0m';

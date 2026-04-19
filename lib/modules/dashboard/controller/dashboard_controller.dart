@@ -59,7 +59,6 @@ class DashboardController extends GetxController {
 
     final years = snapshot.docs.map((doc) => Expense.fromFirestore(doc).date.year).toSet().toList()
       ..sort((a, b) => b.compareTo(a));
-
     availableYears.assignAll(years.isEmpty ? [DateTime.now().year] : years);
   }
 
@@ -110,13 +109,13 @@ class DashboardController extends GetxController {
 
   // ─── Total Card ───────────────────────────────────────────────────────────
 
-  double get yearlyTotal => expenses.fold(0.0, (sum, e) => sum + e.price);
+  double get yearlyTotal => expenses.fold(0.0, (total, e) => total + e.price);
 
   double get currentMonthTotal {
     final month = DateTime.now().month;
     return expenses
         .where((e) => e.date.month == month && e.date.year == selectedYear.value)
-        .fold(0.0, (sum, e) => sum + e.price);
+        .fold(0.0, (total, e) => total + e.price);
   }
 
   double get displayTotal => showMonthly.value ? currentMonthTotal : yearlyTotal;
@@ -163,7 +162,7 @@ class DashboardController extends GetxController {
     return sorted;
   }
 
-  double get categoryGrandTotal => categoryTotals.values.fold(0.0, (sum, v) => sum + v);
+  double get categoryGrandTotal => categoryTotals.values.fold(0.0, (total, v) => total + v);
 
   String piePercentage(double value) =>
       categoryGrandTotal > 0 ? (value / categoryGrandTotal * 100).toStringAsFixed(2) : "0";

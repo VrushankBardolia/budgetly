@@ -6,7 +6,7 @@ class FirebaseHelper {
   static final GoogleSignIn googleSignIn = GoogleSignIn();
 
   // ==========================================
-  // Authentication & User Data
+  // MARK: Authentication & User Data
   // ==========================================
 
   static Stream<User?> get authStateChanges => auth.authStateChanges();
@@ -152,7 +152,7 @@ class FirebaseHelper {
   }
 
   // ==========================================
-  // Expenses
+  // MARK: Expenses
   // ==========================================
 
   static Future<QuerySnapshot<Map<String, dynamic>>> getExpenses(
@@ -271,8 +271,87 @@ class FirebaseHelper {
     }
   }
 
+  static Future<double> getCategoryTotal(String categoryId) async {
+    FirebaseLogger.request('getCategoryTotal', {'categoryId': categoryId});
+    try {
+      final query = db
+          .collection('expenses')
+          .where('userId', isEqualTo: currentUid)
+          .where('categoryId', isEqualTo: categoryId);
+
+      final aggregateSnapshot = await query.aggregate(sum('price')).get();
+      final total = aggregateSnapshot.getSum('price') ?? 0.0;
+      FirebaseLogger.response('getCategoryTotal', total);
+      return total;
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('getCategoryTotal', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<int> getCategoryTransactionCount(String categoryId) async {
+    FirebaseLogger.request('getCategoryTransactionCount', {'categoryId': categoryId});
+    try {
+      final query = db
+          .collection('expenses')
+          .where('userId', isEqualTo: currentUid)
+          .where('categoryId', isEqualTo: categoryId);
+
+      final aggregateSnapshot = await query.count().get();
+      final count = aggregateSnapshot.count ?? 0;
+      FirebaseLogger.response('getCategoryTransactionCount', count);
+      return count;
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('getCategoryTransactionCount', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<double> getTotalExpenseForMonth(int year, int month) async {
+    FirebaseLogger.request('getTotalExpenseForMonth', {'year': year, 'month': month});
+    try {
+      final startDate = DateTime(year, month, 1);
+      final endDate = DateTime(year, month + 1, 1).subtract(const Duration(milliseconds: 1));
+
+      final query = db
+          .collection('expenses')
+          .where('userId', isEqualTo: currentUid)
+          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+
+      final aggregateSnapshot = await query.aggregate(sum('price')).get();
+      final total = aggregateSnapshot.getSum('price') ?? 0.0;
+      FirebaseLogger.response('getTotalExpenseForMonth', total);
+      return total;
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('getTotalExpenseForMonth', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<double> getTotalExpenseForYear(int year) async {
+    FirebaseLogger.request('getTotalExpenseForYear', {'year': year});
+    try {
+      final startDate = DateTime(year, 1, 1);
+      final endDate = DateTime(year + 1, 1, 1).subtract(const Duration(milliseconds: 1));
+      final query = db
+          .collection('expenses')
+          .where('userId', isEqualTo: currentUid)
+          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate));
+
+      final aggregateSnapshot = await query.aggregate(sum('price')).get();
+      final total = aggregateSnapshot.getSum('price') ?? 0.0;
+      FirebaseLogger.response('getTotalExpenseForYear', total);
+      return total;
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('getTotalExpenseForYear', e, stackTrace);
+      rethrow;
+    }
+  }
+
   // ==========================================
-  // Budgets
+  // MARK:Budgets
   // ==========================================
 
   static Future<QuerySnapshot<Map<String, dynamic>>> getBudgets(int year) async {
@@ -358,7 +437,7 @@ class FirebaseHelper {
   }
 
   // ==========================================
-  // Categories
+  // MARK: Categories
   // ==========================================
 
   static Future<QuerySnapshot<Map<String, dynamic>>> getCategories() async {

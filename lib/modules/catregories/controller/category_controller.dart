@@ -2,7 +2,9 @@ import 'package:budgetly/core/import_to_export.dart';
 
 class CategoryController extends GetxController {
   final RxList<Category> _categories = <Category>[].obs;
-  final RxList<Expense> _expenses = <Expense>[].obs;
+  final RxMap<String, double> _categoryTotals = <String, double>{}.obs;
+  final RxMap<String, int> _categoryTransactionCounts = <String, int>{}.obs;
+
   final RxBool _isLoading = true.obs;
 
   List<Category> get categories => _categories;
@@ -15,63 +17,47 @@ class CategoryController extends GetxController {
     loadCategories();
   }
 
-  Map<String, double> get categoryTotals {
-    final totals = <String, double>{};
-    for (var category in _categories) {
-      totals[category.id] = 0.0;
-    }
-    for (var expense in _expenses) {
-      if (totals.containsKey(expense.categoryId)) {
-        totals[expense.categoryId] = totals[expense.categoryId]! + expense.price;
-      }
-    }
-    return totals;
-  }
+  Map<String, double> get categoryTotals => _categoryTotals;
 
   List<Category> get sortedCategories {
-    final totals = categoryTotals;
     return _categories.toList()..sort((a, b) {
-      final amountA = totals[a.id] ?? 0.0;
-      final amountB = totals[b.id] ?? 0.0;
+      final amountA = _categoryTotals[a.id] ?? 0.0;
+      final amountB = _categoryTotals[b.id] ?? 0.0;
       return amountB.compareTo(amountA);
     });
   }
 
   int getTransactionCount(String categoryId) {
-    return _expenses.where((e) => e.categoryId == categoryId).length;
+    return _categoryTransactionCounts[categoryId] ?? 0;
   }
 
   double getCategoryTotal(String categoryId) {
-    return categoryTotals[categoryId] ?? 0.0;
+    return _categoryTotals[categoryId] ?? 0.0;
   }
 
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      labelStyle: regularText(14, color: Colors.grey),
-      hintStyle: regularText(14, color: Colors.grey.withValues(alpha: 0.5)),
-      filled: true,
-      fillColor: const Color(0xFF2C2C2C),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.brand, width: 2),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    );
-  }
+  // MARK: Public Actions
 
   Future<void> loadCategories() async {
     _isLoading.value = true;
     final snapshot = await FirebaseHelper.getCategories();
-    _categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
+    final categoriesList = snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList();
+    _categories.assignAll(categoriesList);
 
-    final expenseSnapshot = await FirebaseHelper.getExpenses(DateTime(2000), DateTime(2100));
-    _expenses.assignAll(expenseSnapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
-    
+    final totalsMap = <String, double>{};
+    final countsMap = <String, int>{};
+
+    await Future.wait(
+      categoriesList.map((category) async {
+        final total = await FirebaseHelper.getCategoryTotal(category.id);
+        final count = await FirebaseHelper.getCategoryTransactionCount(category.id);
+        totalsMap[category.id] = total;
+        countsMap[category.id] = count;
+      }),
+    );
+
+    _categoryTotals.assignAll(totalsMap);
+    _categoryTransactionCounts.assignAll(countsMap);
+
     _isLoading.value = false;
   }
 
@@ -237,11 +223,32 @@ class CategoryController extends GetxController {
     );
   }
 
+  // MARK: Helpers
+
   Category? getCategoryById(String id) {
     try {
       return _categories.firstWhere((c) => c.id == id);
     } catch (e) {
       return null;
     }
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      labelStyle: regularText(14, color: Colors.grey),
+      hintStyle: regularText(14, color: Colors.grey.withValues(alpha: 0.5)),
+      filled: true,
+      fillColor: const Color(0xFF2C2C2C),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.brand, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
   }
 }

@@ -394,7 +394,7 @@ class MonthDetailController extends GetxController {
     // 1. Filter
     if (selectedFilterCategoryId.value != 'All') {
       result = result.where((e) => e.categoryId == selectedFilterCategoryId.value).toList();
-      selectedCategoryTotal.value = result.fold(0, (sum, item) => sum + item.price.toInt());
+      selectedCategoryTotal.value = result.fold(0, (total, item) => total + item.price.toInt());
     }
 
     // 2. Sort
@@ -418,8 +418,8 @@ class MonthDetailController extends GetxController {
 
   // ─── Derived Getters ──────────────────────────────────────────────────────
 
-  double get totalExpense => _allExpenses.fold(0.0, (sum, e) => sum + e.price);
-  double get filteredExpenseTotal => expenses.fold(0.0, (sum, e) => sum + e.price);
+  double get totalExpense => _allExpenses.fold(0.0, (total, e) => total + e.price);
+  double get filteredExpenseTotal => expenses.fold(0.0, (total, e) => total + e.price);
   double get remaining => budget.value - totalExpense;
   int get totalDays => DateTime(year, month + 1, 0).day;
 
