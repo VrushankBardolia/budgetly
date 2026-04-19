@@ -36,6 +36,10 @@ class HomeScreen extends GetView<HomeController> {
                 label: 'Categories',
               ),
               BottomNavigationBarItem(
+                icon: HugeIcon(icon: HugeIcons.strokeRoundedFile02),
+                label: 'Sheets',
+              ),
+              BottomNavigationBarItem(
                 icon: HugeIcon(icon: HugeIcons.strokeRoundedSettings01),
                 label: 'Settings',
               ),

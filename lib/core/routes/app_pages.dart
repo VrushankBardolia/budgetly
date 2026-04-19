@@ -54,5 +54,19 @@ class AppPages {
         Get.put(CategoryDetailsController());
       }),
     ),
+    GetPage(
+      name: Routes.SHEET_DETAIL,
+      page: () => const SheetDetailsScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(SheetDetailsController());
+      }),
+    ),
+    GetPage(
+      name: Routes.SHEET_RECORD_FORM,
+      page: () => const SheetRecordFormScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(SheetRecordFormController());
+      }),
+    ),
   ];
 }

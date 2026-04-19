@@ -10,4 +10,6 @@ class Routes {
   static const PROFILE = '/profile';
   static const ABOUT = '/about';
   static const CATEGORY_DETAILS = '/category-details';
+  static const SHEET_DETAIL = '/sheet-detail';
+  static const SHEET_RECORD_FORM = '/sheet-record-form';
 }

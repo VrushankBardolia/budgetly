@@ -3,7 +3,7 @@ import 'package:budgetly/core/import_to_export.dart';
 class HomeController extends GetxController {
   RxInt currentIndex = 0.obs;
 
-  final screens = [DashboardTab(), MonthsTab(), CategoriesTab(), SettingsTab()];
+  final screens = [DashboardTab(), MonthsTab(), CategoriesTab(), SheetsTab(), SettingsTab()];
 
   @override
   void onInit() {
@@ -22,7 +22,10 @@ class HomeController extends GetxController {
       case 2: // CATEGORIES TAB
         Get.find<CategoryController>().loadCategories();
         break;
-      case 3: // SETTINGS TAB
+      case 3: // SHEETS TAB
+        Get.find<SheetsController>().loadSheets();
+        break;
+      case 4: // SETTINGS TAB
         Get.find<SettingController>().loadUserData();
         break;
     }

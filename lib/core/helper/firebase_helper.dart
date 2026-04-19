@@ -513,4 +513,68 @@ class FirebaseHelper {
       rethrow;
     }
   }
+  // ==========================================
+  // MARK: Sheets
+  // ==========================================
+
+  static Future<QuerySnapshot<Map<String, dynamic>>> getSheets(String userId) async {
+    return await db
+        .collection('sheets')
+        .where('userId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .get();
+  }
+
+  static Future<DocumentReference<Map<String, dynamic>>> addSheet(
+    Map<String, dynamic> sheetData,
+  ) async {
+    return await db.collection('sheets').add(sheetData);
+  }
+
+  static Future<void> updateSheet(String sheetId, Map<String, dynamic> sheetData) async {
+    await db.collection('sheets').doc(sheetId).update(sheetData);
+  }
+
+  static Future<void> deleteSheet(String sheetId) async {
+    final records = await db.collection('sheets').doc(sheetId).collection('records').get();
+
+    final batch = db.batch();
+    for (final doc in records.docs) {
+      batch.delete(doc.reference);
+    }
+    batch.delete(db.collection('sheets').doc(sheetId));
+    await batch.commit();
+  }
+
+  // ==========================================
+  // MARK: Sheet Records (subcollection inside sheets)
+  // ==========================================
+
+  static Future<QuerySnapshot<Map<String, dynamic>>> getRecords(String sheetId) async {
+    return await db
+        .collection('sheets')
+        .doc(sheetId)
+        .collection('records')
+        .orderBy('date', descending: true)
+        .get();
+  }
+
+  static Future<DocumentReference<Map<String, dynamic>>> addRecord(
+    String sheetId,
+    Map<String, dynamic> record,
+  ) async {
+    return await db.collection('sheets').doc(sheetId).collection('records').add(record);
+  }
+
+  static Future<void> updateRecord(
+    String sheetId,
+    String recordId,
+    Map<String, dynamic> data,
+  ) async {
+    await db.collection('sheets').doc(sheetId).collection('records').doc(recordId).update(data);
+  }
+
+  static Future<void> deleteRecord(String sheetId, String recordId) async {
+    await db.collection('sheets').doc(sheetId).collection('records').doc(recordId).delete();
+  }
 }

@@ -48,6 +48,8 @@ export 'package:budgetly/core/model/expense.dart';
 export 'package:budgetly/core/model/month_budget.dart';
 export 'package:budgetly/core/model/user_model.dart';
 export 'package:budgetly/core/model/month_summery.dart';
+export 'package:budgetly/core/model/sheet.dart';
+export 'package:budgetly/core/model/sheet_record.dart';
 
 // ─── Routes ────────────────────────────────────────────────────────────────
 export 'package:budgetly/core/routes/app_pages.dart';
@@ -79,6 +81,14 @@ export 'package:budgetly/modules/months/view/months_tab.dart';
 export 'package:budgetly/modules/months/controller/month_controller.dart';
 export 'package:budgetly/modules/months/controller/expense_form_controller.dart';
 export 'package:budgetly/modules/months/controller/month_details_controller.dart';
+
+// ─── Modules (Sheets) ──────────────────────────────────────────────────────
+export 'package:budgetly/modules/sheets/view/sheet_details_screen.dart';
+export 'package:budgetly/modules/sheets/view/sheet_record_form_screen.dart';
+export 'package:budgetly/modules/sheets/view/sheets_tab.dart';
+export 'package:budgetly/modules/sheets/controller/sheets_controller.dart';
+export 'package:budgetly/modules/sheets/controller/sheet_details_controller.dart';
+export 'package:budgetly/modules/sheets/controller/sheet_record_form_controller.dart';
 
 // ─── Modules (Settings) ────────────────────────────────────────────────────
 export 'package:budgetly/modules/settings/controller/notification_controller.dart';
