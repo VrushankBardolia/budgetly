@@ -57,10 +57,8 @@ class ExpenseFormController extends GetxController {
   }
 
   Future<void> _loadCategories() async {
-    final snapshot = await FirebaseHelper.getCategories();
-    categories.assignAll(
-      snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList(),
-    );
+    final result = await FirebaseHelper.getCategories();
+    categories.assignAll(result);
   }
 
   // ─── Field Actions ────────────────────────────────────────────────────────
@@ -111,6 +109,7 @@ class ExpenseFormController extends GetxController {
       } else {
         await FirebaseHelper.addExpense(expense);
       }
+      Get.find<DashboardController>().loadData();
       Get.back(result: true);
     } finally {
       isSubmitting.value = false;

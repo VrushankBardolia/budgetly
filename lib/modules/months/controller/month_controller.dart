@@ -96,18 +96,18 @@ class MonthController extends GetxController {
     final userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) return;
 
-    final snapshot = await FirebaseHelper.getExpenses(
+    final result = await FirebaseHelper.getExpenses(
       DateTime(year, 1, 1),
       DateTime(year, 12, 31, 23, 59, 59),
     );
 
-    expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
+    expenses.assignAll(result);
   }
 
   Future<void> _loadBudgets(int year) async {
-    final snapshot = await FirebaseHelper.getBudgets(year);
+    final result = await FirebaseHelper.getBudgets(year);
 
-    budgets.assignAll(snapshot.docs.map((doc) => MonthBudget.fromFirestore(doc)).toList());
+    budgets.assignAll(result);
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────

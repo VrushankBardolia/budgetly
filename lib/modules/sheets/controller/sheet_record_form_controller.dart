@@ -66,6 +66,11 @@ class SheetRecordFormController extends GetxController {
     return null;
   }
 
+  String? validateDetail(String? value) {
+    if (value == null || value.isEmpty) return 'Please enter detail';
+    return null;
+  }
+
   // ─── Submit ───────────────────────────────────────────────────────────────
 
   Future<void> submit() async {
@@ -86,6 +91,7 @@ class SheetRecordFormController extends GetxController {
       } else {
         await FirebaseHelper.addRecord(sheetId, data);
       }
+      Get.find<SheetsController>().loadSheets();
 
       Get.back(result: true);
     } finally {

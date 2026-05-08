@@ -61,7 +61,5 @@ void initControllers() {
   Get.put(MonthController());
   Get.put(HomeController());
   Get.put(SheetsController());
-  // Note: OnboardingController is kept here because InitialScreen relies on it
-  // immediately at startup before any routes are loaded.
   Get.put(OnboardingController());
 }

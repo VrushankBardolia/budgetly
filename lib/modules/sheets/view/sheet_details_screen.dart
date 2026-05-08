@@ -1,4 +1,5 @@
 import 'package:budgetly/core/import_to_export.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 class SheetDetailsScreen extends GetView<SheetDetailsController> {
@@ -16,11 +17,24 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
         ),
         title: Text(controller.sheetName, style: boldText(20)),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: controller.goToAddRecord,
-        backgroundColor: AppColors.brandDark,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
-        label: Text('Add Record', style: semiBoldText(14, color: Colors.white)),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.brandDark.withValues(alpha: 0.3),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: controller.goToAddRecord,
+          backgroundColor: AppColors.brandDark,
+          elevation: 0,
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: Text('Add Record', style: semiBoldText(14, color: Colors.white)),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: Obx(() {
@@ -28,76 +42,59 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
           return const Center(child: CircularProgressIndicator());
         }
 
-        return RefreshIndicator(
-          onRefresh: () => controller.loadRecords(isRefresh: true),
-          color: AppColors.brand,
-          backgroundColor: AppColors.surface,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            slivers: [
-              // ── Summary Cards ───────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: buildSummaryCard(
-                              label: 'Total Income',
-                              amount: controller.totalIncome,
-                              color: AppColors.success,
-                              icon: Icons.arrow_downward_rounded,
-                            ),
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Column(
+                  spacing: 14,
+                  children: [
+                    Row(
+                      spacing: 12,
+                      children: [
+                        Expanded(
+                          child: buildSummaryCard(
+                            label: 'Total Income',
+                            amount: controller.totalIncome,
+                            color: AppColors.success,
+                            icon: Icons.arrow_downward_rounded,
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: buildSummaryCard(
-                              label: 'Total Expense',
-                              amount: controller.totalExpense,
-                              color: AppColors.error,
-                              icon: Icons.arrow_upward_rounded,
-                            ),
+                        ),
+                        Expanded(
+                          child: buildSummaryCard(
+                            label: 'Total Expense',
+                            amount: controller.totalExpense,
+                            color: AppColors.error,
+                            icon: Icons.arrow_upward_rounded,
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      buildBalanceCard(
-                        balance: controller.netBalance,
-                        isProfit: controller.isProfit,
-                      ),
-                    ],
-                  ),
+                        ),
+                      ],
+                    ),
+                    buildBalanceCard(controller.netBalance, controller.isProfit),
+                  ],
                 ),
               ),
 
-              // ── Filter Bar ──────────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                  child: buildFilterBar(),
+              Padding(padding: const EdgeInsets.fromLTRB(16, 24, 16, 8), child: buildFilterBar()),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('Records', style: boldText(18, color: AppColors.white)),
+                    Text(
+                      '${controller.filteredRecords.length}'.padLeft(2, '0'),
+                      style: semiBoldText(12, color: AppColors.grey),
+                    ),
+                  ],
                 ),
               ),
 
-              // ── Records Header ──────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Records', style: semiBoldText(13, color: AppColors.grey)),
-                      Text(
-                        '${controller.filteredRecords.length}',
-                        style: semiBoldText(13, color: AppColors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              // ── Record List ─────────────────────────────────────────
               controller.filteredRecords.isEmpty ? buildEmptyState() : buildRecordList(),
             ],
           ),
@@ -106,7 +103,6 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
     );
   }
 
-  // ─── Summary Card ─────────────────────────────────────────────────────────────
   Widget buildSummaryCard({
     required String label,
     required double amount,
@@ -118,38 +114,60 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, size: 14, color: color),
-              const SizedBox(width: 6),
-              Text(label, style: regularText(12, color: AppColors.grey)),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 14, color: color),
+              ),
+              const SizedBox(width: 8),
+              Text(label, style: mediumText(13, color: AppColors.grey)),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(fmt.format(amount), style: boldText(20, color: color)),
+          const SizedBox(height: 12),
+          Text(
+            fmt.format(amount),
+            style: boldText(22, color: color),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
   }
 
-  // ─── Net Balance Card ─────────────────────────────────────────────────────────
-  Widget buildBalanceCard({required double balance, required bool isProfit}) {
+  Widget buildBalanceCard(double balance, bool isProfit) {
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
     final color = isProfit ? AppColors.success : AppColors.error;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
+        gradient: LinearGradient(
+          colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.01)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -157,19 +175,25 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Net Balance', style: regularText(12, color: AppColors.grey)),
-              const SizedBox(height: 2),
               Text(
-                isProfit ? 'You\'re in profit 🎉' : 'You\'re overspending',
-                style: GoogleFonts.plusJakartaSans(
-                  color: color,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
+                'Net Balance',
+                style: mediumText(14, color: Colors.white.withValues(alpha: 0.8)),
               ),
+              const SizedBox(height: 4),
+              Text(fmt.format(balance), style: customText(28, FontWeight.w800, color: color)),
             ],
           ),
-          Text(fmt.format(balance), style: customText(22, FontWeight.w800, color: color)),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: HugeIcon(
+              icon: isProfit
+                  ? HugeIcons.strokeRoundedArrowUpRight01
+                  : HugeIcons.strokeRoundedArrowDownRight01,
+              color: color,
+              size: 28,
+            ),
+          ),
         ],
       ),
     );
@@ -179,129 +203,235 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
     return Obx(() {
       final filters = [('all', 'All'), ('income', 'Income'), ('expense', 'Expense')];
 
-      return Row(
-        children: filters.map((f) {
-          final isActive = controller.filterType.value == f.$1;
-          final color = f.$1 == 'income'
-              ? AppColors.success
-              : f.$1 == 'expense'
-              ? AppColors.error
-              : AppColors.brand;
+      final currentIndex = filters.indexWhere((f) => f.$1 == controller.filterType.value);
+      final safeIndex = currentIndex == -1 ? 0 : currentIndex;
 
-          return GestureDetector(
-            onTap: () => controller.setFilter(f.$1),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: isActive ? color.withValues(alpha: 0.15) : AppColors.surface,
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: isActive
-                      ? color.withValues(alpha: 0.5)
-                      : Colors.white.withValues(alpha: 0.08),
+      final activeColor = controller.filterType.value == 'income'
+          ? AppColors.success
+          : controller.filterType.value == 'expense'
+          ? AppColors.error
+          : AppColors.brand;
+
+      return Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(30),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final tabWidth = constraints.maxWidth / filters.length;
+            return Stack(
+              children: [
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOutCubic,
+                  left: safeIndex * tabWidth,
+                  top: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: tabWidth,
+                    decoration: BoxDecoration(
+                      color: activeColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: activeColor.withValues(alpha: 0.5)),
+                    ),
+                  ),
                 ),
-              ),
-              child: Text(
-                f.$2,
-                style: GoogleFonts.plusJakartaSans(
-                  color: isActive ? color : Colors.grey[400],
-                  fontSize: 13,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+
+                Row(
+                  children: filters.map((f) {
+                    final isActive = controller.filterType.value == f.$1;
+                    return Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          controller.setFilter(f.$1);
+                        },
+                        child: Center(
+                          child: AnimatedDefaultTextStyle(
+                            duration: const Duration(milliseconds: 200),
+                            style: isActive
+                                ? boldText(14, color: AppColors.white)
+                                : regularText(14, color: Colors.white.withValues(alpha: 0.5)),
+                            child: Text(f.$2),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
-              ),
-            ),
-          );
-        }).toList(),
+              ],
+            );
+          },
+        ),
       );
     });
   }
 
   Widget buildEmptyState() {
-    return SliverFillRemaining(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 80),
       child: Center(
-        child: Text('No records found', style: semiBoldText(14, color: AppColors.grey)),
+        child: Column(
+          children: [
+            Icon(
+              CupertinoIcons.doc_text_search,
+              size: 48,
+              color: AppColors.grey.withValues(alpha: 0.3),
+            ),
+            const SizedBox(height: 16),
+            Text('No records found', style: semiBoldText(16, color: AppColors.grey)),
+          ],
+        ),
       ),
     );
   }
 
   Widget buildRecordList() {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate((ctx, index) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(bottom: 120, left: 16, right: 16),
+      itemCount: controller.filteredRecords.length,
+      itemBuilder: (ctx, index) {
         final record = controller.filteredRecords[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: buildRecordTile(record),
-        );
-      }, childCount: controller.filteredRecords.length),
+        return buildRecordTile(record);
+      },
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
     );
   }
 
   Widget buildRecordTile(SheetRecord record) {
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
-    final color = record.isIncome ? AppColors.success : AppColors.error;
-    final sign = record.isIncome ? '+' : '-';
-    final date = DateFormat('dd').format(record.date);
-    final month = DateFormat('MMM').format(record.date);
+    final color = record.isIncome ? AppColors.success : AppColors.white;
 
     return GestureDetector(
-      onTap: () => controller.goToEditRecord(record),
-      onLongPress: () {
+      onLongPressStart: (details) {
         HapticFeedback.heavyImpact();
-        controller.showDeleteDialog(record.id);
+        showPullDownMenu(
+          context: Get.context!,
+          routeTheme: PullDownMenuRouteTheme(backgroundColor: AppColors.surfaceLight, width: 200),
+          items: [
+            PullDownMenuItem(
+              onTap: () => controller.goToEditRecord(record),
+              title: "Edit",
+              icon: CupertinoIcons.pen,
+              itemTheme: PullDownMenuItemTheme(textStyle: mediumText(14)),
+            ),
+            PullDownMenuItem(
+              onTap: () => controller.showDeleteDialog(record.id),
+              title: "Delete",
+              icon: CupertinoIcons.delete,
+              isDestructive: true,
+              itemTheme: PullDownMenuItemTheme(textStyle: mediumText(14)),
+            ),
+          ],
+          position: Rect.fromLTRB(
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+          ),
+        );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.borderColor.withValues(alpha: 0.5)),
+          gradient: RadialGradient(
+            center: Alignment.centerLeft,
+            radius: 2.5,
+            colors: [
+              record.isIncome
+                  ? AppColors.success.withValues(alpha: 0.08)
+                  : Colors.white.withValues(alpha: 0.03),
+              AppColors.surface.withValues(alpha: 0.0),
+            ],
+          ),
         ),
         child: Row(
           children: [
-            // Type icon
             Container(
-              width: 42,
-              height: 42,
+              width: 46,
+              height: 46,
               decoration: BoxDecoration(
-                color: AppColors.black,
-                borderRadius: BorderRadius.circular(12),
+                shape: BoxShape.circle,
+                color: record.isIncome
+                    ? AppColors.success.withValues(alpha: 0.1)
+                    : Colors.white.withValues(alpha: 0.05),
+                border: Border.all(
+                  color: record.isIncome
+                      ? AppColors.success.withValues(alpha: 0.2)
+                      : Colors.white.withValues(alpha: 0.1),
+                ),
               ),
+              child: Center(
+                child: Icon(
+                  record.isIncome ? CupertinoIcons.arrow_down_left : CupertinoIcons.arrow_up_right,
+                  color: color,
+                  size: 20,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // ── 2. Details & Date ──────────────────────────────────
+            Expanded(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(date, style: boldText(14)),
-                  Text(month, style: regularText(12)),
+                  Text(
+                    record.detail,
+                    style: semiBoldText(16, color: Colors.white),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(CupertinoIcons.calendar, size: 14, color: AppColors.hintColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        DateFormat('dd MMMM').format(record.date).toUpperCase(),
+                        style: mediumText(12, color: AppColors.grey).copyWith(letterSpacing: 0.7),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
             const SizedBox(width: 12),
 
-            // Detail + Date
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    record.detail.isEmpty
-                        ? (record.isIncome ? 'Income' : 'Expense')
-                        : record.detail,
-                    style: mediumText(14),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    record.isIncome ? 'Income' : 'Expense',
-                    style: semiBoldText(12, color: color),
-                  ),
-                ],
-              ),
-            ),
+            // ── 3. Stacked Amount ──────────────────────────────────
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${record.isIncome ? '+' : ''}${fmt.format(record.amount)}',
+                  style: boldText(16, color: color).copyWith(letterSpacing: -0.5),
+                ),
+                // const SizedBox(height: 4),
 
-            // Amount
-            Text('$sign${fmt.format(record.amount)}', style: boldText(15, color: color)),
+                // Tiny IN/OUT tag
+                Text(
+                  record.isIncome ? "IN" : "OUT",
+                  style: boldText(
+                    10,
+                    color: record.isIncome
+                        ? AppColors.success.withValues(alpha: 0.8)
+                        : AppColors.white.withValues(alpha: 0.6),
+                  ).copyWith(letterSpacing: 1.2),
+                ),
+              ],
+            ),
           ],
         ),
       ),

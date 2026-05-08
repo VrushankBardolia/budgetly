@@ -7,20 +7,12 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:894720813654:android:90a73b129f00391899e9f7",
+        "mobilesdk_app_id": "1:894720813654:android:702d4607ce87f37699e9f7",
         "android_client_info": {
-          "package_name": "com.example.budgetly"
+          "package_name": "com.app.budgetly"
         }
       },
       "oauth_client": [
-        {
-          "client_id": "894720813654-9if3kuesldkd305pmlj557k08non1tni.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.example.budgetly",
-            "certificate_hash": "232ecafc9ff7568e16509092b0e0c45158f723ba"
-          }
-        },
         {
           "client_id": "894720813654-17rb7vbf6lipukf6udse7jqmor07pdgf.apps.googleusercontent.com",
           "client_type": 3

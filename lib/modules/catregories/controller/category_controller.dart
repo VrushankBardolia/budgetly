@@ -39,9 +39,9 @@ class CategoryController extends GetxController {
 
   Future<void> loadCategories() async {
     _isLoading.value = true;
-    final snapshot = await FirebaseHelper.getCategories();
-    final categoriesList = snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList();
-    _categories.assignAll(categoriesList);
+    final result = await FirebaseHelper.getCategories();
+    final categoriesList = result;
+    _categories.assignAll(result);
 
     final totalsMap = <String, double>{};
     final countsMap = <String, int>{};

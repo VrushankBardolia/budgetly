@@ -7,9 +7,7 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.black,
       appBar: AppBar(
-        backgroundColor: AppColors.black,
         elevation: 0,
         centerTitle: true,
         title: Text(controller.formattedMonth, style: boldText(20)),
@@ -24,12 +22,12 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
         if (controller.isLoading.value) {
           return _buildShimmerLoader();
         }
-        return CustomScrollView(
+        return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── Summary Cards ───────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
@@ -89,10 +87,7 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                   ],
                 ),
               ),
-            ),
-
-            SliverToBoxAdapter(
-              child: Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   TextButton.icon(
@@ -115,11 +110,7 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                   ),
                 ],
               ),
-            ),
-
-            // ── Transactions Header ─────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -132,96 +123,17 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
                   ],
                 ),
               ),
-            ),
-
-            // ── Empty State ─────────────────────────────────────────────────
-            if (controller.expenses.isEmpty)
-              SliverFillRemaining(
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
-                        child: Icon(
-                          Icons.receipt_long_rounded,
-                          size: 50,
-                          color: Colors.white.withValues(alpha: 0.1),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text('No transactions', style: regularText(14, color: Colors.grey.shade600)),
-                    ],
-                  ),
-                ),
-              )
-            else ...[
-              // ── Expense List ───────────────────────────────────────────────
-              SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final expense = controller.expenses[index];
-                  final category = controller.getCategoryById(expense.categoryId);
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: GestureDetector(
-                      onLongPressStart: (details) {
-                        HapticFeedback.heavyImpact();
-                        showPullDownMenu(
-                          context: context,
-                          routeTheme: PullDownMenuRouteTheme(
-                            backgroundColor: AppColors.surfaceLight,
-                            width: 200,
-                          ),
-                          items: [
-                            PullDownMenuItem(
-                              onTap: () => controller.goToEditExpense(expense),
-                              title: "Edit",
-                              icon: CupertinoIcons.pen,
-                              itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
-                            ),
-                            PullDownMenuItem(
-                              onTap: () => controller.showDeleteExpenseDialog(expense.id),
-                              title: "Delete",
-                              icon: CupertinoIcons.delete,
-                              isDestructive: true,
-                              itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
-                            ),
-                          ],
-                          position: Rect.fromLTRB(
-                            details.globalPosition.dx,
-                            details.globalPosition.dy,
-                            details.globalPosition.dx,
-                            details.globalPosition.dy,
-                          ),
-                        );
-                      },
-                      child: ExpenseTile(expense: expense, category: category!),
-                    ),
-                  );
-                }, childCount: controller.expenses.length),
-              ),
-              controller.selectedFilterCategoryId.value == "All"
-                  ? SliverToBoxAdapter(child: SizedBox())
-                  : SliverToBoxAdapter(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          "${controller.selectedFilterOption.value} Total : ${controller.formatter.format(controller.filteredExpenseTotal)}",
-                          style: regularText(14, color: AppColors.grey),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
+              if (controller.expenses.isEmpty)
+                buildEmptyState()
+              else ...[
+                buildExpenseList(),
+                buildCategoryTotal(),
+              ],
+              const SizedBox(height: 100),
             ],
-
-            const SliverToBoxAdapter(child: SizedBox(height: 80)),
-          ],
+          ),
         );
       }),
-
-      // ── FAB ──────────────────────────────────────────────────────────────
       floatingActionButton: FloatingActionButton.extended(
         onPressed: controller.goToAddExpense,
         label: Text("Add Expense", style: regularText(14)),
@@ -230,8 +142,6 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
-
-  // ─── Info Card Widget ─────────────────────────────────────────────────────
 
   Widget _buildInfoCard(
     String title,
@@ -274,6 +184,95 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
         ),
       ),
     );
+  }
+
+  Widget buildEmptyState() {
+    return SizedBox(
+      height: Get.height * 0.5,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+              child: Icon(
+                Icons.receipt_long_rounded,
+                size: 50,
+                color: Colors.white.withValues(alpha: 0.1),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('No transactions', style: regularText(14, color: Colors.grey.shade600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildExpenseList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: controller.expenses.length,
+      itemBuilder: (context, index) {
+        final expense = controller.expenses[index];
+        final category = controller.getCategoryById(expense.categoryId);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GestureDetector(
+            onLongPressStart: (details) {
+              HapticFeedback.heavyImpact();
+              showPullDownMenu(
+                context: context,
+                routeTheme: PullDownMenuRouteTheme(
+                  backgroundColor: AppColors.surfaceLight,
+                  width: 200,
+                ),
+                items: [
+                  PullDownMenuItem(
+                    onTap: () => controller.goToEditExpense(expense),
+                    title: "Edit",
+                    icon: CupertinoIcons.pen,
+                    itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
+                  ),
+                  PullDownMenuItem(
+                    onTap: () => controller.showDeleteExpenseDialog(expense.id),
+                    title: "Delete",
+                    icon: CupertinoIcons.delete,
+                    isDestructive: true,
+                    itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
+                  ),
+                ],
+                position: Rect.fromLTRB(
+                  details.globalPosition.dx,
+                  details.globalPosition.dy,
+                  details.globalPosition.dx,
+                  details.globalPosition.dy,
+                ),
+              );
+            },
+            child: ExpenseTile(expense: expense, category: category!),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildCategoryTotal() {
+    if (controller.selectedFilterCategoryId.value == "All") {
+      return const SizedBox();
+    } else {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text(
+          "${controller.selectedFilterOption.value} Total : ${controller.formatter.format(controller.filteredExpenseTotal)}",
+          style: regularText(14, color: AppColors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
   }
 
   // MARK:Shimmer Loader

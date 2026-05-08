@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class AppColors {
@@ -13,9 +12,9 @@ class AppColors {
   static const Color brandDark = Color(0xFF001F42);
 
   // Functional Status Colors
-  static const Color success = Color.fromARGB(255, 18, 176, 100);
-  static const Color warning = Color(0xFFFFAB40);
-  static const Color error = CupertinoColors.destructiveRed;
+  static const Color success = Color(0xFF66BB6A);
+  static const Color warning = Color(0xFFFFB74D);
+  static const Color error = Color(0xFFEF5350);
 
   // Surface & Borders
   static const Color surface = Color(0xFF1E1E1E);
@@ -23,4 +22,11 @@ class AppColors {
   static const Color borderColor = Color(0xFF333333);
   static const Color hintColor = Color(0xFF757575);
   static const Color focusedBorderColor = Color(0xFFA8A8A8);
+
+  static LinearGradient get mainCardGradient => LinearGradient(
+    colors: [AppColors.black, AppColors.brandDark.withValues(alpha: 0.25)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    stops: [0.5, 1],
+  );
 }

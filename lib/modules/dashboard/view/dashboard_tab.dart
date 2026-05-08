@@ -22,21 +22,21 @@ class DashboardTab extends GetView<DashboardController> {
 
         return SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          // padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildYearSelector(),
+              _buildYearSelector().marginSymmetric(horizontal: 16),
               const SizedBox(height: 20),
-              _buildTotalCard(),
+              _buildHeroCarousel(),
               const SizedBox(height: 24),
-              _buildSectionTitle('Top Categories'),
+              _buildSectionTitle('Top Categories').marginSymmetric(horizontal: 16),
               const SizedBox(height: 8),
-              _buildCategoryList(),
+              _buildCategoryList().marginSymmetric(horizontal: 16),
               const SizedBox(height: 24),
-              _buildSectionTitle('Analytics'),
+              _buildSectionTitle('Analytics').marginSymmetric(horizontal: 16),
               const SizedBox(height: 16),
-              _buildCharts(),
+              _buildCharts().marginSymmetric(horizontal: 16),
               const SizedBox(height: 24),
             ],
           ),
@@ -90,11 +90,48 @@ class DashboardTab extends GetView<DashboardController> {
     );
   }
 
+  Widget _buildHeroCarousel() {
+    return Column(
+      children: [
+        SizedBox(
+          height: 180,
+          child: PageView(
+            controller: PageController(viewportFraction: 1.0),
+            onPageChanged: controller.onCarouselPageChanged,
+            children: [_buildTotalCard(), _buildTotalSheetsCard()],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Obx(
+          () => Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              2,
+              (index) => AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                height: 8,
+                width: controller.currentCarouselIndex.value == index ? 24 : 8,
+                decoration: BoxDecoration(
+                  color: controller.currentCarouselIndex.value == index
+                      ? AppColors.brand
+                      : Colors.white24,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // ─── Total Card ───────────────────────────────────────────────────────────
 
   Widget _buildTotalCard() {
     return Obx(
       () => Container(
+        margin: EdgeInsets.symmetric(horizontal: 16),
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -114,6 +151,7 @@ class DashboardTab extends GetView<DashboardController> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
@@ -204,6 +242,79 @@ class DashboardTab extends GetView<DashboardController> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalSheetsCard() {
+    return Obx(
+      () => Container(
+        width: double.infinity,
+        margin: EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.brandDark, AppColors.black],
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.account_balance, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Sheets Balance',
+                  style: semiBoldText(18, color: Colors.white.withValues(alpha: 0.9)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              spacing: 4,
+              children: [
+                Text(
+                  '₹',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 40,
+                    color: Colors.white,
+                    height: 1.0,
+                  ),
+                ),
+                AnimatedDigitWidget(
+                  value: controller.totalSheetsBalance.value,
+                  textStyle: GoogleFonts.plusJakartaSans(
+                    fontSize: 40,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    height: 1.0,
+                    letterSpacing: -2,
+                  ),
+                  enableSeparator: true,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Across all your sheets',
+              style: GoogleFonts.plusJakartaSans(fontSize: 16, color: Colors.white70),
             ),
           ],
         ),
@@ -380,7 +491,7 @@ class DashboardTab extends GetView<DashboardController> {
                 lineType: TrackballLineType.vertical,
                 tooltipSettings: InteractiveTooltip(
                   enable: true,
-                  borderColor: AppColors.accent,
+                  borderColor: AppColors.brand.withValues(alpha: 0.5),
                   borderRadius: 12,
                   canShowMarker: false,
                   borderWidth: 2,
@@ -419,6 +530,7 @@ class DashboardTab extends GetView<DashboardController> {
               ),
               series: <CartesianSeries>[
                 SplineAreaSeries<MapEntry<int, double>, String>(
+                  splineType: SplineType.cardinal,
                   dataSource: controller.monthlyTotals.entries.toList(),
                   xValueMapper: (entry, _) => entry.key.toString(),
                   yValueMapper: (entry, _) => entry.value,
@@ -439,8 +551,8 @@ class DashboardTab extends GetView<DashboardController> {
                     width: 8,
                     shape: DataMarkerType.circle,
                     borderWidth: 2,
-                    borderColor: AppColors.accent, // Outer ring color
-                    color: Colors.white, // Inner dot color
+                    borderColor: AppColors.accent,
+                    color: Colors.white,
                   ),
                 ),
               ],

@@ -6,14 +6,7 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.black,
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(controller.title, style: boldText(20)),
-        leading: IconButton(icon: const Icon(Icons.close), onPressed: Get.back),
-      ),
+      appBar: AppBar(centerTitle: true, title: Text(controller.title, style: boldText(20))),
       body: Obx(() {
         if (controller.isLoading.value) {
           return buildShimmerLoader();
@@ -26,27 +19,31 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Date ─────────────────────────────────────────────────
                 buildSectionLabel('Date'),
-                buildDatePickerTile(),
+                DatePickerField(
+                  formattedDate: controller.formattedSelectedDate,
+                  onTap: controller.pickDate,
+                ),
                 const SizedBox(height: 16),
 
-                // ── Price ─────────────────────────────────────────────────
                 buildSectionLabel('Amount'),
-                buildPriceField(),
+                AmountField(
+                  controller: controller.priceController,
+                  validator: controller.validatePrice,
+                ),
                 const SizedBox(height: 16),
 
-                // ── Category ──────────────────────────────────────────────
                 buildSectionLabel('Category'),
                 buildCategoryDropdown(),
                 const SizedBox(height: 16),
 
-                // ── Detail ────────────────────────────────────────────────
                 buildSectionLabel('Details'),
-                buildDetailField(),
+                DetailField(
+                  controller: controller.detailController,
+                  hintText: 'Add a note (optional)',
+                ),
                 const SizedBox(height: 40),
 
-                // ── Submit ────────────────────────────────────────────────
                 buildSubmitButton(),
               ],
             ),
@@ -60,48 +57,6 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(label, style: mediumText(13, color: AppColors.grey)),
-    );
-  }
-
-  Widget buildDatePickerTile() {
-    return Obx(
-      () => GestureDetector(
-        onTap: controller.pickDate,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              HugeIcon(
-                icon: HugeIcons.strokeRoundedCalendar04,
-                size: 20,
-                color: AppColors.grey,
-              ),
-              const SizedBox(width: 12),
-              Text(controller.formattedSelectedDate, style: regularText(14)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget buildPriceField() {
-    return TextFormField(
-      controller: controller.priceController,
-      decoration: InputDecoration(
-        hintText: 'Enter amount',
-        prefixIcon: const Icon(Icons.currency_rupee, size: 20),
-        border: OutlineInputBorder(),
-      ),
-      keyboardType: TextInputType.number,
-      style: regularText(16),
-      validator: controller.validatePrice,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      onTapOutside: (_) => FocusScope.of(Get.context!).unfocus(),
     );
   }
 
@@ -151,30 +106,6 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
     });
   }
 
-  Widget buildDetailField() {
-    return TextFormField(
-      controller: controller.detailController,
-      decoration: InputDecoration(
-        hintText: 'Add a note (optional)',
-        filled: true,
-        fillColor: AppColors.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.brand, width: 2),
-        ),
-      ),
-      minLines: 3,
-      maxLines: 5,
-      style: regularText(14),
-      textCapitalization: TextCapitalization.sentences,
-      onTapOutside: (_) => FocusScope.of(Get.context!).unfocus(),
-    );
-  }
-
   Widget buildSubmitButton() {
     return Obx(
       () => Button(
@@ -183,10 +114,7 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
             ? const SizedBox(
                 height: 20,
                 width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
               )
             : Text(controller.submitLabel, style: semiBoldText(16)),
       ),
@@ -230,18 +158,12 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
         Container(
           height: 8,
           width: 80,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(4),
-          ),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
         ),
         const SizedBox(height: 8),
         Container(
           height: height,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
         ),
       ],
     );

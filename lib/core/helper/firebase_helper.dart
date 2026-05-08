@@ -11,7 +11,13 @@ class FirebaseHelper {
 
   static Stream<User?> get authStateChanges => auth.authStateChanges();
   static User? get currentUser => auth.currentUser;
-  static String get currentUid => currentUser?.uid ?? '';
+  static String get currentUid {
+    final uid = currentUser?.uid ?? PreferenceHelper.userId;
+    if (uid.isNotEmpty) {
+      PreferenceHelper.userId = uid;
+    }
+    return uid;
+  }
 
   static Future<UserCredential?> signInWithGoogle() async {
     FirebaseLogger.request('signInWithGoogle');
@@ -53,10 +59,10 @@ class FirebaseHelper {
     }
   }
 
-  static Future<void> saveUserData(String uid, Map<String, dynamic> data) async {
+  static Future<void> saveUserData(String uid, UserInputModel data) async {
     FirebaseLogger.request('saveUserData', {'uid': uid});
     try {
-      await db.collection('users').doc(uid).set(data);
+      await db.collection('users').doc(uid).set(data.toJson());
       FirebaseLogger.response('saveUserData');
     } catch (e, stackTrace) {
       FirebaseLogger.error('saveUserData', e, stackTrace);
@@ -64,13 +70,15 @@ class FirebaseHelper {
     }
   }
 
-  static Future<void> updateUserData(String authEmail, Map<String, dynamic> data) async {
-    FirebaseLogger.request('updateUserData', {'authEmail': authEmail});
+  static Future<void> updateUserLastLogin(String authEmail) async {
+    FirebaseLogger.request('updateUserLastLogin', {'authEmail': authEmail});
     try {
-      await db.collection('users').doc(authEmail).update(data);
-      FirebaseLogger.response('updateUserData');
+      await db.collection('users').doc(authEmail).update({
+        'lastLoginAt': FieldValue.serverTimestamp(),
+      });
+      FirebaseLogger.response('updateUserLastLogin');
     } catch (e, stackTrace) {
-      FirebaseLogger.error('updateUserData', e, stackTrace);
+      FirebaseLogger.error('updateUserLastLogin', e, stackTrace);
       rethrow;
     }
   }
@@ -155,10 +163,7 @@ class FirebaseHelper {
   // MARK: Expenses
   // ==========================================
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getExpenses(
-    DateTime startDate,
-    DateTime endDate,
-  ) async {
+  static Future<List<Expense>> getExpenses(DateTime startDate, DateTime endDate) async {
     FirebaseLogger.request('getExpenses', {
       'userId': currentUid,
       'startDate': startDate,
@@ -176,14 +181,14 @@ class FirebaseHelper {
         'count': result.docs.length,
         'data': result.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
       });
-      return result;
+      return result.docs.map((d) => Expense.fromFirestore(d)).toList();
     } catch (e, stackTrace) {
       FirebaseLogger.error('getExpenses', e, stackTrace);
       rethrow;
     }
   }
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getYearsWithExpenses() async {
+  static Future<List<Expense>> getYearsWithExpenses() async {
     FirebaseLogger.request('getYearsWithExpenses', {'userId': currentUid});
     try {
       final result = await db.collection('expenses').where('userId', isEqualTo: currentUid).get();
@@ -191,19 +196,18 @@ class FirebaseHelper {
         'count': result.docs.length,
         'data': result.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
       });
-      return result;
+      return result.docs.map((d) => Expense.fromFirestore(d)).toList();
     } catch (e, stackTrace) {
       FirebaseLogger.error('getYearsWithExpenses', e, stackTrace);
       rethrow;
     }
   }
 
-  static Future<DocumentReference<Map<String, dynamic>>> addExpense(Expense expense) async {
+  static Future<void> addExpense(Expense expense) async {
     FirebaseLogger.request('addExpense', {'expense': expense.toFirestore()});
     try {
-      final result = await db.collection('expenses').add(expense.toFirestore());
-      FirebaseLogger.response('addExpense', 'Added expense with ID: ${result.id}');
-      return result;
+      await db.collection('expenses').add(expense.toFirestore());
+      FirebaseLogger.response('addExpense');
     } catch (e, stackTrace) {
       FirebaseLogger.error('addExpense', e, stackTrace);
       rethrow;
@@ -246,9 +250,7 @@ class FirebaseHelper {
     }
   }
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getExpensesByCategory(
-    String categoryId,
-  ) async {
+  static Future<List<Expense>> getExpensesByCategory(String categoryId) async {
     FirebaseLogger.request('getExpensesByCategory', {
       'userId': currentUid,
       'categoryId': categoryId,
@@ -264,7 +266,7 @@ class FirebaseHelper {
         'count': result.docs.length,
         'data': result.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
       });
-      return result;
+      return result.docs.map((d) => Expense.fromFirestore(d)).toList();
     } catch (e, stackTrace) {
       FirebaseLogger.error('getExpensesByCategory', e, stackTrace);
       rethrow;
@@ -354,7 +356,7 @@ class FirebaseHelper {
   // MARK:Budgets
   // ==========================================
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getBudgets(int year) async {
+  static Future<List<MonthBudget>> getBudgets(int year) async {
     FirebaseLogger.request('getBudgets', {'userId': currentUid, 'year': year});
     try {
       final result = await db
@@ -366,14 +368,14 @@ class FirebaseHelper {
         'count': result.docs.length,
         'data': result.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
       });
-      return result;
+      return result.docs.map((d) => MonthBudget.fromFirestore(d)).toList();
     } catch (e, stackTrace) {
       FirebaseLogger.error('getBudgets', e, stackTrace);
       rethrow;
     }
   }
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getBudgetForMonth(int year, int month) async {
+  static Future<MonthBudget?> getBudgetForMonth(int year, int month) async {
     FirebaseLogger.request('getBudgetForMonth', {
       'userId': currentUid,
       'year': year,
@@ -390,21 +392,19 @@ class FirebaseHelper {
         'count': result.docs.length,
         'data': result.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
       });
-      return result;
+      if (result.docs.isEmpty) return null;
+      return MonthBudget.fromFirestore(result.docs.first);
     } catch (e, stackTrace) {
       FirebaseLogger.error('getBudgetForMonth', e, stackTrace);
       rethrow;
     }
   }
 
-  static Future<DocumentReference<Map<String, dynamic>>> addBudget(
-    Map<String, dynamic> budgetData,
-  ) async {
+  static Future<void> addBudget(Map<String, dynamic> budgetData) async {
     FirebaseLogger.request('addBudget', budgetData);
     try {
-      final result = await db.collection('budgets').add(budgetData);
-      FirebaseLogger.response('addBudget', 'Added budget with ID: ${result.id}');
-      return result;
+      await db.collection('budgets').add(budgetData);
+      FirebaseLogger.response('addBudget');
     } catch (e, stackTrace) {
       FirebaseLogger.error('addBudget', e, stackTrace);
       rethrow;
@@ -440,7 +440,7 @@ class FirebaseHelper {
   // MARK: Categories
   // ==========================================
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getCategories() async {
+  static Future<List<Category>> getCategories() async {
     FirebaseLogger.request('getCategories', {'userId': currentUid});
     try {
       final result = await db
@@ -452,23 +452,19 @@ class FirebaseHelper {
         'count': result.docs.length,
         'data': result.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
       });
-      return result;
+      return result.docs.map((d) => Category.fromFirestore(d)).toList();
     } catch (e, stackTrace) {
       FirebaseLogger.error('getCategories', e, stackTrace);
       rethrow;
     }
   }
 
-  static Future<DocumentReference<Map<String, dynamic>>> addCategory(
-    String name,
-    String emoji,
-  ) async {
+  static Future<void> addCategory(String name, String emoji) async {
     final categoryData = {'name': name, 'emoji': emoji, 'userId': currentUid};
     FirebaseLogger.request('addCategory', categoryData);
     try {
-      final result = await db.collection('categories').add(categoryData);
-      FirebaseLogger.response('addCategory', 'Added category with ID: ${result.id}');
-      return result;
+      await db.collection('categories').add(categoryData);
+      FirebaseLogger.response('addCategory');
     } catch (e, stackTrace) {
       FirebaseLogger.error('addCategory', e, stackTrace);
       rethrow;
@@ -517,53 +513,105 @@ class FirebaseHelper {
   // MARK: Sheets
   // ==========================================
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getSheets(String userId) async {
-    return await db
-        .collection('sheets')
-        .where('userId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .get();
+  static Future<List<Sheet>> getSheets() async {
+    FirebaseLogger.request('getSheets', {'userId': PreferenceHelper.userId});
+    try {
+      final sheetsSnap = await db
+          .collection('sheets')
+          .where('userId', isEqualTo: PreferenceHelper.userId)
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      final List<Sheet> sheets = [];
+      for (var sheetDoc in sheetsSnap.docs) {
+        final recordsSnap = await sheetDoc.reference.collection('records').get();
+        final records = recordsSnap.docs.map((r) => SheetRecord.fromFirestore(r)).toList();
+        sheets.add(Sheet.fromFirestore(sheetDoc, records));
+      }
+      FirebaseLogger.response('getSheets', {
+        'count': sheets.length,
+        'data': sheets.map((d) => d.toFirestore()).toList(),
+      });
+      return sheets;
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('getSheets', e, stackTrace);
+      rethrow;
+    }
   }
 
-  static Future<DocumentReference<Map<String, dynamic>>> addSheet(
-    Map<String, dynamic> sheetData,
-  ) async {
-    return await db.collection('sheets').add(sheetData);
+  static Future<void> addSheet(Map<String, dynamic> sheetData) async {
+    FirebaseLogger.request('addSheet', sheetData);
+    try {
+      await db.collection('sheets').add(sheetData);
+      FirebaseLogger.response('addSheet');
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('addSheet', e, stackTrace);
+      rethrow;
+    }
   }
 
   static Future<void> updateSheet(String sheetId, Map<String, dynamic> sheetData) async {
-    await db.collection('sheets').doc(sheetId).update(sheetData);
+    FirebaseLogger.request('updateSheet', {'sheetId': sheetId, 'sheetData': sheetData});
+    try {
+      await db.collection('sheets').doc(sheetId).update(sheetData);
+      FirebaseLogger.response('updateSheet');
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('updateSheet', e, stackTrace);
+      rethrow;
+    }
   }
 
   static Future<void> deleteSheet(String sheetId) async {
-    final records = await db.collection('sheets').doc(sheetId).collection('records').get();
+    FirebaseLogger.request('deleteSheet', {'sheetId': sheetId});
+    try {
+      final records = await db.collection('sheets').doc(sheetId).collection('records').get();
 
-    final batch = db.batch();
-    for (final doc in records.docs) {
-      batch.delete(doc.reference);
+      final batch = db.batch();
+      for (final doc in records.docs) {
+        batch.delete(doc.reference);
+      }
+      batch.delete(db.collection('sheets').doc(sheetId));
+      await batch.commit();
+      FirebaseLogger.response('deleteSheet');
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('deleteSheet', e, stackTrace);
+      rethrow;
     }
-    batch.delete(db.collection('sheets').doc(sheetId));
-    await batch.commit();
   }
 
   // ==========================================
   // MARK: Sheet Records (subcollection inside sheets)
   // ==========================================
 
-  static Future<QuerySnapshot<Map<String, dynamic>>> getRecords(String sheetId) async {
-    return await db
-        .collection('sheets')
-        .doc(sheetId)
-        .collection('records')
-        .orderBy('date', descending: true)
-        .get();
+  static Future<List<SheetRecord>> getRecords(String sheetId) async {
+    FirebaseLogger.request('getRecords', {'sheetId': sheetId});
+    try {
+      final result = await db
+          .collection('sheets')
+          .doc(sheetId)
+          .collection('records')
+          .orderBy('date', descending: true)
+          .get();
+      FirebaseLogger.response('getRecords', {
+        'count': result.docs.length,
+        'data': result.docs.map((d) => {'id': d.id, ...d.data()}).toList(),
+      });
+      return result.docs.map((d) => SheetRecord.fromFirestore(d)).toList();
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('getRecords', e, stackTrace);
+      rethrow;
+    }
   }
 
-  static Future<DocumentReference<Map<String, dynamic>>> addRecord(
-    String sheetId,
-    Map<String, dynamic> record,
-  ) async {
-    return await db.collection('sheets').doc(sheetId).collection('records').add(record);
+  static Future<void> addRecord(String sheetId, Map<String, dynamic> record) async {
+    FirebaseLogger.request('addRecord', {'sheetId': sheetId, 'record': record});
+    try {
+      await db.collection('sheets').doc(sheetId).collection('records').add(record);
+      FirebaseLogger.response('addRecord');
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('addRecord', e, stackTrace);
+      rethrow;
+    }
   }
 
   static Future<void> updateRecord(
@@ -571,10 +619,75 @@ class FirebaseHelper {
     String recordId,
     Map<String, dynamic> data,
   ) async {
-    await db.collection('sheets').doc(sheetId).collection('records').doc(recordId).update(data);
+    FirebaseLogger.request('updateRecord', {
+      'sheetId': sheetId,
+      'recordId': recordId,
+      'data': data,
+    });
+    try {
+      await db.collection('sheets').doc(sheetId).collection('records').doc(recordId).update(data);
+      FirebaseLogger.response('updateRecord');
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('updateRecord', e, stackTrace);
+      rethrow;
+    }
   }
 
   static Future<void> deleteRecord(String sheetId, String recordId) async {
-    await db.collection('sheets').doc(sheetId).collection('records').doc(recordId).delete();
+    FirebaseLogger.request('deleteRecord', {'sheetId': sheetId, 'recordId': recordId});
+    try {
+      await db.collection('sheets').doc(sheetId).collection('records').doc(recordId).delete();
+      FirebaseLogger.response('deleteRecord');
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('deleteRecord', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<double> getSheetBalance(String sheetId) async {
+    FirebaseLogger.request('getSheetBalance', {'sheetId': sheetId});
+    try {
+      final query = db.collection('sheets').doc(sheetId).collection('records');
+      final income = await query
+          .where('type', isEqualTo: 'income')
+          .aggregate(sum('amount'))
+          .get()
+          .then((snapshot) => snapshot.getSum('amount') ?? 0.0);
+
+      final expense = await query
+          .where('type', isEqualTo: 'expense')
+          .aggregate(sum('amount'))
+          .get()
+          .then((snapshot) => snapshot.getSum('amount') ?? 0.0);
+
+      return income - expense;
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('getSheetBalance', e, stackTrace);
+      rethrow;
+    }
+  }
+
+  static Future<double> getTotalSheetsBalance() async {
+    FirebaseLogger.request('getTotalSheetsBalance', {'userId': PreferenceHelper.userId});
+    try {
+      final sheets = await getSheets();
+      double totalBalance = 0.0;
+
+      for (var sheet in sheets) {
+        for (var record in sheet.records) {
+          if (record.isIncome) {
+            totalBalance += record.amount;
+          } else if (record.isExpense) {
+            totalBalance -= record.amount;
+          }
+        }
+      }
+
+      FirebaseLogger.response('getTotalSheetsBalance', totalBalance);
+      return totalBalance;
+    } catch (e, stackTrace) {
+      FirebaseLogger.error('getTotalSheetsBalance', e, stackTrace);
+      rethrow;
+    }
   }
 }

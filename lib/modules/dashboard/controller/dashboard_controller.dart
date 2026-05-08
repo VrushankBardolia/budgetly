@@ -11,13 +11,15 @@ class DashboardController extends GetxController {
   final RxBool showMonthly = true.obs;
   final RxString donutCenterText = ''.obs;
 
+  // Carousel
+  final RxDouble totalSheetsBalance = 0.0.obs;
+  final RxInt currentCarouselIndex = 0.obs;
+
   // ─── Lifecycle ────────────────────────────────────────────────────────────
 
   @override
   void onInit() {
     super.onInit();
-    // Use addPostFrameCallback to ensure the widget tree is fully built
-    // before kicking off the heavy lifting.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       loadData();
     });
@@ -41,41 +43,47 @@ class DashboardController extends GetxController {
       if (!availableYears.contains(selectedYear.value)) {
         selectedYear.value = availableYears.first;
       }
-      await loadExpenses(userId, selectedYear.value);
+      await loadExpenses(selectedYear.value);
     }
+
+    await loadSheetsBalance();
+
     isLoading.value = false;
   }
 
   // ─── Data Loading ─────────────────────────────────────────────────────────
 
-  // Updated to accept userId as a parameter
   Future<void> loadAvailableYears() async {
-    final snapshot = await FirebaseHelper.getExpenses(DateTime(2000), DateTime(2100));
+    final results = await FirebaseHelper.getExpenses(DateTime(2000), DateTime(2100));
 
-    if (snapshot.docs.isEmpty) {
+    if (results.isEmpty) {
       availableYears.assignAll([DateTime.now().year]);
       return;
     }
 
-    final years = snapshot.docs.map((doc) => Expense.fromFirestore(doc).date.year).toSet().toList()
-      ..sort((a, b) => b.compareTo(a));
+    final years = results.map((e) => e.date.year).toSet().toList()..sort((a, b) => b.compareTo(a));
     availableYears.assignAll(years.isEmpty ? [DateTime.now().year] : years);
   }
 
-  // Updated to accept userId as a parameter
-  Future<void> loadExpenses(String userId, int year) async {
-    final snapshot = await FirebaseHelper.getExpenses(
+  Future<void> loadExpenses(int year) async {
+    final result = await FirebaseHelper.getExpenses(
       DateTime(year, 1, 1),
       DateTime(year, 12, 31, 23, 59, 59),
     );
-
-    expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
+    expenses.assignAll(result);
   }
 
-  // Updated to accept userId as a parameter
   Future<void> loadCategories() async {
-    final snapshot = await FirebaseHelper.getCategories();
-    categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
+    final result = await FirebaseHelper.getCategories();
+    categories.assignAll(result);
+  }
+
+  Future<void> loadSheetsBalance() async {
+    try {
+      totalSheetsBalance.value = await FirebaseHelper.getTotalSheetsBalance();
+    } catch (e) {
+      totalSheetsBalance.value = 0.0;
+    }
   }
 
   // ─── Actions ──────────────────────────────────────────────────────────────
@@ -83,16 +91,16 @@ class DashboardController extends GetxController {
   Future<void> changeYear(int year) async {
     selectedYear.value = year;
 
-    // Quick check to grab the user ID for the year change
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId != null) {
-      isLoading.value = true;
-      await loadExpenses(userId, year);
-      isLoading.value = false;
-    }
+    isLoading.value = true;
+    await loadExpenses(year);
+    isLoading.value = false;
   }
 
   void toggleMonthlyYearly() => showMonthly.value = !showMonthly.value;
+
+  void onCarouselPageChanged(int index) {
+    currentCarouselIndex.value = index;
+  }
 
   // ─── Category Helper ──────────────────────────────────────────────────────
 

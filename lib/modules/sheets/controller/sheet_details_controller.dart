@@ -26,8 +26,8 @@ class SheetDetailsController extends GetxController {
   Future<void> loadRecords({bool isRefresh = false}) async {
     isRefresh ? null : isLoading.value = true;
     try {
-      final snapshot = await FirebaseHelper.getRecords(sheetId);
-      records.assignAll(snapshot.docs.map((doc) => SheetRecord.fromFirestore(doc)).toList());
+      final recordsList = await FirebaseHelper.getRecords(sheetId);
+      records.assignAll(recordsList);
     } finally {
       isRefresh ? null : isLoading.value = false;
     }

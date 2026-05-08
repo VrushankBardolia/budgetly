@@ -29,8 +29,11 @@ export 'package:budgetly/core/theme/app_theme.dart';
 export 'package:budgetly/core/theme/text_theme.dart';
 
 // ─── Components ────────────────────────────────────────────────────────────
+export 'package:budgetly/components/amount_field.dart';
 export 'package:budgetly/components/button.dart';
 export 'package:budgetly/components/category_tile.dart';
+export 'package:budgetly/components/date_picker_field.dart';
+export 'package:budgetly/components/detail_field.dart';
 export 'package:budgetly/components/expense_tile.dart';
 export 'package:budgetly/components/google_signin_button.dart';
 export 'package:budgetly/components/main_notification_tile.dart';

@@ -3,6 +3,7 @@ import 'package:budgetly/core/import_to_export.dart';
 class SheetsController extends GetxController {
   // ─── Reactive State ───────────────────────────────────────────────────────
   final RxList<Sheet> sheets = <Sheet>[].obs;
+  final RxMap<String, double> sheetBalances = <String, double>{}.obs;
   final RxBool isLoading = true.obs;
 
   // ─── Lifecycle ────────────────────────────────────────────────────────────
@@ -16,22 +17,35 @@ class SheetsController extends GetxController {
   // ─── Data ─────────────────────────────────────────────────────────────────
 
   Future<void> loadSheets({bool isRefresh = false}) async {
-    final userId = FirebaseHelper.currentUser?.uid;
-    if (userId == null) return;
-
     isRefresh ? null : isLoading.value = true;
     try {
-      final snapshot = await FirebaseHelper.getSheets(userId);
-      sheets.assignAll(snapshot.docs.map((doc) => Sheet.fromFirestore(doc)).toList());
+      final result = await FirebaseHelper.getSheets();
+      sheets.assignAll(result);
+      await _fetchBalance();
     } finally {
       isRefresh ? null : isLoading.value = false;
     }
   }
 
-  // ─── Navigation ───────────────────────────────────────────────────────────
-
-  void goToSheet(Sheet sheet) {
-    Get.toNamed(Routes.SHEET_DETAIL, arguments: {'sheetId': sheet.id, 'sheetName': sheet.name});
+  Future<void> _fetchBalance() async {
+    try {
+      for (var sheet in sheets) {
+        double balance = 0;
+        for (var record in sheet.records) {
+          if (record.type == RecordType.income) {
+            balance += record.amount;
+          } else if (record.type == RecordType.expense) {
+            balance -= record.amount;
+          }
+        }
+        sheetBalances[sheet.id] = balance;
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+      for (var sheet in sheets) {
+        sheetBalances[sheet.id] = 0.0;
+      }
+    }
   }
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -75,7 +89,7 @@ class SheetsController extends GetxController {
               onPressed: () async {
                 final name = nameCtrl.text.trim();
                 if (name.isEmpty) return;
-                await _createSheet(name: name, year: selectedYear);
+                await _createSheet(name, selectedYear);
                 Get.back();
               },
               style: ElevatedButton.styleFrom(
@@ -90,7 +104,7 @@ class SheetsController extends GetxController {
     );
   }
 
-  Future<void> _createSheet({required String name, required int year}) async {
+  Future<void> _createSheet(String name, int year) async {
     final userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) return;
 
@@ -104,7 +118,7 @@ class SheetsController extends GetxController {
       'records': [],
     });
 
-    await loadSheets();
+    await loadSheets(isRefresh: true);
   }
 
   // ─── Rename ───────────────────────────────────────────────────────────────
@@ -148,7 +162,7 @@ class SheetsController extends GetxController {
                 'name': name,
                 'updatedAt': Timestamp.fromDate(DateTime.now()),
               });
-              await loadSheets();
+              await loadSheets(isRefresh: true);
               Get.back();
             },
             style: ElevatedButton.styleFrom(
@@ -189,7 +203,7 @@ class SheetsController extends GetxController {
 
     if (confirmed == true) {
       await FirebaseHelper.deleteSheet(sheet.id);
-      await loadSheets();
+      await loadSheets(isRefresh: true);
     }
   }
 }

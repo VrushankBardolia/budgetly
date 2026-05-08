@@ -29,8 +29,8 @@ class CategoryDetailsController extends GetxController {
 
   Future<void> loadExpenses() async {
     isLoading.value = true;
-    final snapshot = await FirebaseHelper.getExpensesByCategory(category.id);
-    expenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
+    final result = await FirebaseHelper.getExpensesByCategory(category.id);
+    expenses.assignAll(result);
     isLoading.value = false;
   }
 }

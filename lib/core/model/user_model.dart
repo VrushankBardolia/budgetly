@@ -8,7 +8,14 @@ class UserModel {
   final bool isGoogle;
   final DateTime? createdAt;
 
-  UserModel({required this.uid, required this.name, required this.email, required this.phone, this.isGoogle = false, this.createdAt});
+  UserModel({
+    required this.uid,
+    required this.name,
+    required this.email,
+    required this.phone,
+    this.isGoogle = false,
+    this.createdAt,
+  });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     DateTime? parsedDate;
@@ -31,10 +38,25 @@ class UserModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {'uid': uid, 'name': name, 'email': email, 'phone': phone, 'isGoogle': isGoogle, 'createdAt': createdAt?.toIso8601String()};
+    return {
+      'uid': uid,
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'isGoogle': isGoogle,
+      'createdAt': createdAt?.toIso8601String(),
+    };
   }
 
-  UserModel copyWith({String? uid, String? name, String? email, String? phone, bool? isGoogle, DateTime? createdAt, List<String>? fcmTokens}) {
+  UserModel copyWith({
+    String? uid,
+    String? name,
+    String? email,
+    String? phone,
+    bool? isGoogle,
+    DateTime? createdAt,
+    List<String>? fcmTokens,
+  }) {
     return UserModel(
       uid: uid ?? this.uid,
       name: name ?? this.name,
@@ -43,5 +65,23 @@ class UserModel {
       isGoogle: isGoogle ?? this.isGoogle,
       createdAt: createdAt ?? this.createdAt,
     );
+  }
+}
+
+class UserInputModel {
+  final String name;
+  final String email;
+  final DateTime createdAt;
+  final DateTime lastLoginAt;
+
+  UserInputModel({
+    required this.name,
+    required this.email,
+    required this.createdAt,
+    required this.lastLoginAt,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {'name': name, 'email': email, 'createdAt': createdAt, 'lastLoginAt': lastLoginAt};
   }
 }

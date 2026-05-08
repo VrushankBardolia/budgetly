@@ -1,4 +1,5 @@
 import 'package:budgetly/core/import_to_export.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 class SheetsTab extends GetView<SheetsController> {
@@ -17,17 +18,12 @@ class SheetsTab extends GetView<SheetsController> {
           return buildEmptyState();
         }
 
-        return RefreshIndicator(
-          onRefresh: () => controller.loadSheets(isRefresh: true),
-          color: AppColors.brand,
-          backgroundColor: AppColors.surface,
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-            itemCount: controller.sheets.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, index) => buildSheetCard(controller.sheets[index]),
-          ),
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          physics: const BouncingScrollPhysics(),
+          itemCount: controller.sheets.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (_, index) => buildSheetCard(controller.sheets[index]),
         );
       }),
       floatingActionButton: FloatingActionButton.extended(
@@ -47,25 +43,46 @@ class SheetsTab extends GetView<SheetsController> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: AppColors.brand.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: HugeIcon(
-                icon: HugeIcons.strokeRoundedFile02,
-                size: 56,
-                color: AppColors.brand,
-              ),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.brand.withValues(alpha: 0.03),
+                  ),
+                ),
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppColors.brand.withValues(alpha: 0.06),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.brand.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedFile02,
+                    size: 40,
+                    color: AppColors.brand,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 32),
             Text('No Sheets Yet', style: boldText(22)),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             Text(
               'Create a sheet to track your annual\nincome and expenses in one place.',
               textAlign: TextAlign.center,
-              style: regularText(14, color: AppColors.grey, height: 1.6),
+              style: regularText(15, color: AppColors.grey.withValues(alpha: 0.8), height: 1.5),
             ),
           ],
         ),
@@ -75,84 +92,122 @@ class SheetsTab extends GetView<SheetsController> {
 
   Widget buildSheetCard(Sheet sheet) {
     return GestureDetector(
-      onTap: () => controller.goToSheet(sheet),
+      onTap: () => Get.toNamed(
+        Routes.SHEET_DETAIL,
+        arguments: {'sheetId': sheet.id, 'sheetName': sheet.name},
+      ),
+      onLongPressStart: (details) {
+        showPullDownMenu(
+          context: Get.context!,
+          routeTheme: PullDownMenuRouteTheme(backgroundColor: AppColors.surfaceLight, width: 200),
+          items: [
+            PullDownMenuItem(
+              onTap: () => controller.showRenameDialog(sheet),
+              title: "Rename",
+              icon: CupertinoIcons.pen,
+              itemTheme: PullDownMenuItemTheme(textStyle: mediumText(14)),
+            ),
+            PullDownMenuItem(
+              onTap: () => controller.showDeleteDialog(sheet),
+              title: "Delete",
+              icon: CupertinoIcons.delete,
+              isDestructive: true,
+              itemTheme: PullDownMenuItemTheme(textStyle: mediumText(14)),
+            ),
+          ],
+          position: Rect.fromLTRB(
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+          ),
+        );
+      },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.borderColor),
+          gradient: AppColors.mainCardGradient,
           boxShadow: [
             BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: AppColors.black.withValues(alpha: 0.5),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: AppColors.brand.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: HugeIcon(icon: HugeIcons.strokeRoundedFile02, color: AppColors.brand),
-            ),
-            const SizedBox(width: 14),
-
-            // Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(sheet.name, style: semiBoldText(15)),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${sheet.year}  ·  Created ${DateFormat('dd MMM yyyy').format(sheet.createdAt)}',
-                    style: regularText(12, color: AppColors.grey),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.brand.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.brand.withValues(alpha: 0.1)),
                   ),
-                ],
-              ),
-            ),
-
-            // Menu
-            PopupMenuButton<String>(
-              color: AppColors.surfaceLight,
-              icon: Icon(Icons.more_vert_rounded, color: Colors.grey[500], size: 20),
-              onSelected: (value) {
-                HapticFeedback.lightImpact();
-                if (value == 'rename') {
-                  controller.showRenameDialog(sheet);
-                } else if (value == 'delete') {
-                  controller.showDeleteDialog(sheet);
-                }
-              },
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'rename',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.edit_rounded, size: 16, color: Colors.white),
-                      const SizedBox(width: 10),
-                      Text('Rename', style: regularText(14)),
-                    ],
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedFile02,
+                    color: AppColors.brand,
+                    size: 20,
                   ),
                 ),
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_rounded, size: 16, color: AppColors.error),
-                      const SizedBox(width: 10),
-                      Text('Delete', style: regularText(14, color: AppColors.error)),
-                    ],
+                const SizedBox(width: 14),
+
+                // Sheet Name
+                Expanded(
+                  child: Text(
+                    sheet.name,
+                    style: semiBoldText(18),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                ),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.brand.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.brand.withValues(alpha: 0.15)),
+                  ),
+                  child: Text("${sheet.year}", style: mediumText(12, color: AppColors.brand)),
                 ),
               ],
             ),
+
+            const SizedBox(height: 24),
+            Text(
+              "TOTAL BALANCE",
+              style: mediumText(
+                11,
+                color: AppColors.grey.withValues(alpha: 0.6),
+              ).copyWith(letterSpacing: 1.2),
+            ),
+            const SizedBox(height: 4),
+            Obx(() {
+              final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+              final balance = controller.sheetBalances[sheet.id];
+
+              if (balance == null) {
+                return Text(
+                  formatter.format(0),
+                  style: boldText(
+                    32,
+                    color: AppColors.grey.withValues(alpha: 0.2),
+                  ).copyWith(letterSpacing: -1),
+                );
+              }
+
+              final color = balance >= 0 ? AppColors.success : AppColors.error;
+              return Text(
+                formatter.format(balance),
+                style: boldText(32, color: color).copyWith(letterSpacing: -1),
+              );
+            }),
           ],
         ),
       ),

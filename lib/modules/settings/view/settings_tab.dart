@@ -52,7 +52,7 @@ class SettingsTab extends GetView<SettingController> {
           ),
 
           buildSettingsTile(
-            icon: HugeIcons.strokeRoundedFile02,
+            icon: HugeIcons.strokeRoundedInformationCircle,
             title: "About Budgetly",
             onTap: controller.showAboutAppDialog,
           ),

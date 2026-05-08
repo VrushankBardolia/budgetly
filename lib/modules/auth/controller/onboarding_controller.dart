@@ -69,17 +69,15 @@ class OnboardingController extends GetxController {
 
       final doc = await FirebaseHelper.getUserData(user.email);
       if (!doc.exists) {
-        await FirebaseHelper.saveUserData(user.email!, {
-          'name': user.displayName ?? 'User',
-          'email': user.email,
-          'profileUrl': user.photoURL,
-          'lastLoginAt': FieldValue.serverTimestamp(),
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+        final userData = UserInputModel(
+          name: user.displayName ?? 'User',
+          email: user.email!,
+          lastLoginAt: DateTime.now(),
+          createdAt: DateTime.now(),
+        );
+        await FirebaseHelper.saveUserData(user.email!, userData);
       } else {
-        await FirebaseHelper.updateUserData(user.email!, {
-          'lastLoginAt': FieldValue.serverTimestamp(),
-        });
+        await FirebaseHelper.updateUserLastLogin(user.email!);
       }
 
       await _fetchAndStoreUserData();

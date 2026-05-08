@@ -174,31 +174,31 @@ class MonthDetailController extends GetxController {
   }
 
   Future<void> loadExpenses() async {
-    final snapshot = await FirebaseHelper.getExpenses(
+    final result = await FirebaseHelper.getExpenses(
       DateTime(year, month, 1),
       DateTime(year, month + 1, 0, 23, 59, 59),
     );
-    _allExpenses.assignAll(snapshot.docs.map((doc) => Expense.fromFirestore(doc)).toList());
+    _allExpenses.assignAll(result);
     applyFiltersAndSorts();
   }
 
   Future<void> loadBudget() async {
-    final snapshot = await FirebaseHelper.getBudgetForMonth(year, month);
-    if (snapshot.docs.isNotEmpty) {
-      budget.value = (snapshot.docs.first.data()['budget'] as num).toInt();
+    final result = await FirebaseHelper.getBudgetForMonth(year, month);
+    if (result != null) {
+      budget.value = result.budget.toInt();
     }
   }
 
   Future<void> loadCategories() async {
-    final snapshot = await FirebaseHelper.getCategories();
-    categories.assignAll(snapshot.docs.map((doc) => Category.fromFirestore(doc)).toList());
+    final result = await FirebaseHelper.getCategories();
+    categories.assignAll(result);
   }
 
   // ─── Budget CRUD ──────────────────────────────────────────────────────────
 
   Future<void> setBudget(int value) async {
-    final snapshot = await FirebaseHelper.getBudgetForMonth(year, month);
-    if (snapshot.docs.isEmpty) {
+    final result = await FirebaseHelper.getBudgetForMonth(year, month);
+    if (result == null) {
       await FirebaseHelper.addBudget({
         'userId': PreferenceHelper.userId,
         'year': year,
@@ -206,7 +206,7 @@ class MonthDetailController extends GetxController {
         'budget': value,
       });
     } else {
-      await FirebaseHelper.updateBudget(snapshot.docs.first.id, value);
+      await FirebaseHelper.updateBudget(result.id, value);
     }
     budget.value = value;
   }

@@ -20,93 +20,34 @@ class SheetRecordFormScreen extends GetView<SheetRecordFormController> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ── Type Toggle ───────────────────────────────────────
-                buildSectionLabel('Type'),
-                const SizedBox(height: 8),
                 buildTypeToggle(),
                 const SizedBox(height: 24),
 
-                // ── Amount ────────────────────────────────────────────
                 buildSectionLabel('Amount'),
                 const SizedBox(height: 8),
-                TextFormField(
+                AmountField(
                   controller: controller.amountController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter amount',
-                    prefixIcon: const Icon(Icons.currency_rupee_rounded, size: 20),
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.brand, width: 2),
-                    ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.error),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.error, width: 2),
-                    ),
-                  ),
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  style: regularText(16),
                   validator: controller.validateAmount,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,
                 ),
                 const SizedBox(height: 24),
 
-                // ── Date ──────────────────────────────────────────────
                 buildSectionLabel('Date'),
                 const SizedBox(height: 8),
-                GestureDetector(
+                DatePickerField(
+                  formattedDate: controller.formattedDate,
                   onTap: controller.pickDate,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      spacing: 12,
-                      children: [
-                        Icon(Icons.calendar_today_rounded, size: 18, color: Colors.grey[400]),
-                        Text(controller.formattedDate, style: regularText(15)),
-                      ],
-                    ),
-                  ),
                 ),
                 const SizedBox(height: 24),
 
-                // ── Detail ────────────────────────────────────────────
                 buildSectionLabel('Detail'),
                 const SizedBox(height: 8),
-                TextFormField(
+                DetailField(
                   controller: controller.detailController,
-                  decoration: InputDecoration(
-                    hintText: 'Add a note (optional)',
-                    filled: true,
-                    fillColor: AppColors.surface,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.brand, width: 2),
-                    ),
-                  ),
-                  maxLines: 3,
-                  style: regularText(14),
-                  textCapitalization: TextCapitalization.sentences,
+                  validator: controller.validateDetail,
+                  hintText: 'Add Details',
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
 
-                // ── Submit ────────────────────────────────────────────
                 Button(onClick: controller.submit, child: Text(controller.submitLabel)),
               ],
             ),

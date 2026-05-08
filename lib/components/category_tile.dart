@@ -30,72 +30,66 @@ class CategoryTile extends StatelessWidget {
         margin: margin ?? const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: AppColors.borderColor),
+          gradient: AppColors.mainCardGradient,
         ),
         child: Row(
           children: [
             Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppColors.black,
-                borderRadius: BorderRadius.circular(12),
-              ),
+              height: 48,
+              width: 48,
               alignment: Alignment.center,
-              child: Text(emoji, style: regularText(24)),
+              child: Text(emoji, style: regularText(28)),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: showProgress
-                  ? Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(name, style: semiBoldText(16)),
-                            Spacer(),
-                            Text(
-                              "$transactionCount • ",
-                              style: boldText(16, color: AppColors.grey),
-                            ),
-                            Text(formattedAmount, style: boldText(16)),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: percentage ?? 0.0,
-                            backgroundColor: Colors.white10,
-                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.brand),
-                            minHeight: 6,
-                          ),
-                        ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(name, style: semiBoldText(18)),
-                            Text(
-                              '$transactionCount transactions',
-                              style: regularText(12, color: AppColors.grey),
-                            ),
-                          ],
-                        ),
-                        Text(formattedAmount, style: boldText(16)),
-                      ],
-                    ),
-            ),
+            const SizedBox(width: 8),
+            Expanded(child: showProgress ? buildProgressView() : buildDefaultView()),
           ],
         ),
       ),
+    );
+  }
+
+  Widget buildProgressView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(name, style: semiBoldText(16)),
+            Spacer(),
+            Text("$transactionCount • ", style: boldText(16, color: AppColors.grey)),
+            Text(formattedAmount, style: boldText(16)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: LinearProgressIndicator(
+            value: percentage ?? 0.0,
+            backgroundColor: Colors.white10,
+            valueColor: AlwaysStoppedAnimation<Color>(AppColors.brand),
+            minHeight: 6,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget buildDefaultView() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(name, style: semiBoldText(18)),
+            Text('$transactionCount transactions', style: regularText(12, color: AppColors.grey)),
+          ],
+        ),
+        Text(formattedAmount, style: boldText(16)),
+      ],
     );
   }
 }

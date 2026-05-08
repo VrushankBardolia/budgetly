@@ -15,65 +15,42 @@ class ExpenseTile extends StatelessWidget {
     final hasDetail = expense.detail.isNotEmpty;
     final title = hasDetail ? expense.detail : category.name;
 
-    final cardColor = const Color(0xFF1E1E1E);
-
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: AppColors.black,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.borderColor),
+        gradient: RadialGradient(
+          center: Alignment.centerLeft,
+          radius: 3,
+          colors: [AppColors.brand.withValues(alpha: 0.07), AppColors.black.withValues(alpha: 0)],
+        ),
       ),
       child: Row(
         children: [
-          // 1. Emoji Badge
           Container(
             width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Color(0xFF121212),
-              borderRadius: BorderRadius.circular(12),
-            ),
             alignment: Alignment.center,
             child: Text(category.emoji, style: regularText(24)),
           ),
-
-          const SizedBox(width: 12),
-
-          // 2. Title & Subtitle
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: boldText(18),
-                ),
-                const SizedBox(height: 4),
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: boldText(18)),
                 Row(
                   children: [
                     Text(
                       dateFormatter.format(expense.date),
-                      style: customText(
-                        14,
-                        FontWeight.w800,
-                        color: AppColors.grey,
-                      ),
+                      style: customText(14, FontWeight.w800, color: AppColors.grey),
                     ),
                     if (hasDetail) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
-                        child: Icon(Icons.circle, size: 4, color: Colors.grey),
+                        child: Icon(Icons.circle, size: 4, color: AppColors.grey),
                       ),
                       Flexible(
                         child: Text(
@@ -89,10 +66,7 @@ class ExpenseTile extends StatelessWidget {
               ],
             ),
           ),
-
           const SizedBox(width: 12),
-
-          // 3. Price
           Text(formatter.format(expense.price), style: boldText(18)),
         ],
       ),

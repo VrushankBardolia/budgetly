@@ -29,9 +29,7 @@ class MonthsTab extends GetView<MonthController> {
           itemCount: controller.monthSummaries.length,
           itemBuilder: (ctx, index) => MonthCard(
             summary: controller.monthSummaries[index],
-            onTap: () => controller.navigateToMonth(
-              controller.monthSummaries[index].month,
-            ),
+            onTap: () => controller.navigateToMonth(controller.monthSummaries[index].month),
           ),
         );
       }),
@@ -61,10 +59,7 @@ class MonthsTab extends GetView<MonthController> {
           itemBuilder: (ctx, index) {
             return Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: baseColor,
-                borderRadius: BorderRadius.circular(16),
-              ),
+              decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(16)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -122,11 +117,11 @@ class MonthCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          // color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: summary.isCurrent
               ? Border.all(color: AppColors.brand, width: 2)
-              : Border.all(color: Colors.white.withValues(alpha: 0.05)),
+              : Border.all(color: AppColors.borderColor),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.2),
@@ -134,6 +129,7 @@ class MonthCard extends StatelessWidget {
               offset: const Offset(0, 4),
             ),
           ],
+          gradient: AppColors.mainCardGradient,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,11 +147,7 @@ class MonthCard extends StatelessWidget {
                   ),
                 ),
                 if (summary.hasData)
-                  HugeIcon(
-                    icon: summary.statusIcon,
-                    color: summary.statusColor,
-                    size: 20,
-                  ),
+                  HugeIcon(icon: summary.statusIcon, color: summary.statusColor, size: 20),
               ],
             ),
 
@@ -165,10 +157,7 @@ class MonthCard extends StatelessWidget {
             if (summary.hasData) ...[
               Text(
                 summary.statusLabel,
-                style: GoogleFonts.plusJakartaSans(
-                  color: AppColors.grey,
-                  fontSize: 12,
-                ),
+                style: GoogleFonts.plusJakartaSans(color: AppColors.grey, fontSize: 12),
               ),
               Text(
                 '₹${summary.difference.abs().toStringAsFixed(0)}',
@@ -183,19 +172,14 @@ class MonthCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: summary.progressValue,
                   backgroundColor: Colors.grey[800],
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    summary.statusColor,
-                  ),
+                  valueColor: AlwaysStoppedAnimation<Color>(summary.statusColor),
                   minHeight: 4,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 'Spent: ₹${summary.expense.toStringAsFixed(0)}',
-                style: GoogleFonts.plusJakartaSans(
-                  color: AppColors.grey,
-                  fontSize: 12,
-                ),
+                style: GoogleFonts.plusJakartaSans(color: AppColors.grey, fontSize: 12),
               ),
             ] else ...[
               Center(
@@ -207,10 +191,7 @@ class MonthCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Text(
-                'No Data',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-              ),
+              Text('No Data', style: TextStyle(color: Colors.white.withValues(alpha: 0.2))),
             ],
           ],
         ),

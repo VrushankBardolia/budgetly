@@ -60,6 +60,10 @@ It helps users track expenses, manage budgets, and visualize spending patterns w
 
 ## Changelog
 
+### 1.5
+* Introduced a new **Sheets** feature to help manage and track yearly financial flow efficiently
+* Refined tab card UI for a cleaner and more modern look
+
 ### 1.4 (Latest Release)
 * Added biometric authentication for secure app access
 * Added sort and filter options in month details screen
