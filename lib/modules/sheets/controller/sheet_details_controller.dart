@@ -1,4 +1,5 @@
 import 'package:budgetly/core/import_to_export.dart';
+import 'package:intl/intl.dart';
 
 class SheetDetailsController extends GetxController {
   // ─── Arguments ────────────────────────────────────────────────────────────
@@ -41,6 +42,19 @@ class SheetDetailsController extends GetxController {
     if (filterType.value == 'all') return records;
     final type = filterType.value == 'income' ? RecordType.income : RecordType.expense;
     return records.where((r) => r.type == type).toList();
+  }
+
+  Map<String, List<SheetRecord>> get groupedRecords {
+    final filtered = filteredRecords;
+    final map = <String, List<SheetRecord>>{};
+    for (var record in filtered) {
+      final monthStr = DateFormat('MMMM').format(record.date);
+      if (!map.containsKey(monthStr)) {
+        map[monthStr] = [];
+      }
+      map[monthStr]!.add(record);
+    }
+    return map;
   }
 
   // ─── Navigation ───────────────────────────────────────────────────────────

@@ -61,7 +61,7 @@ class CategoriesTab extends GetView<CategoryController> {
               ),
               items: [
                 PullDownMenuItem(
-                  onTap: () => controller.editCategory(context, category),
+                  onTap: () => controller.editCategory(category),
                   title: "Edit",
                   icon: CupertinoIcons.pen,
                   itemTheme: PullDownMenuItemTheme(textStyle: regularText(14, color: Colors.white)),

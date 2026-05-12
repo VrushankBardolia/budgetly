@@ -25,13 +25,13 @@ class ExpenseTile extends StatelessWidget {
         gradient: RadialGradient(
           center: Alignment.centerLeft,
           radius: 3,
-          colors: [AppColors.brand.withValues(alpha: 0.07), AppColors.black.withValues(alpha: 0)],
+          colors: [AppColors.brand.withValues(alpha: 0.1), AppColors.black.withValues(alpha: 0)],
         ),
       ),
       child: Row(
         children: [
           Container(
-            width: 50,
+            width: 40,
             alignment: Alignment.center,
             child: Text(category.emoji, style: regularText(24)),
           ),
@@ -40,12 +40,12 @@ class ExpenseTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: boldText(18)),
+                Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: boldText(16)),
                 Row(
                   children: [
                     Text(
                       dateFormatter.format(expense.date),
-                      style: customText(14, FontWeight.w800, color: AppColors.grey),
+                      style: boldText(14, color: AppColors.grey),
                     ),
                     if (hasDetail) ...[
                       Padding(

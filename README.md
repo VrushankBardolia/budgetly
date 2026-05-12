@@ -62,6 +62,7 @@ It helps users track expenses, manage budgets, and visualize spending patterns w
 
 ### 1.5
 * Introduced a new **Sheets** feature to help manage and track yearly financial flow efficiently
+* Added Total balance card and transaction filter in` sheets
 * Refined tab card UI for a cleaner and more modern look
 
 ### 1.4 (Latest Release)

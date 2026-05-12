@@ -11,10 +11,7 @@ class DashboardTab extends GetView<DashboardController> {
       appBar: AppBar(
         backgroundColor: AppColors.black,
         elevation: 0,
-        title: Text(
-          'Budgetly',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 24),
-        ),
+        title: Text('Budgetly', style: boldText(24)),
       ),
       body: Obx(() {
         if (controller.isLoading.value) return _buildShimmerLoader();
@@ -94,9 +91,12 @@ class DashboardTab extends GetView<DashboardController> {
     return Column(
       children: [
         SizedBox(
-          height: 180,
+          height: 170,
           child: PageView(
-            controller: PageController(viewportFraction: 1.0),
+            controller: PageController(
+              viewportFraction: 1.0,
+              initialPage: controller.currentCarouselIndex.value,
+            ),
             onPageChanged: controller.onCarouselPageChanged,
             children: [_buildTotalCard(), _buildTotalSheetsCard()],
           ),
@@ -141,17 +141,9 @@ class DashboardTab extends GetView<DashboardController> {
             colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
           ),
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF1565C0).withValues(alpha: 0.3),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
@@ -178,34 +170,19 @@ class DashboardTab extends GetView<DashboardController> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
             Row(
               spacing: 4,
               children: [
-                Text(
-                  '₹',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 40,
-                    color: Colors.white,
-                    height: 1.0,
-                  ),
-                ),
+                Text('₹', style: regularText(40)),
                 AnimatedDigitWidget(
                   value: controller.displayTotal,
-                  textStyle: GoogleFonts.plusJakartaSans(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.0,
-                    letterSpacing: -2,
-                  ),
+                  textStyle: customText(40, FontWeight.w800),
                   enableSeparator: true,
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutCubic,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
             Row(
               children: [
                 AnimatedSwitcher(
@@ -223,7 +200,7 @@ class DashboardTab extends GetView<DashboardController> {
                   child: Text(
                     controller.displayPeriodLabel,
                     key: ValueKey(controller.showMonthly.value),
-                    style: GoogleFonts.plusJakartaSans(fontSize: 16),
+                    style: regularText(16),
                   ),
                 ),
                 const Spacer(),
@@ -265,7 +242,6 @@ class DashboardTab extends GetView<DashboardController> {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
@@ -275,7 +251,7 @@ class DashboardTab extends GetView<DashboardController> {
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.account_balance, color: Colors.white, size: 20),
+                  child: HugeIcon(icon: HugeIcons.strokeRoundedFiles01, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -284,38 +260,20 @@ class DashboardTab extends GetView<DashboardController> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
             Row(
               spacing: 4,
               children: [
-                Text(
-                  '₹',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 40,
-                    color: Colors.white,
-                    height: 1.0,
-                  ),
-                ),
+                Text('₹', style: regularText(40)),
                 AnimatedDigitWidget(
                   value: controller.totalSheetsBalance.value,
-                  textStyle: GoogleFonts.plusJakartaSans(
-                    fontSize: 40,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    height: 1.0,
-                    letterSpacing: -2,
-                  ),
+                  textStyle: customText(40, FontWeight.w800),
                   enableSeparator: true,
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutCubic,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Across all your sheets',
-              style: GoogleFonts.plusJakartaSans(fontSize: 16, color: Colors.white70),
-            ),
+            Text('Across all your sheets', style: regularText(16)),
           ],
         ),
       ),

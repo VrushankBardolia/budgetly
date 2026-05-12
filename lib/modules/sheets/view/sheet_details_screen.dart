@@ -17,29 +17,17 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
         ),
         title: Text(controller.sheetName, style: boldText(20)),
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.brandDark.withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
-          ],
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: FloatingActionButton.extended(
-          onPressed: controller.goToAddRecord,
-          backgroundColor: AppColors.brandDark,
-          elevation: 0,
-          icon: const Icon(Icons.add_rounded, color: Colors.white),
-          label: Text('Add Record', style: semiBoldText(14, color: Colors.white)),
-        ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: controller.goToAddRecord,
+        backgroundColor: AppColors.brandDark,
+        elevation: 0,
+        icon: const Icon(Icons.add_rounded, color: AppColors.white),
+        label: Text('Add Record', style: semiBoldText(14, color: AppColors.white)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return buildShimmerLoader();
         }
 
         return SingleChildScrollView(
@@ -50,25 +38,25 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Column(
-                  spacing: 14,
+                  spacing: 12,
                   children: [
                     Row(
                       spacing: 12,
                       children: [
                         Expanded(
                           child: buildSummaryCard(
-                            label: 'Total Income',
-                            amount: controller.totalIncome,
-                            color: AppColors.success,
-                            icon: Icons.arrow_downward_rounded,
+                            'Total Income',
+                            controller.totalIncome,
+                            AppColors.success,
+                            Icons.arrow_downward_rounded,
                           ),
                         ),
                         Expanded(
                           child: buildSummaryCard(
-                            label: 'Total Expense',
-                            amount: controller.totalExpense,
-                            color: AppColors.error,
-                            icon: Icons.arrow_upward_rounded,
+                            'Total Expense',
+                            controller.totalExpense,
+                            AppColors.error,
+                            Icons.arrow_upward_rounded,
                           ),
                         ),
                       ],
@@ -103,12 +91,7 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
     );
   }
 
-  Widget buildSummaryCard({
-    required String label,
-    required double amount,
-    required Color color,
-    required IconData icon,
-  }) {
+  Widget buildSummaryCard(String label, double amount, Color color, IconData icon) {
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
     return Container(
       padding: const EdgeInsets.all(16),
@@ -291,16 +274,37 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
   }
 
   Widget buildRecordList() {
-    return ListView.separated(
+    final grouped = controller.groupedRecords;
+    final keys = grouped.keys.toList();
+
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 120, left: 16, right: 16),
-      itemCount: controller.filteredRecords.length,
-      itemBuilder: (ctx, index) {
-        final record = controller.filteredRecords[index];
-        return buildRecordTile(record);
+      itemCount: keys.length,
+      itemBuilder: (context, index) {
+        final month = keys[index];
+        final monthRecords = grouped[month]!;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 4, left: 8),
+              child: Text(
+                month.toUpperCase(),
+                style: boldText(13, color: AppColors.grey).copyWith(letterSpacing: 1),
+              ),
+            ),
+            ...monthRecords.map(
+              (record) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: buildRecordTile(record),
+              ),
+            ),
+          ],
+        );
       },
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
     );
   }
 
@@ -380,7 +384,6 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
             ),
             const SizedBox(width: 8),
 
-            // ── 2. Details & Date ──────────────────────────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,7 +412,6 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
             ),
             const SizedBox(width: 12),
 
-            // ── 3. Stacked Amount ──────────────────────────────────
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -418,9 +420,6 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
                   '${record.isIncome ? '+' : ''}${fmt.format(record.amount)}',
                   style: boldText(16, color: color).copyWith(letterSpacing: -0.5),
                 ),
-                // const SizedBox(height: 4),
-
-                // Tiny IN/OUT tag
                 Text(
                   record.isIncome ? "IN" : "OUT",
                   style: boldText(
@@ -434,6 +433,161 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget buildShimmerLoader() {
+    return Shimmer.fromColors(
+      baseColor: AppColors.surface,
+      highlightColor: AppColors.surfaceLight,
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 90,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            Container(
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  height: 24,
+                  width: 100,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                Container(
+                  height: 16,
+                  width: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+            ...List.generate(
+              5,
+              (_) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: buildRecordShimmerTile(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildRecordShimmerTile() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.white),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  height: 18,
+                  width: 120,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  height: 14,
+                  width: 80,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Container(
+                height: 20,
+                width: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 12,
+                width: 30,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

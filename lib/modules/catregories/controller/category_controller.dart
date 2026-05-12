@@ -37,8 +37,8 @@ class CategoryController extends GetxController {
 
   // MARK: Public Actions
 
-  Future<void> loadCategories() async {
-    _isLoading.value = true;
+  Future<void> loadCategories({bool isRefresh = true}) async {
+    if (isRefresh) _isLoading.value = true;
     final result = await FirebaseHelper.getCategories();
     final categoriesList = result;
     _categories.assignAll(result);
@@ -58,7 +58,7 @@ class CategoryController extends GetxController {
     _categoryTotals.assignAll(totalsMap);
     _categoryTransactionCounts.assignAll(countsMap);
 
-    _isLoading.value = false;
+    if (isRefresh) _isLoading.value = false;
   }
 
   Future<void> addCategory(BuildContext context) async {
@@ -127,13 +127,11 @@ class CategoryController extends GetxController {
     );
   }
 
-  Future<void> editCategory(BuildContext context, Category category) async {
+  Future<void> editCategory(Category category) async {
     final nameController = TextEditingController(text: category.name);
     final emojiController = TextEditingController(text: category.emoji);
-
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
+    Get.dialog(
+      AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text('Edit Category', style: regularText(14, color: Colors.white)),
@@ -170,9 +168,9 @@ class CategoryController extends GetxController {
                     emoji: emojiController.text.trim(),
                     userId: category.userId,
                   );
+                  Get.back();
                   await FirebaseHelper.updateCategory(updatedCategory);
-                  await loadCategories();
-                  if (dialogContext.mounted) Get.back();
+                  await loadCategories(isRefresh: false);
                 } catch (e) {
                   // Error handling
                 }

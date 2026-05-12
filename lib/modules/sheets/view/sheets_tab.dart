@@ -11,7 +11,7 @@ class SheetsTab extends GetView<SheetsController> {
       appBar: AppBar(title: Text('Sheets', style: boldText(24))),
       body: Obx(() {
         if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return buildShimmerLoader();
         }
 
         if (controller.sheets.isEmpty) {
@@ -129,13 +129,6 @@ class SheetsTab extends GetView<SheetsController> {
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: AppColors.borderColor),
           gradient: AppColors.mainCardGradient,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.black.withValues(alpha: 0.5),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,7 +148,7 @@ class SheetsTab extends GetView<SheetsController> {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
 
                 // Sheet Name
                 Expanded(
@@ -179,13 +172,10 @@ class SheetsTab extends GetView<SheetsController> {
               ],
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             Text(
               "TOTAL BALANCE",
-              style: mediumText(
-                11,
-                color: AppColors.grey.withValues(alpha: 0.6),
-              ).copyWith(letterSpacing: 1.2),
+              style: mediumText(11, color: AppColors.grey).copyWith(letterSpacing: 1.2),
             ),
             const SizedBox(height: 4),
             Obx(() {
@@ -195,10 +185,7 @@ class SheetsTab extends GetView<SheetsController> {
               if (balance == null) {
                 return Text(
                   formatter.format(0),
-                  style: boldText(
-                    32,
-                    color: AppColors.grey.withValues(alpha: 0.2),
-                  ).copyWith(letterSpacing: -1),
+                  style: boldText(32, color: AppColors.grey).copyWith(letterSpacing: -1),
                 );
               }
 
@@ -208,6 +195,84 @@ class SheetsTab extends GetView<SheetsController> {
                 style: boldText(32, color: color).copyWith(letterSpacing: -1),
               );
             }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget buildShimmerLoader() {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 4,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, __) => buildShimmerCard(),
+    );
+  }
+
+  Widget buildShimmerCard() {
+    return Shimmer.fromColors(
+      baseColor: AppColors.surface,
+      highlightColor: AppColors.surfaceLight,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.borderColor),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: 50,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              height: 12,
+              width: 100,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              height: 32,
+              width: 150,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
           ],
         ),
       ),
