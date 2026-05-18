@@ -1,111 +1,138 @@
-# Budgetly – Personal Budget & Expense Tracker
+<div align="center">
 
-Budgetly is a modern **budget tracking mobile app** built using **Flutter** and **Firebase**.  
-It helps users track expenses, manage budgets, and visualize spending patterns with clean charts and insights.
+# Budgetly
+
+**A modern personal budget & expense tracker built with Flutter and Firebase.**
+
+Track expenses, manage budgets, and understand your spending — all in one clean app.
+
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
+[![Firebase](https://img.shields.io/badge/Firebase-Backend-FFCA28?logo=firebase)](https://firebase.google.com)
+[![GetX](https://img.shields.io/badge/GetX-State%20Management-8A2BE2)](https://pub.dev/packages/get)
+[![Version](https://img.shields.io/badge/Version-1.5-success)](#changelog)
+
+</div>
+
+---
+
+## Overview
+
+Budgetly is a Flutter-based mobile app that makes personal finance simple. Whether you're logging daily coffee runs or tracking a full year's financial flow, Budgetly gives you the tools to stay on top of your money.
 
 ---
 
 ## Features
 
-* **Secure Access**
+### Security
+- **Biometric authentication** — unlock with fingerprint or Face ID
 
-  * Unlock the app using biometric authentication (fingerprint/face)
+### Expense Tracking
+- Add, edit, and delete daily expenses
+- Restrict future date selection to keep records accurate
+- View current month's expenses directly from the home screen
 
-* **Track Expenses**
+### Categories
+- Create custom categories with emoji icons
+- Dedicated category detail screen with spending breakdown
+- Transaction count and total amounts per category
 
-  * Add, edit, and delete daily expenses
-  * Organize expenses with categories
+### Monthly View
+- Full monthly expense breakdown
+- Sort and filter transactions with ease
 
-* **Categories**
+### Sheets *(new in 1.5)*
+- Manage and track yearly financial flow
+- View your total sheet balance right from the home tab
 
-  * Create custom categories with emojis
-  * View detailed spending for each category
+### Budget
+- Set monthly budgets per category
+- Track spending against your limits in real time
 
-* **Monthly Tracking**
+### Insights
+- Pie and line charts for visual spending analysis
+- Dashboard updated with improved data visualization
 
-  * View monthly expense breakdown
-  * Sort and filter transactions easily
+### Profile
+- Edit your profile details
+- Delete your account at any time
 
-* **Insights**
-
-  * Visual charts to understand your spending better
-
-* **Budget**
-
-  * Set budgets and track your spending against them
-
-* **Profile**
-
-  * Manage your profile
-  * Delete your account anytime
-
-* **Reminders**
-
-  * Get daily reminders to log your expenses
-
-* **Experience**
-
-  * Clean, modern UI with smooth performance
+### Reminders
+- Daily push notifications to log your expenses on time
 
 ---
 
 ## Tech Stack
 
-- **Frontend:** Flutter (Dart)
-- **State Management:** GetX
-- **Backend:** Firebase
+| Layer | Technology |
+|---|---|
+| Frontend | Flutter (Dart) |
+| State Management | GetX |
+| Backend & Auth | Firebase (Firestore, Auth) |
 
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Flutter SDK `>=3.0.0`
+- Dart SDK `>=3.0.0`
+- A Firebase project with Firestore and Authentication enabled
 
 ---
 
 ## Changelog
 
-### 1.5
-* Introduced a new **Sheets** feature to help manage and track yearly financial flow efficiently
-* Added Total balance card and transaction filter in` sheets
-* Refined tab card UI for a cleaner and more modern look
+### v1.5 *(Latest)*
+- Introduced **Sheets** — manage and track yearly financial flow
+- Added total sheet balance card on the Home tab
+- Refined card UI for a more modern look
 
-### 1.4 (Latest Release)
-* Added biometric authentication for secure app access
-* Added sort and filter options in month details screen
-* Introduced Manage Profile screen
-* Added Delete Account functionality
-* Added Category Details screen for better insights
-* Updated dashboard charts for improved visualization
+### v1.4
+- Biometric authentication (fingerprint / Face ID)
+- Sort and filter options in the month detail screen
+- Manage Profile screen with delete account support
+- Category Details screen for deeper spending insights
+- Improved dashboard chart visualization
 
-### 1.3.2
-- Restricted selecting future dates while adding or editing expenses
-- Fixed issue where user initials were not displaying in the settings tab
-- Fixed minor bugs and improved overall stability
+### v1.3.2
+- Restricted future date selection when adding or editing expenses
+- Fixed user initials not showing in the Settings tab
+- Minor bug fixes and stability improvements
 
-### 1.3.1
-- Fixed dashboard data not loading when user logins after installing app
+### v1.3.1
+- Fixed dashboard data not loading after a fresh install and login
 
-### 1.3 
-- Added daily notification reminders to log expenses on time
-- Removed traditional email-password authentication
-- Introduced initial loading screen for smoother app startup
+### v1.3
+- Daily notification reminders to log expenses
+- Removed email/password authentication in favour of Google Sign-In
+- Added initial loading screen for a smoother startup experience
 
-### 1.2.1
-- Fixed black screen issue while launching app
+### v1.2.1
+- Fixed black screen on app launch
 
-### 1.2
-- Google Sign-In authentication support
-- New Category tab for better transaction organization
-- Transaction count & Total transaction amount display in category tiles
+### v1.2
+- Google Sign-In support
+- New Categories tab for better transaction organisation
+- Transaction count and totals displayed on category tiles
 
-### 1.1
-- View **current month expenses** directly from the home screen
-- Open **current month expense screen** using a toggle on the home screen
-- Improved **bottom navigation bar** for better visibility
-- Added **shimmer loading effects** for a smoother user experience
-- Updated **icons** for a refreshed and modern look
+### v1.1
+- Current month expenses visible directly on the home screen
+- Toggle to open the current month detail screen from home
+- Improved bottom navigation bar visibility
+- Shimmer loading effects for a smoother feel
+- Refreshed icon set
 
-### 1.0
-- Expense tracking with add, edit, and delete functionality
-- Category-based expense management with emoji support
-- Year-wise and month-wise expense tracking
+### v1.0
+- Expense tracking with add, edit, and delete
+- Custom categories with emoji support
+- Year-wise and month-wise expense views
 - Budget setting and comparison
 - Analytics with pie and line charts
 - Dark-themed modern UI
 
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

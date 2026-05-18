@@ -54,24 +54,24 @@ class DashboardTab extends GetView<DashboardController> {
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white12),
+              border: Border.all(color: AppColors.borderColor),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Year: ", style: regularText(14, color: Colors.grey)),
+                Text("Year: ", style: regularText(14, color: AppColors.grey)),
                 DropdownButton<int>(
                   value: controller.selectedYear.value,
                   dropdownColor: AppColors.surface,
                   icon: HugeIcon(
                     icon: HugeIcons.strokeRoundedArrowDown01,
                     size: 24,
-                    color: Colors.white,
+                    color: AppColors.white,
                     strokeWidth: 2,
                   ),
                   underline: SizedBox(),
                   isDense: true,
-                  style: semiBoldText(16, color: Colors.white),
+                  style: semiBoldText(16, color: AppColors.white),
                   items: controller.availableYears
                       .map((y) => DropdownMenuItem(value: y, child: Text(y.toString())))
                       .toList(),
@@ -90,16 +90,25 @@ class DashboardTab extends GetView<DashboardController> {
   Widget _buildHeroCarousel() {
     return Column(
       children: [
-        SizedBox(
-          height: 170,
-          child: PageView(
-            controller: PageController(
-              viewportFraction: 1.0,
-              initialPage: controller.currentCarouselIndex.value,
+        Stack(
+          children: [
+            // Invisible template to define the dynamic intrinsic height based on the card's content
+            Visibility(
+              visible: false,
+              maintainSize: true,
+              maintainAnimation: true,
+              maintainState: true,
+              child: _buildTotalCard(),
             ),
-            onPageChanged: controller.onCarouselPageChanged,
-            children: [_buildTotalCard(), _buildTotalSheetsCard()],
-          ),
+            Positioned.fill(
+              child: PageView(
+                controller: PageController(initialPage: controller.currentCarouselIndex.value),
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: controller.onCarouselPageChanged,
+                children: [_buildTotalCard(), _buildTotalSheetsCard()],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         Obx(
@@ -115,7 +124,7 @@ class DashboardTab extends GetView<DashboardController> {
                 decoration: BoxDecoration(
                   color: controller.currentCarouselIndex.value == index
                       ? AppColors.brand
-                      : Colors.white24,
+                      : AppColors.grey.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -347,9 +356,14 @@ class DashboardTab extends GetView<DashboardController> {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: AppColors.borderColor),
+        gradient: LinearGradient(
+          colors: [AppColors.brandDark.withValues(alpha: 0.5), AppColors.black],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          stops: [0, 0.5],
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -416,11 +430,15 @@ class DashboardTab extends GetView<DashboardController> {
 
   Widget _buildMonthlyChart() {
     return Container(
-      // padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: AppColors.borderColor),
+        gradient: LinearGradient(
+          colors: [AppColors.brandDark.withValues(alpha: 0.5), AppColors.black],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          stops: [0, 0.5],
+        ),
       ),
       child: Column(
         children: [
