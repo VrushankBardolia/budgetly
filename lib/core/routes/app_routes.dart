@@ -12,4 +12,5 @@ class Routes {
   static const CATEGORY_DETAILS = '/category-details';
   static const SHEET_DETAIL = '/sheet-detail';
   static const SHEET_RECORD_FORM = '/sheet-record-form';
+  static const EXPORT_PDF = '/export-pdf';
 }

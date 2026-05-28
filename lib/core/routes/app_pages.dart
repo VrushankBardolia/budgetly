@@ -68,5 +68,12 @@ class AppPages {
         Get.put(SheetRecordFormController());
       }),
     ),
+    GetPage(
+      name: Routes.EXPORT_PDF,
+      page: () => const ExportPdfScreen(),
+      binding: BindingsBuilder(() {
+        Get.put(ExportPdfController());
+      }),
+    ),
   ];
 }

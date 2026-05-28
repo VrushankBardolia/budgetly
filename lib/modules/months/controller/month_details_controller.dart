@@ -1,4 +1,5 @@
 import 'package:budgetly/core/import_to_export.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 class MonthDetailController extends GetxController {
@@ -12,6 +13,9 @@ class MonthDetailController extends GetxController {
   final RxInt budget = 0.obs;
   final RxInt selectedCategoryTotal = 0.obs;
   final RxBool isLoading = true.obs;
+  final RxBool isExporting = false.obs;
+  final RxBool includeCategory = true.obs;
+  final RxBool includeTxList = true.obs;
 
   // ─── Sort ────────────────────────────────────────────────────────────
   final List sortOptions = [
@@ -414,6 +418,184 @@ class MonthDetailController extends GetxController {
     }
 
     expenses.assignAll(result);
+  }
+
+  void exportToPdf() {
+    HapticFeedback.lightImpact();
+
+    Get.bottomSheet(
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Export PDF', style: boldText(20)),
+                  IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    onPressed: Get.back,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Customize your monthly report PDF. You can choose which sections to include in the exported document.',
+                style: regularText(14, color: AppColors.grey),
+              ),
+              const SizedBox(height: 24),
+              Obx(
+                () => _buildToggleRow(
+                  title: 'Category Breakdown',
+                  subtitle: 'Summary and progress bar of category spending',
+                  icon: HugeIcons.strokeRoundedBarChartHorizontal,
+                  value: includeCategory.value,
+                  onChanged: (val) => includeCategory.value = val,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Obx(
+                () => _buildToggleRow(
+                  title: 'Transaction List',
+                  subtitle: 'Detailed list of all expenses with date and amount',
+                  icon: HugeIcons.strokeRoundedLeftToRightListDash,
+                  value: includeTxList.value,
+                  onChanged: (val) => includeTxList.value = val,
+                ),
+              ),
+              const SizedBox(height: 32),
+              Button(
+                onClick: () {
+                  if (!includeCategory.value && !includeTxList.value) {
+                    Get.snackbar(
+                      'Select Options',
+                      'Please select at least one option',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                      colorText: AppColors.error,
+                      icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AppColors.error),
+                    );
+                    return;
+                  }
+                  Get.back();
+                  _generatePdf();
+                },
+                child: Text('Generate Report', style: semiBoldText(16, color: Colors.white)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleRow({
+    required String title,
+    required String subtitle,
+    required dynamic icon,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.black,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderColor),
+      ),
+      child: Row(
+        children: [
+          HugeIcon(icon: icon, color: value ? AppColors.brand : AppColors.grey, size: 22),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: boldText(14)),
+                Text(subtitle, style: regularText(12, color: AppColors.grey)),
+              ],
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            activeThumbColor: AppColors.brand,
+            activeTrackColor: AppColors.surface,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generatePdf() async {
+    if (isExporting.value) return;
+    isExporting.value = true;
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(color: AppColors.brand),
+              const SizedBox(height: 20),
+              Text('Exporting PDF...', style: boldText(16), textAlign: TextAlign.center),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+
+    try {
+      final user = FirebaseHelper.currentUser;
+      final filePath = await PdfExportService.exportMonthlyReport(
+        expenses: expenses,
+        month: month,
+        year: year,
+        userName: user?.displayName ?? user?.email ?? 'User',
+        budget: budget.value.toDouble(),
+        categoryNames: {for (final cat in categories) cat.id: cat.name},
+        includeCategoryBreakdown: includeCategory.value,
+        includeTransactions: includeTxList.value,
+      );
+
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+
+      includeCategory.value = true;
+      includeTxList.value = true;
+
+      await OpenFilex.open(filePath);
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) {
+        Get.back();
+      }
+      Get.snackbar(
+        'Export Failed',
+        'Something went wrong. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.error.withValues(alpha: 0.1),
+        colorText: AppColors.error,
+        icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AppColors.error),
+        margin: const EdgeInsets.all(16),
+        borderRadius: 14,
+      );
+    } finally {
+      isExporting.value = false;
+    }
   }
 
   // ─── Derived Getters ──────────────────────────────────────────────────────

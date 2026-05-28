@@ -22,6 +22,10 @@ export 'package:permission_handler/permission_handler.dart';
 export 'package:local_auth/local_auth.dart';
 export 'package:flutter_svg/svg.dart';
 export 'package:package_info_plus/package_info_plus.dart';
+export 'package:path_provider/path_provider.dart';
+export 'package:pdf/pdf.dart';
+export 'package:printing/printing.dart';
+export 'package:open_filex/open_filex.dart';
 
 // ─── Core & Theme ──────────────────────────────────────────────────────────
 export 'package:budgetly/core/theme/app_colors.dart';
@@ -44,6 +48,7 @@ export 'package:budgetly/core/helper/firebase_logger.dart';
 export 'package:budgetly/core/helper/firebase_options.dart';
 export 'package:budgetly/core/helper/notification_service.dart';
 export 'package:budgetly/core/helper/preference_helper.dart';
+export 'package:budgetly/core/helper/export_pdf_helper.dart';
 
 // ─── Models ────────────────────────────────────────────────────────────────
 export 'package:budgetly/core/model/category.dart';
@@ -94,9 +99,11 @@ export 'package:budgetly/modules/sheets/controller/sheet_details_controller.dart
 export 'package:budgetly/modules/sheets/controller/sheet_record_form_controller.dart';
 
 // ─── Modules (Settings) ────────────────────────────────────────────────────
+export 'package:budgetly/modules/settings/controller/export_pdf_controller.dart';
 export 'package:budgetly/modules/settings/controller/notification_controller.dart';
 export 'package:budgetly/modules/settings/controller/setting_controller.dart';
 export 'package:budgetly/modules/settings/controller/profile_controller.dart';
+export 'package:budgetly/modules/settings/view/export_pdf_screen.dart';
 export 'package:budgetly/modules/settings/view/notification_screen.dart';
 export 'package:budgetly/modules/settings/view/settings_shimmer_loader.dart';
 export 'package:budgetly/modules/settings/view/profile_screen.dart';

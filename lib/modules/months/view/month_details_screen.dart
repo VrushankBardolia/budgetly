@@ -13,7 +13,13 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
         title: Text(controller.formattedMonth, style: boldText(20)),
         actions: [
           IconButton(
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04, size: 20, color: Colors.white),
+            tooltip: "Export to PDF",
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedPdf02),
+            onPressed: controller.exportToPdf,
+          ),
+          IconButton(
+            tooltip: "Change Budget",
+            icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04),
             onPressed: controller.showBudgetDialog,
           ),
         ],

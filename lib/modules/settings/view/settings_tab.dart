@@ -8,12 +8,7 @@ class SettingsTab extends GetView<SettingController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.black,
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        elevation: 0,
-        title: Text('Settings', style: boldText(24)),
-      ),
+      appBar: AppBar(elevation: 0, title: Text('Settings', style: boldText(24))),
       body: Obx(() {
         return AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -49,6 +44,12 @@ class SettingsTab extends GetView<SettingController> {
                 activeTrackColor: AppColors.brand,
               ),
             ),
+          ),
+
+          buildSettingsTile(
+            icon: HugeIcons.strokeRoundedPdf02,
+            title: "Export PDF",
+            onTap: () => Get.toNamed(Routes.EXPORT_PDF),
           ),
 
           buildSettingsTile(
@@ -143,12 +144,8 @@ class SettingsTab extends GetView<SettingController> {
         onTap: onTap,
         splashColor: Colors.transparent,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isDestructive ? AppColors.error.withValues(alpha: 0.1) : AppColors.black,
-            borderRadius: BorderRadius.circular(10),
-          ),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8),
           child: HugeIcon(icon: icon, color: iconColor, size: 22),
         ),
         title: Text(title, style: semiBoldText(16, color: textColor)),
