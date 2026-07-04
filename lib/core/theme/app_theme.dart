@@ -83,10 +83,7 @@ ThemeData themeData = ThemeData(
     elevation: 2,
   ),
 
-  dividerTheme: const DividerThemeData(
-    color: AppColors.surfaceLight,
-    thickness: 1,
-  ),
+  dividerTheme: const DividerThemeData(color: AppColors.surfaceLight, thickness: 1),
 
   bottomSheetTheme: const BottomSheetThemeData(
     backgroundColor: AppColors.surface,

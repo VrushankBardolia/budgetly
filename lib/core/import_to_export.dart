@@ -49,6 +49,7 @@ export 'package:budgetly/core/helper/firebase_options.dart';
 export 'package:budgetly/core/helper/notification_service.dart';
 export 'package:budgetly/core/helper/preference_helper.dart';
 export 'package:budgetly/core/helper/export_pdf_helper.dart';
+export 'package:budgetly/core/helper/widget_helper.dart';
 
 // ─── Models ────────────────────────────────────────────────────────────────
 export 'package:budgetly/core/model/category.dart';

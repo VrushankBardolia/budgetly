@@ -69,6 +69,7 @@ class MonthController extends GetxController {
     isLoading.value = true;
     await Future.wait([_loadExpenses(selectedYear.value), _loadBudgets(selectedYear.value)]);
     isLoading.value = false;
+    WidgetHelper.updateRemainingBudgetWidget();
   }
 
   Future<void> changeYear(int year) async {
@@ -90,6 +91,7 @@ class MonthController extends GetxController {
     isLoading.value = true;
     await Future.wait([_loadExpenses(year), _loadBudgets(year)]);
     isLoading.value = false;
+    WidgetHelper.updateRemainingBudgetWidget();
   }
 
   Future<void> _loadExpenses(int year) async {

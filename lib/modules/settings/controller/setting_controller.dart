@@ -125,6 +125,7 @@ class SettingController extends GetxController {
     await NotificationService.disable();
     PreferenceHelper.clearAll();
     await FirebaseHelper.signOut();
+    WidgetHelper.updateRemainingBudgetWidget();
     Get.find<HomeController>().currentIndex.value = 0;
     Get.offAllNamed(Routes.ONBOARDING);
   }

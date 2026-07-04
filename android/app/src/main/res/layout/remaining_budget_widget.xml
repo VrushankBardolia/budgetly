@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@drawable/widget_background">
+
+    <!-- Month Name Header -->
+    <TextView
+        android:id="@+id/widget_month_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#9E9E9E"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/plus_jakarta_sans_bold"
+        android:layout_marginBottom="12dp" />
+
+    <!-- Remaining Budget value -->
+    <TextView
+        android:id="@+id/widget_remaining_budget"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="₹0"
+        android:textColor="#66BB6A"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/plus_jakarta_sans_bold"
+        android:ellipsize="end"
+        android:maxLines="1" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="REMAINING"
+        android:textColor="#757575"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/plus_jakarta_sans_bold"
+        android:layout_marginBottom="14dp"
+        android:letterSpacing="0.1" />
+
+    <!-- Progress indicator -->
+    <ProgressBar
+        android:id="@+id/widget_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_marginBottom="14dp"
+        android:progress="0"
+        android:max="100"
+        android:progressBackgroundTint="#333333"
+        android:progressTint="#42A5F5" />
+
+    <!-- Bottom info row (Spent & Budget) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal">
+
+        <!-- Spent column -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SPENT"
+                android:textColor="#757575"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/plus_jakarta_sans_bold" />
+
+            <TextView
+                android:id="@+id/widget_spent_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₹0"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/plus_jakarta_sans_medium" />
+        </LinearLayout>
+
+        <!-- Budget column -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="end">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BUDGET"
+                android:textColor="#757575"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/plus_jakarta_sans_bold" />
+
+            <TextView
+                android:id="@+id/widget_budget_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="₹0"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/plus_jakarta_sans_medium" />
+        </LinearLayout>
+    </LinearLayout>
+
+</LinearLayout>

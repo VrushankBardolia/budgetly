@@ -38,6 +38,9 @@ class CategoryController extends GetxController {
   // MARK: Public Actions
 
   Future<void> loadCategories({bool isRefresh = true}) async {
+    final user = FirebaseHelper.currentUser;
+    if (user == null) return;
+
     if (isRefresh) _isLoading.value = true;
     final result = await FirebaseHelper.getCategories();
     final categoriesList = result;

@@ -17,6 +17,9 @@ class SheetsController extends GetxController {
   // ─── Data ─────────────────────────────────────────────────────────────────
 
   Future<void> loadSheets({bool isRefresh = false}) async {
+    final user = FirebaseHelper.currentUser;
+    if (user == null) return;
+
     isRefresh ? null : isLoading.value = true;
     try {
       final result = await FirebaseHelper.getSheets();

@@ -6,7 +6,7 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await NotificationService.init();
 
-  initControllers();
+  await GoogleFonts.pendingFonts([GoogleFonts.plusJakartaSans(), GoogleFonts.staatliches()]);
 
   runApp(const MyApp());
 }
@@ -23,6 +23,13 @@ class MyApp extends StatelessWidget {
       theme: themeData,
       initialRoute: Routes.INITIAL,
       getPages: AppPages.routes,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
+          child: child!,
+        );
+      },
+      initialBinding: BindingsBuilder(initControllers),
     );
   }
 }
@@ -35,20 +42,16 @@ class InitialScreen extends StatelessWidget {
     return Obx(() {
       final onboardingCtrl = Get.find<OnboardingController>();
 
-      // If we are still checking the initial auth state, show the loader
       if (onboardingCtrl.isCheckingAuth.value) {
         return const InitialLoaderScreen();
       }
 
-      // If securely authenticated, proceed to Home/AppLock
       if (FirebaseHelper.currentUser != null) {
         if (PreferenceHelper.isEnabledBiometric) {
           return const AppLockScreen();
         }
         return const HomeScreen();
       }
-
-      // Otherwise, show onboarding screen
       return const OnboardingScreen();
     });
   }

@@ -19,11 +19,19 @@ class OnboardingController extends GetxController {
     FirebaseHelper.authStateChanges.listen((user) async {
       if (user != null) {
         await _fetchAndStoreUserData();
+        _loadDataForControllers();
       } else {
         currentUser.value = null; // Clear data if user logs out
       }
       isCheckingAuth.value = false;
     });
+  }
+
+  void _loadDataForControllers() {
+    Get.find<DashboardController>().loadData();
+    Get.find<CategoryController>().loadCategories();
+    Get.find<SheetsController>().loadSheets();
+    Get.find<SettingController>().loadUserData();
   }
 
   Future<void> _fetchAndStoreUserData() async {
@@ -86,9 +94,7 @@ class OnboardingController extends GetxController {
 
       // Navigate to Home only if we successfully have user data
       if (currentUser.value != null) {
-        // The dashboard controller was instantiated before the user logged in,
-        // so we must manually tell it to load data now that we have a valid userId.
-        Get.find<DashboardController>().loadData();
+        _loadDataForControllers();
         Get.offAllNamed(Routes.HOME);
       }
     } catch (e) {

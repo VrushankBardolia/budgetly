@@ -49,6 +49,7 @@ class DashboardController extends GetxController {
     await loadSheetsBalance();
 
     isLoading.value = false;
+    WidgetHelper.updateRemainingBudgetWidget();
   }
 
   // ─── Data Loading ─────────────────────────────────────────────────────────
