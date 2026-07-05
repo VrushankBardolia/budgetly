@@ -1,79 +1,89 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
 
-class ExpenseFormController extends GetxController {
-  // ─── Arguments via GetX ───────────────────────────────────────────────────
-  final int year = Get.arguments['year'] ?? DateTime.now().year;
-  final int month = Get.arguments['month'] ?? DateTime.now().month;
-  final Expense? editingExpense = Get.arguments['expense'];
+class ExpenseFormProvider extends ChangeNotifier {
+  final Ref ref;
+
+  // ─── Arguments via constructor ───────────────────────────────────────────────────
+  final int year;
+  final int month;
+  final Expense? editingExpense;
 
   // ─── Text Controllers ─────────────────────────────────────────────────────
   final priceController = TextEditingController();
   final detailController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
-  // ─── Reactive State ───────────────────────────────────────────────────────
-  final Rx<DateTime?> selectedDate = Rx<DateTime?>(null);
-  final RxString selectedCategoryId = ''.obs;
-  final RxList<Category> categories = <Category>[].obs;
-  final RxBool isLoading = true.obs;
-  final RxBool isSubmitting = false.obs;
+  // ─── State ───────────────────────────────────────────────────────
+  DateTime? selectedDate;
+  String selectedCategoryId = '';
+  List<Category> categories = [];
+  bool isLoading = true;
+  bool isSubmitting = false;
 
   bool get isEditing => editingExpense != null;
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  @override
-  void onInit() {
-    super.onInit();
+  ExpenseFormProvider(this.ref, Map args)
+    : year = args['year'] ?? DateTime.now().year,
+      month = args['month'] ?? DateTime.now().month,
+      editingExpense = args['expense'] {
     _initState();
   }
 
   @override
-  void onClose() {
+  void dispose() {
     priceController.dispose();
     detailController.dispose();
-    super.onClose();
+    super.dispose();
   }
 
   // ─── Init ─────────────────────────────────────────────────────────────────
 
   Future<void> _initState() async {
-    isLoading.value = true;
+    isLoading = true;
+    notifyListeners();
     await _loadCategories();
 
     if (isEditing) {
       priceController.text = editingExpense!.price.toInt().toString();
       detailController.text = editingExpense!.detail;
-      selectedDate.value = editingExpense!.date;
-      selectedCategoryId.value = editingExpense!.categoryId;
+      selectedDate = editingExpense!.date;
+      selectedCategoryId = editingExpense!.categoryId;
     } else {
       final today = DateTime.now().day;
       final daysInMonth = DateTime(year, month + 1, 0).day;
-      selectedDate.value = DateTime(year, month, today.clamp(1, daysInMonth));
+      selectedDate = DateTime(year, month, today.clamp(1, daysInMonth));
     }
 
-    isLoading.value = false;
+    isLoading = false;
+    notifyListeners();
   }
 
   Future<void> _loadCategories() async {
     final result = await FirebaseHelper.getCategories();
-    categories.assignAll(result);
+    categories = result;
+    notifyListeners();
   }
 
   // ─── Field Actions ────────────────────────────────────────────────────────
 
   Future<void> pickDate() async {
     final picked = await showDatePicker(
-      context: Get.context!,
-      initialDate: selectedDate.value ?? DateTime(year, month),
+      context: appContext!,
+      initialDate: selectedDate ?? DateTime(year, month),
       firstDate: DateTime(year, month, 1),
       lastDate: DateTime.now(),
     );
-    if (picked != null) selectedDate.value = picked;
+    if (picked != null) {
+      selectedDate = picked;
+      notifyListeners();
+    }
   }
 
-  void setCategory(String id) => selectedCategoryId.value = id;
+  void setCategory(String id) {
+    selectedCategoryId = id;
+    notifyListeners();
+  }
 
   // ─── Validation ───────────────────────────────────────────────────────────
 
@@ -93,13 +103,14 @@ class ExpenseFormController extends GetxController {
   Future<void> submit() async {
     if (!formKey.currentState!.validate()) return;
 
-    isSubmitting.value = true;
+    isSubmitting = true;
+    notifyListeners();
     try {
       final expense = Expense(
         id: editingExpense?.id ?? '',
-        date: selectedDate.value!,
+        date: selectedDate!,
         price: double.parse(priceController.text),
-        categoryId: selectedCategoryId.value,
+        categoryId: selectedCategoryId,
         detail: detailController.text.trim(),
         userId: PreferenceHelper.userId,
       );
@@ -109,18 +120,18 @@ class ExpenseFormController extends GetxController {
       } else {
         await FirebaseHelper.addExpense(expense);
       }
-      Get.find<DashboardController>().loadData();
-      Get.back(result: true);
+      ref.read(dashboardProvider).loadData();
+      appRouter.pop(true);
     } finally {
-      isSubmitting.value = false;
+      isSubmitting = false;
+      notifyListeners();
     }
   }
 
   // ─── Derived Getters ─────────────────────────────────────────────────────
 
-  String get formattedSelectedDate => selectedDate.value != null
-      ? DateFormat('MMM dd, yyyy').format(selectedDate.value!)
-      : 'Select date';
+  String get formattedSelectedDate =>
+      selectedDate != null ? DateFormat('MMM dd, yyyy').format(selectedDate!) : 'Select date';
 
   String get title => isEditing ? 'Edit Expense' : 'Add Expense';
   String get submitLabel => isEditing ? 'Update Expense' : 'Add Expense';

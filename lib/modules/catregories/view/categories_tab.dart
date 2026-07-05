@@ -2,52 +2,49 @@ import 'package:budgetly/core/import_to_export.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
-class CategoriesTab extends GetView<CategoryController> {
+class CategoriesTab extends ConsumerWidget {
   const CategoriesTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      return Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          title: Text('Categories', style: boldText(24, color: Colors.white)),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-          actions: [
-            Tooltip(
-              triggerMode: TooltipTriggerMode.tap,
-              showDuration: Duration(seconds: 3),
-              message: "You can make only 10 categories",
-              child: Text(
-                "${controller.categoryCount.toString()}/10",
-                style: semiBoldText(14, color: Colors.white),
-              ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prov = ref.watch(categoryProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        title: Text('Categories', style: boldText(24, color: Colors.white)),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        actions: [
+          Tooltip(
+            triggerMode: TooltipTriggerMode.tap,
+            showDuration: const Duration(seconds: 3),
+            message: "You can make only 10 categories",
+            child: Text("${prov.categoryCount}/10", style: semiBoldText(14, color: Colors.white)),
+          ),
+        ],
+      ),
+      body: _buildBody(context, prov),
+      floatingActionButton: prov.categoryCount >= 10
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => prov.addCategory(context),
+              label: const Text("Add Category"),
+              icon: const Icon(Icons.add),
             ),
-          ],
-        ),
-        body: _buildBody(),
-        floatingActionButton: controller.categoryCount >= 10
-            ? null
-            : FloatingActionButton.extended(
-                onPressed: () => controller.addCategory(context),
-                label: const Text("Add Category"),
-                icon: const Icon(Icons.add),
-              ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      );
-    });
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
   }
 
-  Widget _buildBody() {
-    if (controller.categories.isEmpty) return _buildEmptyState();
-    if (controller.isLoading) return _buildShimmer();
-    final belowPadding = controller.categoryCount == 10 ? 16.0 : 100.0;
+  Widget _buildBody(BuildContext context, CategoryProvider prov) {
+    if (prov.categories.isEmpty) return _buildEmptyState();
+    if (prov.isLoading) return _buildShimmer();
+    final belowPadding = prov.categoryCount == 10 ? 16.0 : 100.0;
     return ListView.builder(
       padding: EdgeInsets.fromLTRB(16, 16, 16, belowPadding),
       physics: const BouncingScrollPhysics(),
-      itemCount: controller.sortedCategories.length,
+      itemCount: prov.sortedCategories.length,
       itemBuilder: (context, index) {
-        final category = controller.sortedCategories[index];
+        final category = prov.sortedCategories[index];
         final formatter = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
 
         return GestureDetector(
@@ -55,19 +52,19 @@ class CategoriesTab extends GetView<CategoryController> {
             HapticFeedback.heavyImpact();
             showPullDownMenu(
               context: context,
-              routeTheme: PullDownMenuRouteTheme(
+              routeTheme: const PullDownMenuRouteTheme(
                 backgroundColor: AppColors.surfaceLight,
                 width: 201,
               ),
               items: [
                 PullDownMenuItem(
-                  onTap: () => controller.editCategory(category),
+                  onTap: () => prov.editCategory(category),
                   title: "Edit",
                   icon: CupertinoIcons.pen,
                   itemTheme: PullDownMenuItemTheme(textStyle: regularText(14, color: Colors.white)),
                 ),
                 PullDownMenuItem(
-                  onTap: () => controller.deleteCategory(context, category.id, category.name),
+                  onTap: () => prov.deleteCategory(context, category.id, category.name),
                   title: "Delete",
                   icon: CupertinoIcons.delete,
                   isDestructive: true,
@@ -86,9 +83,10 @@ class CategoriesTab extends GetView<CategoryController> {
             emoji: category.emoji,
             name: category.name,
             showProgress: false,
-            formattedAmount: formatter.format(controller.getCategoryTotal(category.id)),
-            transactionCount: controller.getTransactionCount(category.id),
-            onTap: () => Get.toNamed(Routes.CATEGORY_DETAILS, arguments: {'category': category}),
+            formattedAmount: formatter.format(prov.getCategoryTotal(category.id)),
+            transactionCount: prov.getTransactionCount(category.id),
+            onTap: () =>
+                appRouter.pushNamed(Routes.CATEGORY_DETAILS, extra: {'category': category}),
           ),
         );
       },
@@ -102,7 +100,7 @@ class CategoriesTab extends GetView<CategoryController> {
         children: [
           Container(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
             child: Icon(Icons.category_outlined, size: 60, color: Colors.grey[700]),
           ),
           const SizedBox(height: 24),
@@ -154,7 +152,7 @@ class CategoriesTab extends GetView<CategoryController> {
                   ),
                 ],
               ),
-              Spacer(),
+              const Spacer(),
               Container(
                 width: 50,
                 height: 10,

@@ -1,10 +1,12 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class MonthsTab extends GetView<MonthController> {
+class MonthsTab extends ConsumerWidget {
   const MonthsTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prov = ref.watch(monthProvider);
+
     return Scaffold(
       backgroundColor: AppColors.black,
       appBar: AppBar(
@@ -12,27 +14,23 @@ class MonthsTab extends GetView<MonthController> {
         elevation: 0,
         title: Text('Monthly Overview', style: boldText(24)),
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return _buildShimmerLoader();
-        }
-
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          physics: const BouncingScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.3,
-          ),
-          itemCount: controller.monthSummaries.length,
-          itemBuilder: (ctx, index) => MonthCard(
-            summary: controller.monthSummaries[index],
-            onTap: () => controller.navigateToMonth(controller.monthSummaries[index].month),
-          ),
-        );
-      }),
+      body: prov.isLoading
+          ? _buildShimmerLoader()
+          : GridView.builder(
+              padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.3,
+              ),
+              itemCount: prov.monthSummaries.length,
+              itemBuilder: (ctx, index) => MonthCard(
+                summary: prov.monthSummaries[index],
+                onTap: () => prov.navigateToMonth(prov.monthSummaries[index].month),
+              ),
+            ),
     );
   }
 
@@ -117,7 +115,6 @@ class MonthCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          // color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
           border: summary.isCurrent
               ? Border.all(color: AppColors.brand, width: 2)

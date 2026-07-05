@@ -1,60 +1,62 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
 
-class SheetRecordFormController extends GetxController {
+class SheetRecordFormProvider extends ChangeNotifier {
+  final Ref ref;
+
   // ─── Arguments ────────────────────────────────────────────────────────────
-  late final String sheetId;
-  late final SheetRecord? editingRecord;
+  final String sheetId;
+  final SheetRecord? editingRecord;
 
   // ─── Form ─────────────────────────────────────────────────────────────────
   final amountController = TextEditingController();
   final detailController = TextEditingController();
   final formKey = GlobalKey<FormState>();
 
-  // ─── Reactive State ───────────────────────────────────────────────────────
-  final Rx<DateTime> selectedDate = DateTime.now().obs;
-  final Rx<RecordType> selectedType = RecordType.expense.obs;
-  final RxBool isSubmitting = false.obs;
+  // ─── State ───────────────────────────────────────────────────────
+  DateTime selectedDate = DateTime.now();
+  RecordType selectedType = RecordType.expense;
+  bool isSubmitting = false;
 
   bool get isEditing => editingRecord != null;
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  @override
-  void onInit() {
-    super.onInit();
-    final args = Get.arguments as Map? ?? {};
-    sheetId = args['sheetId'] ?? '';
-    editingRecord = args['record'];
-
+  SheetRecordFormProvider(this.ref, Map args)
+    : sheetId = args['sheetId'] ?? '',
+      editingRecord = args['record'] {
     if (isEditing) {
       amountController.text = editingRecord!.amount.toInt().toString();
       detailController.text = editingRecord!.detail;
-      selectedDate.value = editingRecord!.date;
-      selectedType.value = editingRecord!.type;
+      selectedDate = editingRecord!.date;
+      selectedType = editingRecord!.type;
     }
   }
 
   @override
-  void onClose() {
+  void dispose() {
     amountController.dispose();
     detailController.dispose();
-    super.onClose();
+    super.dispose();
   }
 
   // ─── Actions ──────────────────────────────────────────────────────────────
 
   Future<void> pickDate() async {
     final picked = await showDatePicker(
-      context: Get.context!,
-      initialDate: selectedDate.value,
+      context: appContext!,
+      initialDate: selectedDate,
       firstDate: DateTime(DateTime.now().year),
       lastDate: DateTime.now(),
     );
-    if (picked != null) selectedDate.value = picked;
+    if (picked != null) {
+      selectedDate = picked;
+      notifyListeners();
+    }
   }
 
-  void setType(RecordType type) => selectedType.value = type;
+  void setType(RecordType type) {
+    selectedType = type;
+    notifyListeners();
+  }
 
   // ─── Validation ───────────────────────────────────────────────────────────
 
@@ -76,12 +78,13 @@ class SheetRecordFormController extends GetxController {
   Future<void> submit() async {
     if (!formKey.currentState!.validate()) return;
 
-    isSubmitting.value = true;
+    isSubmitting = true;
+    notifyListeners();
     try {
       final data = {
-        'date': Timestamp.fromDate(selectedDate.value),
+        'date': Timestamp.fromDate(selectedDate),
         'amount': double.parse(amountController.text),
-        'type': selectedType.value.name,
+        'type': selectedType.name,
         'detail': detailController.text.trim(),
         'createdAt': Timestamp.fromDate(editingRecord?.createdAt ?? DateTime.now()),
       };
@@ -91,17 +94,18 @@ class SheetRecordFormController extends GetxController {
       } else {
         await FirebaseHelper.addRecord(sheetId, data);
       }
-      Get.find<SheetsController>().loadSheets();
+      ref.read(sheetsProvider).loadSheets();
 
-      Get.back(result: true);
+      appRouter.pop(true);
     } finally {
-      isSubmitting.value = false;
+      isSubmitting = false;
+      notifyListeners();
     }
   }
 
   // ─── Derived Getters ──────────────────────────────────────────────────────
 
-  String get formattedDate => DateFormat('MMM dd, yyyy').format(selectedDate.value);
+  String get formattedDate => DateFormat('MMM dd, yyyy').format(selectedDate);
   String get title => isEditing ? 'Edit Record' : 'Add Record';
   String get submitLabel => isEditing ? 'Update' : 'Add';
 }

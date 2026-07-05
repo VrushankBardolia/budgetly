@@ -1,61 +1,58 @@
 import 'package:flutter/cupertino.dart';
-
 import '../../../core/import_to_export.dart';
 
-class SettingsTab extends GetView<SettingController> {
+class SettingsTab extends ConsumerWidget {
   const SettingsTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prov = ref.watch(settingProvider);
+
     return Scaffold(
       appBar: AppBar(elevation: 0, title: Text('Settings', style: boldText(24))),
-      body: Obx(() {
-        return AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          switchInCurve: Curves.easeIn,
-          switchOutCurve: Curves.easeIn,
-          child: controller.isLoading.value ? buildSettingShimmer() : _buildMainContent(),
-        );
-      }),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 300),
+        switchInCurve: Curves.easeIn,
+        switchOutCurve: Curves.easeIn,
+        child: prov.isLoading ? buildSettingShimmer() : _buildMainContent(context, prov),
+      ),
     );
   }
 
-  Widget _buildMainContent() {
+  Widget _buildMainContent(BuildContext context, SettingProvider prov) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          buildProfileHeader(),
+          buildProfileHeader(context, prov),
 
           buildSettingsTile(
             icon: HugeIcons.strokeRoundedNotification02,
             title: "Notifications",
-            onTap: () => Get.toNamed(Routes.NOTIFICATIONS),
+            onTap: () => appRouter.pushNamed(Routes.NOTIFICATIONS),
           ),
 
           buildSettingsTile(
             icon: HugeIcons.strokeRoundedFingerPrintScan,
             title: "Use biometric",
-            trailing: Obx(
-              () => CupertinoSwitch(
-                value: controller.isBiometricEnabled.value,
-                onChanged: (value) => controller.toggleBiometric(value),
-                activeTrackColor: AppColors.brand,
-              ),
+            trailing: CupertinoSwitch(
+              value: prov.isBiometricEnabled,
+              onChanged: (value) => prov.toggleBiometric(value),
+              activeTrackColor: AppColors.brand,
             ),
           ),
 
           buildSettingsTile(
             icon: HugeIcons.strokeRoundedPdf02,
             title: "Export PDF",
-            onTap: () => Get.toNamed(Routes.EXPORT_PDF),
+            onTap: () => appRouter.pushNamed(Routes.EXPORT_PDF),
           ),
 
           buildSettingsTile(
             icon: HugeIcons.strokeRoundedInformationCircle,
             title: "About Budgetly",
-            onTap: controller.showAboutAppDialog,
+            onTap: prov.showAboutAppDialog,
           ),
 
           buildSettingsTile(
@@ -63,7 +60,7 @@ class SettingsTab extends GetView<SettingController> {
             title: "Sign Out",
             color: AppColors.error,
             isDestructive: true,
-            onTap: controller.handleSignOut,
+            onTap: prov.handleSignOut,
           ),
           const SizedBox(height: 40),
         ],
@@ -71,7 +68,7 @@ class SettingsTab extends GetView<SettingController> {
     );
   }
 
-  Widget buildProfileHeader() {
+  Widget buildProfileHeader(BuildContext context, SettingProvider prov) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -85,40 +82,33 @@ class SettingsTab extends GetView<SettingController> {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundColor: Theme.of(Get.context!).colorScheme.secondary,
-                child: Obx(
-                  () => Text(
-                    controller.initials,
-                    style: customText(32, FontWeight.w900, color: AppColors.brand),
-                  ),
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                child: Text(
+                  prov.initials,
+                  style: customText(32, FontWeight.w900, color: AppColors.brand),
                 ),
               ),
               const SizedBox(width: 12),
-              Obx(
-                () => Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      controller.currentUser.value?.name ?? "",
-                      style: boldText(24),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      controller.usingSince.value,
-                      style: regularText(14, color: AppColors.grey),
-                    ),
-                  ],
-                ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    prov.currentUser?.name ?? "",
+                    style: boldText(24),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(prov.usingSince, style: regularText(14, color: AppColors.grey)),
+                ],
               ),
             ],
           ),
-          SizedBox(height: 12),
-          Divider(height: 1),
-          SizedBox(height: 8),
+          const SizedBox(height: 12),
+          const Divider(height: 1),
+          const SizedBox(height: 8),
           InkWell(
-            onTap: () => Get.toNamed(Routes.PROFILE),
+            onTap: () => appRouter.pushNamed(Routes.PROFILE),
             child: Text("Manage Profile", style: semiBoldText(16, color: AppColors.brand)),
           ),
         ],

@@ -225,13 +225,13 @@ class NotificationService {
   static void navigateToCurrentMonth() {
     final now = DateTime.now();
 
-    if (Get.context == null) {
+    if (appContext == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         navigateToCurrentMonth();
       });
       return;
     }
 
-    Get.toNamed(Routes.MONTH_DETAILS, arguments: {'year': now.year, 'month': now.month});
+    appRouter.pushNamed(Routes.MONTH_DETAILS, extra: {'year': now.year, 'month': now.month});
   }
 }

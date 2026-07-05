@@ -1,31 +1,27 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-enum NotificationPermissionState {
-  denied, // user denied
-  granted, // user allowed
-}
+enum NotificationPermissionState { denied, granted }
 
-class NotificationController extends GetxController {
-  // ─── Reactive State ───────────────────────────────────────────────────────
-  final Rx<NotificationPermissionState> permissionState =
-      NotificationPermissionState.denied.obs;
-  final RxBool notificationsEnabled = false.obs;
-  final RxBool dailyReminderEnabled = true.obs;
-  final RxBool isLoading = false.obs;
+class NotificationProvider extends ChangeNotifier {
+  final Ref ref;
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
+  // ─── State ───────────────────────────────────────────────────────
+  NotificationPermissionState permissionState = NotificationPermissionState.denied;
+  bool notificationsEnabled = false;
+  bool dailyReminderEnabled = true;
+  bool isLoading = false;
 
-  @override
-  void onInit() {
-    super.onInit();
+  NotificationProvider(this.ref) {
     _init();
   }
 
   Future<void> _init() async {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      isLoading.value = true;
+      isLoading = true;
+      notifyListeners();
       await _checkPermissionState();
-      isLoading.value = false;
+      isLoading = false;
+      notifyListeners();
     });
   }
 
@@ -35,38 +31,34 @@ class NotificationController extends GetxController {
     final status = await Permission.notification.status;
 
     if (status.isGranted) {
-      permissionState.value = NotificationPermissionState.granted;
-      // Restore saved preferences
-      notificationsEnabled.value = PreferenceHelper.isNotificationEnabled;
-      dailyReminderEnabled.value = PreferenceHelper.isDailyReminderEnabled;
-      // Re-schedule if daily reminder was on
-      if (notificationsEnabled.value && dailyReminderEnabled.value) {
+      permissionState = NotificationPermissionState.granted;
+      notificationsEnabled = PreferenceHelper.isNotificationEnabled;
+      dailyReminderEnabled = PreferenceHelper.isDailyReminderEnabled;
+      if (notificationsEnabled && dailyReminderEnabled) {
         await NotificationService.scheduleDailyReminder();
       }
     } else {
-      permissionState.value = NotificationPermissionState.denied;
+      permissionState = NotificationPermissionState.denied;
       requestPermission();
     }
+    notifyListeners();
   }
 
   // ─── Request Permission ───────────────────────────────────────────────────
 
   Future<void> requestPermission() async {
-    // isLoading.value = true;
-
     final granted = await NotificationService.enable();
 
     if (granted) {
-      permissionState.value = NotificationPermissionState.granted;
-      notificationsEnabled.value = true;
-      dailyReminderEnabled.value = true;
+      permissionState = NotificationPermissionState.granted;
+      notificationsEnabled = true;
+      dailyReminderEnabled = true;
       PreferenceHelper.isNotificationEnabled = true;
       PreferenceHelper.isDailyReminderEnabled = true;
     } else {
-      permissionState.value = NotificationPermissionState.denied;
+      permissionState = NotificationPermissionState.denied;
     }
-
-    // isLoading.value = false;
+    notifyListeners();
   }
 
   // ─── Main Notification Toggle ─────────────────────────────────────────────
@@ -75,28 +67,25 @@ class NotificationController extends GetxController {
     HapticFeedback.lightImpact();
 
     try {
-      if (notificationsEnabled.value) {
+      if (notificationsEnabled) {
         // Disabling notifications also cancels daily reminder
         await NotificationService.disable();
-        notificationsEnabled.value = false;
-        dailyReminderEnabled.value = false;
+        notificationsEnabled = false;
+        dailyReminderEnabled = false;
         PreferenceHelper.isNotificationEnabled = false;
         PreferenceHelper.isDailyReminderEnabled = false;
       } else {
-        notificationsEnabled.value = true;
+        notificationsEnabled = true;
         // Re-enable daily reminder by default when notifications are turned back on
-        dailyReminderEnabled.value = true;
+        dailyReminderEnabled = true;
         await NotificationService.scheduleDailyReminder();
         PreferenceHelper.isNotificationEnabled = true;
         PreferenceHelper.isDailyReminderEnabled = true;
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Could not update notification settings. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      errorSnackbar('Could not update notification settings. Please try again.');
     }
+    notifyListeners();
   }
 
   // ─── Daily Reminder Toggle ────────────────────────────────────────────────
@@ -105,21 +94,18 @@ class NotificationController extends GetxController {
     HapticFeedback.lightImpact();
 
     try {
-      if (dailyReminderEnabled.value) {
+      if (dailyReminderEnabled) {
         await NotificationService.cancelDailyReminder();
-        dailyReminderEnabled.value = false;
+        dailyReminderEnabled = false;
         PreferenceHelper.isDailyReminderEnabled = false;
       } else {
         await NotificationService.scheduleDailyReminder();
-        dailyReminderEnabled.value = true;
+        dailyReminderEnabled = true;
         PreferenceHelper.isDailyReminderEnabled = true;
       }
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Could not update reminder settings. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      errorSnackbar('Could not update reminder settings. Please try again.');
     }
+    notifyListeners();
   }
 }

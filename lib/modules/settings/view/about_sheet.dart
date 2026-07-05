@@ -2,7 +2,7 @@ import 'package:budgetly/core/import_to_export.dart';
 
 class AboutSheet {
   static void show(String version) {
-    Get.bottomSheet(
+    bottomSheet(
       AboutSheetContent(version: version),
       isScrollControlled: true,
       backgroundColor: AppColors.surface,

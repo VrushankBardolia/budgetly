@@ -1,11 +1,13 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
 
-class DashboardTab extends GetView<DashboardController> {
+class DashboardTab extends ConsumerWidget {
   const DashboardTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prov = ref.watch(dashboardProvider);
+
     return Scaffold(
       backgroundColor: AppColors.black,
       appBar: AppBar(
@@ -13,120 +15,128 @@ class DashboardTab extends GetView<DashboardController> {
         elevation: 0,
         title: Text('Budgetly', style: boldText(24)),
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) return _buildShimmerLoader();
-        if (controller.availableYears.isEmpty) return _buildEmptyState();
-
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          // padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildYearSelector().marginSymmetric(horizontal: 16),
-              const SizedBox(height: 20),
-              _buildHeroCarousel(),
-              const SizedBox(height: 24),
-              _buildSectionTitle('Top Categories').marginSymmetric(horizontal: 16),
-              const SizedBox(height: 8),
-              _buildCategoryList().marginSymmetric(horizontal: 16),
-              const SizedBox(height: 24),
-              _buildSectionTitle('Analytics').marginSymmetric(horizontal: 16),
-              const SizedBox(height: 16),
-              _buildCharts().marginSymmetric(horizontal: 16),
-              const SizedBox(height: 24),
-            ],
-          ),
-        );
-      }),
+      body: prov.isLoading
+          ? _buildShimmerLoader()
+          : prov.availableYears.isEmpty
+          ? _buildEmptyState()
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildYearSelector(prov),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildHeroCarousel(prov),
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildSectionTitle('Top Categories'),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildCategoryList(prov),
+                  ),
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildSectionTitle('Analytics'),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildCharts(prov),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
     );
   }
 
   // ─── Year Selector ────────────────────────────────────────────────────────
 
-  Widget _buildYearSelector() {
-    return Obx(
-      () => Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: AppColors.borderColor),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Year: ", style: regularText(14, color: AppColors.grey)),
-                DropdownButton<int>(
-                  value: controller.selectedYear.value,
-                  dropdownColor: AppColors.surface,
-                  icon: HugeIcon(
-                    icon: HugeIcons.strokeRoundedArrowDown01,
-                    size: 24,
-                    color: AppColors.white,
-                    strokeWidth: 2,
-                  ),
-                  underline: SizedBox(),
-                  isDense: true,
-                  style: semiBoldText(16, color: AppColors.white),
-                  items: controller.availableYears
-                      .map((y) => DropdownMenuItem(value: y, child: Text(y.toString())))
-                      .toList(),
-                  onChanged: (year) {
-                    if (year != null) controller.changeYear(year);
-                  },
-                ),
-              ],
-            ),
+  Widget _buildYearSelector(DashboardProvider prov) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: AppColors.borderColor),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Year: ", style: regularText(14, color: AppColors.grey)),
+              DropdownButton<int>(
+                value: prov.selectedYear,
+                dropdownColor: AppColors.surface,
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedArrowDown01,
+                  size: 24,
+                  color: AppColors.white,
+                  strokeWidth: 2,
+                ),
+                underline: const SizedBox(),
+                isDense: true,
+                style: semiBoldText(16, color: AppColors.white),
+                items: prov.availableYears
+                    .map((y) => DropdownMenuItem(value: y, child: Text(y.toString())))
+                    .toList(),
+                onChanged: (year) {
+                  if (year != null) prov.changeYear(year);
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildHeroCarousel() {
+  Widget _buildHeroCarousel(DashboardProvider prov) {
     return Column(
       children: [
         Stack(
           children: [
-            // Invisible template to define the dynamic intrinsic height based on the card's content
             Visibility(
               visible: false,
               maintainSize: true,
               maintainAnimation: true,
               maintainState: true,
-              child: _buildTotalCard(),
+              child: _buildTotalCard(prov),
             ),
             Positioned.fill(
               child: PageView(
-                controller: PageController(initialPage: controller.currentCarouselIndex.value),
+                controller: PageController(initialPage: prov.currentCarouselIndex),
                 physics: const BouncingScrollPhysics(),
-                onPageChanged: controller.onCarouselPageChanged,
-                children: [_buildTotalCard(), _buildTotalSheetsCard()],
+                onPageChanged: prov.onCarouselPageChanged,
+                children: [_buildTotalCard(prov), _buildTotalSheetsCard(prov)],
               ),
             ),
           ],
         ),
         const SizedBox(height: 16),
-        Obx(
-          () => Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              2,
-              (index) => AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                height: 8,
-                width: controller.currentCarouselIndex.value == index ? 24 : 8,
-                decoration: BoxDecoration(
-                  color: controller.currentCarouselIndex.value == index
-                      ? AppColors.brand
-                      : AppColors.grey.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(4),
-                ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            2,
+            (index) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              height: 8,
+              width: prov.currentCarouselIndex == index ? 24 : 8,
+              decoration: BoxDecoration(
+                color: prov.currentCarouselIndex == index
+                    ? AppColors.brand
+                    : AppColors.grey.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
           ),
@@ -137,208 +147,203 @@ class DashboardTab extends GetView<DashboardController> {
 
   // ─── Total Card ───────────────────────────────────────────────────────────
 
-  Widget _buildTotalCard() {
-    return Obx(
-      () => Container(
-        margin: EdgeInsets.symmetric(horizontal: 16),
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
+  Widget _buildTotalCard(DashboardProvider prov) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1565C0), Color(0xFF1E88E5)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.wallet, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Total Expenses',
+                style: semiBoldText(18, color: Colors.white.withValues(alpha: 0.9)),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: prov.toggleMonthlyYearly,
+                child: Text(
+                  prov.showMonthly ? "Show Yearly" : "Monthly",
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
+                ),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.wallet, color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Total Expenses',
-                  style: semiBoldText(18, color: Colors.white.withValues(alpha: 0.9)),
-                ),
-                const Spacer(),
-                GestureDetector(
-                  onTap: controller.toggleMonthlyYearly,
-                  child: Text(
-                    controller.showMonthly.value ? "Show Yearly" : "Monthly",
-                    style: regularText(13, color: Colors.white70),
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              spacing: 4,
-              children: [
-                Text('₹', style: regularText(40)),
-                AnimatedDigitWidget(
-                  value: controller.displayTotal,
-                  textStyle: customText(40, FontWeight.w800),
-                  enableSeparator: true,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutCubic,
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(-0.1, 0),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
-                    ),
-                  ),
-                  child: Text(
-                    controller.displayPeriodLabel,
-                    key: ValueKey(controller.showMonthly.value),
-                    style: regularText(16),
+          Row(
+            spacing: 4,
+            children: [
+              Text('₹', style: regularText(40)),
+              AnimatedDigitWidget(
+                value: prov.displayTotal,
+                textStyle: customText(40, FontWeight.w800),
+                enableSeparator: true,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(-0.1, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
                   ),
                 ),
-                const Spacer(),
-                AnimatedOpacity(
-                  duration: const Duration(milliseconds: 200),
-                  opacity: controller.showMonthly.value ? 1 : 0,
-                  child: GestureDetector(
-                    onTap: () => Get.toNamed(
-                      Routes.MONTH_DETAILS,
-                      arguments: {
-                        'year': controller.selectedYear.value,
-                        'month': DateTime.now().month,
-                      },
-                    ),
-                    child: HugeIcon(icon: HugeIcons.strokeRoundedArrowRight03),
-                  ),
+                child: Text(
+                  prov.displayPeriodLabel,
+                  key: ValueKey(prov.showMonthly),
+                  style: regularText(16),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              const Spacer(),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: prov.showMonthly ? 1 : 0,
+                child: GestureDetector(
+                  onTap: () {
+                    if (prov.showMonthly) {
+                      appRouter.pushNamed(
+                        Routes.MONTH_DETAILS,
+                        extra: {'year': prov.selectedYear, 'month': DateTime.now().month},
+                      );
+                    }
+                  },
+                  child: const HugeIcon(icon: HugeIcons.strokeRoundedArrowRight03),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildTotalSheetsCard() {
-    return Obx(
-      () => Container(
-        width: double.infinity,
-        margin: EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.brandDark, AppColors.black],
+  Widget _buildTotalSheetsCard(DashboardProvider prov) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.brandDark, AppColors.black],
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const HugeIcon(icon: HugeIcons.strokeRoundedFiles01, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Sheets Balance',
+                style: semiBoldText(18, color: Colors.white.withValues(alpha: 0.9)),
+              ),
+            ],
           ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: HugeIcon(icon: HugeIcons.strokeRoundedFiles01, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Sheets Balance',
-                  style: semiBoldText(18, color: Colors.white.withValues(alpha: 0.9)),
-                ),
-              ],
-            ),
-            Row(
-              spacing: 4,
-              children: [
-                Text('₹', style: regularText(40)),
-                AnimatedDigitWidget(
-                  value: controller.totalSheetsBalance.value,
-                  textStyle: customText(40, FontWeight.w800),
-                  enableSeparator: true,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutCubic,
-                ),
-              ],
-            ),
-            Text('Across all your sheets', style: regularText(16)),
-          ],
-        ),
+          Row(
+            spacing: 4,
+            children: [
+              Text('₹', style: regularText(40)),
+              AnimatedDigitWidget(
+                value: prov.totalSheetsBalance,
+                textStyle: customText(40, FontWeight.w800),
+                enableSeparator: true,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+              ),
+            ],
+          ),
+          Text('Across all your sheets', style: regularText(16)),
+        ],
       ),
     );
   }
 
   // ─── Category List ────────────────────────────────────────────────────────
 
-  Widget _buildCategoryList() {
-    return Obx(() {
-      final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+  Widget _buildCategoryList(DashboardProvider prov) {
+    final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
 
-      if (controller.topCategoryEntries.isEmpty) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Text(
-            'No expenses recorded',
-            style: regularText(14, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        );
-      }
-
-      return Column(
-        children: controller.topCategoryEntries.map((entry) {
-          final category = controller.getCategoryById(entry.key);
-          return CategoryTile(
-            margin: const EdgeInsets.only(top: 12),
-            emoji: category?.emoji ?? '📦',
-            name: category?.name ?? 'Unknown',
-            showProgress: true,
-            percentage: controller.categoryPercentage(entry.value),
-            formattedAmount: formatter.format(entry.value),
-            transactionCount: controller.transactionCountForCategory(entry.key),
-            onTap: () => Get.toNamed(Routes.CATEGORY_DETAILS, arguments: {'category': category}),
-          );
-        }).toList(),
+    if (prov.topCategoryEntries.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          'No expenses recorded',
+          style: regularText(14, color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
       );
-    });
+    }
+
+    return Column(
+      children: prov.topCategoryEntries.map((entry) {
+        final category = prov.getCategoryById(entry.key);
+        return CategoryTile(
+          margin: const EdgeInsets.only(top: 12),
+          emoji: category?.emoji ?? '📦',
+          name: category?.name ?? 'Unknown',
+          showProgress: true,
+          percentage: prov.categoryPercentage(entry.value),
+          formattedAmount: formatter.format(entry.value),
+          transactionCount: prov.transactionCountForCategory(entry.key),
+          onTap: () => appRouter.pushNamed(Routes.CATEGORY_DETAILS, extra: {'category': category}),
+        );
+      }).toList(),
+    );
   }
 
   // ─── Charts ───────────────────────────────────────────────────────────────
 
-  Widget _buildCharts() {
-    return Obx(() {
-      if (controller.categoryTotals.isEmpty) return const SizedBox();
-      return Column(children: [_buildPieChart(), const SizedBox(height: 20), _buildMonthlyChart()]);
-    });
+  Widget _buildCharts(DashboardProvider prov) {
+    if (prov.categoryTotals.isEmpty) return const SizedBox();
+    return Column(
+      children: [_buildPieChart(prov), const SizedBox(height: 20), _buildMonthlyChart(prov)],
+    );
   }
 
-  Widget _buildPieChart() {
-    final entries = controller.sortedCategoryEntries;
+  Widget _buildPieChart(DashboardProvider prov) {
+    final entries = prov.sortedCategoryEntries;
     if (entries.isEmpty) return const SizedBox();
 
     const colors = [
@@ -362,7 +367,7 @@ class DashboardTab extends GetView<DashboardController> {
           colors: [AppColors.brandDark.withValues(alpha: 0.5), AppColors.black],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 0.5],
+          stops: const [0, 0.5],
         ),
       ),
       child: Column(
@@ -373,7 +378,7 @@ class DashboardTab extends GetView<DashboardController> {
             child: Row(
               spacing: 8,
               children: [
-                HugeIcon(
+                const HugeIcon(
                   icon: HugeIcons.strokeRoundedPieChart08,
                   size: 20,
                   color: AppColors.accent,
@@ -397,9 +402,7 @@ class DashboardTab extends GetView<DashboardController> {
               ),
               annotations: <CircularChartAnnotation>[
                 CircularChartAnnotation(
-                  widget: Obx(
-                    () => Text(controller.donutCenterText.value, style: semiBoldText(18)),
-                  ),
+                  widget: Text(prov.donutCenterText, style: semiBoldText(18)),
                 ),
               ],
               series: <CircularSeries>[
@@ -407,18 +410,17 @@ class DashboardTab extends GetView<DashboardController> {
                   animationDuration: 1000,
                   dataSource: entries,
                   xValueMapper: (dynamic entry, _) =>
-                      controller.getCategoryById((entry as MapEntry<String, double>).key)?.name ??
-                      '',
+                      prov.getCategoryById((entry as MapEntry<String, double>).key)?.name ?? '',
                   yValueMapper: (dynamic entry, _) => (entry as MapEntry<String, double>).value,
                   innerRadius: '50%',
                   radius: '100%',
                   selectionBehavior: SelectionBehavior(enable: true),
                   dataLabelMapper: (dynamic entry, _) {
-                    final pct = controller.piePercentage((entry as MapEntry<String, double>).value);
+                    final pct = prov.piePercentage((entry as MapEntry<String, double>).value);
                     return '$pct%';
                   },
                   legendIconType: LegendIconType.seriesType,
-                  onPointTap: controller.onDonutSectionTap,
+                  onPointTap: prov.onDonutSectionTap,
                 ),
               ],
             ),
@@ -428,7 +430,7 @@ class DashboardTab extends GetView<DashboardController> {
     );
   }
 
-  Widget _buildMonthlyChart() {
+  Widget _buildMonthlyChart(DashboardProvider prov) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -437,7 +439,7 @@ class DashboardTab extends GetView<DashboardController> {
           colors: [AppColors.brandDark.withValues(alpha: 0.5), AppColors.black],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0, 0.5],
+          stops: const [0, 0.5],
         ),
       ),
       child: Column(
@@ -446,7 +448,7 @@ class DashboardTab extends GetView<DashboardController> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Row(
               children: [
-                HugeIcon(
+                const HugeIcon(
                   icon: HugeIcons.strokeRoundedChartEvaluation,
                   size: 20,
                   color: AppColors.accent,
@@ -494,10 +496,10 @@ class DashboardTab extends GetView<DashboardController> {
                 labelStyle: regularText(12, color: AppColors.grey),
               ),
               primaryYAxis: NumericAxis(
-                majorGridLines: MajorGridLines(
+                majorGridLines: const MajorGridLines(
                   width: 1,
                   color: AppColors.borderColor,
-                  dashArray: const <double>[5, 5],
+                  dashArray: <double>[5, 5],
                 ),
                 axisLine: const AxisLine(width: 0),
                 majorTickLines: const MajorTickLines(width: 0),
@@ -507,7 +509,7 @@ class DashboardTab extends GetView<DashboardController> {
               series: <CartesianSeries>[
                 SplineAreaSeries<MapEntry<int, double>, String>(
                   splineType: SplineType.cardinal,
-                  dataSource: controller.monthlyTotals.entries.toList(),
+                  dataSource: prov.monthlyTotals.entries.toList(),
                   xValueMapper: (entry, _) => entry.key.toString(),
                   yValueMapper: (entry, _) => entry.value,
                   animationDuration: 1000,
@@ -552,7 +554,7 @@ class DashboardTab extends GetView<DashboardController> {
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
             child: Icon(Icons.receipt_long, size: 60, color: Colors.grey[700]),
           ),
           const SizedBox(height: 24),
@@ -567,7 +569,7 @@ class DashboardTab extends GetView<DashboardController> {
     );
   }
 
-  Widget _buildShimmerLoader() {
+  static Widget _buildShimmerLoader() {
     const baseColor = Color(0xFF1E1E1E);
     const highlightColor = Color(0xFF2C2C2C);
     const backgroundColor = Color(0xFF121212);

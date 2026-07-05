@@ -1,10 +1,10 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class OnboardingScreen extends GetView<OnboardingController> {
+class OnboardingScreen extends ConsumerWidget {
   const OnboardingScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(

@@ -2,32 +2,28 @@ import 'package:budgetly/core/import_to_export.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
-class SheetsTab extends GetView<SheetsController> {
+class SheetsTab extends ConsumerWidget {
   const SheetsTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prov = ref.watch(sheetsProvider);
+
     return Scaffold(
       appBar: AppBar(title: Text('Sheets', style: boldText(24))),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return buildShimmerLoader();
-        }
-
-        if (controller.sheets.isEmpty) {
-          return buildEmptyState();
-        }
-
-        return ListView.separated(
-          padding: const EdgeInsets.all(16),
-          physics: const BouncingScrollPhysics(),
-          itemCount: controller.sheets.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (_, index) => buildSheetCard(controller.sheets[index]),
-        );
-      }),
+      body: prov.isLoading
+          ? buildShimmerLoader()
+          : prov.sheets.isEmpty
+          ? buildEmptyState()
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              physics: const BouncingScrollPhysics(),
+              itemCount: prov.sheets.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (_, index) => buildSheetCard(context, prov, prov.sheets[index]),
+            ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: controller.showCreateSheetDialog,
+        onPressed: prov.showCreateSheetDialog,
         backgroundColor: AppColors.brandDark,
         label: Text('New Sheet', style: regularText(14)),
         icon: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
@@ -90,25 +86,28 @@ class SheetsTab extends GetView<SheetsController> {
     );
   }
 
-  Widget buildSheetCard(Sheet sheet) {
+  Widget buildSheetCard(BuildContext context, SheetsProvider prov, Sheet sheet) {
     return GestureDetector(
-      onTap: () => Get.toNamed(
+      onTap: () => appRouter.pushNamed(
         Routes.SHEET_DETAIL,
-        arguments: {'sheetId': sheet.id, 'sheetName': sheet.name},
+        extra: {'sheetId': sheet.id, 'sheetName': sheet.name},
       ),
       onLongPressStart: (details) {
         showPullDownMenu(
-          context: Get.context!,
-          routeTheme: PullDownMenuRouteTheme(backgroundColor: AppColors.surfaceLight, width: 200),
+          context: context,
+          routeTheme: const PullDownMenuRouteTheme(
+            backgroundColor: AppColors.surfaceLight,
+            width: 200,
+          ),
           items: [
             PullDownMenuItem(
-              onTap: () => controller.showRenameDialog(sheet),
+              onTap: () => prov.showRenameDialog(sheet),
               title: "Rename",
               icon: CupertinoIcons.pen,
               itemTheme: PullDownMenuItemTheme(textStyle: mediumText(14)),
             ),
             PullDownMenuItem(
-              onTap: () => controller.showDeleteDialog(sheet),
+              onTap: () => prov.showDeleteDialog(sheet),
               title: "Delete",
               icon: CupertinoIcons.delete,
               isDestructive: true,
@@ -178,26 +177,27 @@ class SheetsTab extends GetView<SheetsController> {
               style: mediumText(11, color: AppColors.grey).copyWith(letterSpacing: 1.2),
             ),
             const SizedBox(height: 4),
-            Obx(() {
-              final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
-              final balance = controller.sheetBalances[sheet.id];
-
-              if (balance == null) {
-                return Text(
-                  formatter.format(0),
-                  style: boldText(32, color: AppColors.grey).copyWith(letterSpacing: -1),
-                );
-              }
-
-              final color = balance >= 0 ? AppColors.success : AppColors.error;
-              return Text(
-                formatter.format(balance),
-                style: boldText(32, color: color).copyWith(letterSpacing: -1),
-              );
-            }),
+            _buildBalanceText(prov.sheetBalances[sheet.id], sheet),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBalanceText(double? balance, Sheet sheet) {
+    final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
+
+    if (balance == null) {
+      return Text(
+        formatter.format(0),
+        style: boldText(32, color: AppColors.grey).copyWith(letterSpacing: -1),
+      );
+    }
+
+    final color = balance >= 0 ? AppColors.success : AppColors.error;
+    return Text(
+      formatter.format(balance),
+      style: boldText(32, color: color).copyWith(letterSpacing: -1),
     );
   }
 

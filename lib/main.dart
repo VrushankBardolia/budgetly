@@ -8,7 +8,7 @@ void main() async {
 
   await GoogleFonts.pendingFonts([GoogleFonts.plusJakartaSans(), GoogleFonts.staatliches()]);
 
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -16,53 +16,42 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      title: 'Budgetly',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.dark,
-      theme: themeData,
-      initialRoute: Routes.INITIAL,
-      getPages: AppPages.routes,
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
-          child: child!,
-        );
-      },
-      initialBinding: BindingsBuilder(initControllers),
+    return ToastificationWrapper(
+      child: MaterialApp.router(
+        title: 'Budgetly',
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.dark,
+        theme: themeData,
+        routerConfig: appRouter,
+        scaffoldMessengerKey: scaffoldMessengerKey,
+        builder: (context, child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(1)),
+            child: child!,
+          );
+        },
+      ),
     );
   }
 }
 
-class InitialScreen extends StatelessWidget {
+class InitialScreen extends ConsumerWidget {
   const InitialScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Obx(() {
-      final onboardingCtrl = Get.find<OnboardingController>();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prov = ref.watch(onboardingProvider);
 
-      if (onboardingCtrl.isCheckingAuth.value) {
-        return const InitialLoaderScreen();
-      }
+    if (prov.isCheckingAuth) {
+      return const InitialLoaderScreen();
+    }
 
-      if (FirebaseHelper.currentUser != null) {
-        if (PreferenceHelper.isEnabledBiometric) {
-          return const AppLockScreen();
-        }
-        return const HomeScreen();
+    if (FirebaseHelper.currentUser != null) {
+      if (PreferenceHelper.isEnabledBiometric) {
+        return const AppLockScreen();
       }
-      return const OnboardingScreen();
-    });
+      return const HomeScreen();
+    }
+    return const OnboardingScreen();
   }
-}
-
-void initControllers() {
-  Get.put(CategoryController());
-  Get.put(DashboardController());
-  Get.put(SettingController());
-  Get.put(MonthController());
-  Get.put(HomeController());
-  Get.put(SheetsController());
-  Get.put(OnboardingController());
 }

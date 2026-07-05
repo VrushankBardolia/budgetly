@@ -1,25 +1,31 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
 
-class MonthController extends GetxController {
-  // ─── Reactive State ───────────────────────────────────────────────────────
-  final RxList<Expense> expenses = <Expense>[].obs;
-  final RxList<MonthBudget> budgets = <MonthBudget>[].obs;
-  final RxInt selectedYear = DateTime.now().year.obs;
-  final RxBool isLoading = true.obs;
+class MonthProvider extends ChangeNotifier {
+  final Ref ref;
+
+  // ─── State ───────────────────────────────────────────────────────
+  List<Expense> expenses = [];
+  List<MonthBudget> budgets = [];
+  int selectedYear = DateTime.now().year;
+  bool isLoading = true;
+
+  MonthProvider(this.ref) {
+    loadData();
+  }
 
   // ─── Derived ──────────────────────────────────────────────────────────────
   List<MonthSummary> get monthSummaries {
     final now = DateTime.now();
     return List.generate(12, (index) {
       final month = index + 1;
-      final monthDate = DateTime(selectedYear.value, month);
+      final monthDate = DateTime(selectedYear, month);
 
       final isCurrent = monthDate.year == now.year && monthDate.month == now.month;
       final isPast = monthDate.isBefore(DateTime(now.year, now.month));
 
-      final budget = _getBudgetForMonth(selectedYear.value, month);
-      final expense = _getTotalExpenseForMonth(selectedYear.value, month);
+      final budget = _getBudgetForMonth(selectedYear, month);
+      final expense = _getTotalExpenseForMonth(selectedYear, month);
       final difference = budget - expense;
       final progressValue = budget > 0 ? (expense / budget).clamp(0.0, 1.0) : 0.0;
 
@@ -66,31 +72,33 @@ class MonthController extends GetxController {
   // ─── Public Actions ───────────────────────────────────────────────────────
 
   Future<void> loadData() async {
-    isLoading.value = true;
-    await Future.wait([_loadExpenses(selectedYear.value), _loadBudgets(selectedYear.value)]);
-    isLoading.value = false;
+    isLoading = true;
+    notifyListeners();
+    await Future.wait([_loadExpenses(selectedYear), _loadBudgets(selectedYear)]);
+    isLoading = false;
+    notifyListeners();
     WidgetHelper.updateRemainingBudgetWidget();
   }
 
   Future<void> changeYear(int year) async {
-    selectedYear.value = year;
+    selectedYear = year;
+    notifyListeners();
     await _loadAll(year);
   }
 
   Future<void> navigateToMonth(int month) async {
-    await Get.toNamed(
-      Routes.MONTH_DETAILS,
-      arguments: {'year': selectedYear.value, 'month': month},
-    );
-    await _loadAll(selectedYear.value);
+    await appRouter.pushNamed(Routes.MONTH_DETAILS, extra: {'year': selectedYear, 'month': month});
+    await _loadAll(selectedYear);
   }
 
   // ─── Data Loading ─────────────────────────────────────────────────────────
 
   Future<void> _loadAll(int year) async {
-    isLoading.value = true;
+    isLoading = true;
+    notifyListeners();
     await Future.wait([_loadExpenses(year), _loadBudgets(year)]);
-    isLoading.value = false;
+    isLoading = false;
+    notifyListeners();
     WidgetHelper.updateRemainingBudgetWidget();
   }
 
@@ -103,13 +111,15 @@ class MonthController extends GetxController {
       DateTime(year, 12, 31, 23, 59, 59),
     );
 
-    expenses.assignAll(result);
+    expenses = result;
+    notifyListeners();
   }
 
   Future<void> _loadBudgets(int year) async {
     final result = await FirebaseHelper.getBudgets(year);
 
-    budgets.assignAll(result);
+    budgets = result;
+    notifyListeners();
   }
 
   // ─── Private Helpers ──────────────────────────────────────────────────────

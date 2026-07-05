@@ -1,149 +1,149 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:flutter/cupertino.dart';
 
-class MonthDetailScreen extends GetView<MonthDetailController> {
+class MonthDetailScreen extends ConsumerWidget {
   const MonthDetailScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map? ?? {};
+    final prov = ref.watch(monthDetailProvider(args));
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
-        title: Text(controller.formattedMonth, style: boldText(20)),
+        title: Text(prov.formattedMonth, style: boldText(20)),
         actions: [
           IconButton(
             tooltip: "Export to PDF",
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedPdf02),
-            onPressed: controller.exportToPdf,
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedPdf02),
+            onPressed: prov.exportToPdf,
           ),
           IconButton(
             tooltip: "Change Budget",
-            icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04),
-            onPressed: controller.showBudgetDialog,
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedEdit04),
+            onPressed: prov.showBudgetDialog,
           ),
         ],
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return _buildShimmerLoader();
-        }
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Row(
+      body: prov.isLoading
+          ? _buildShimmerLoader()
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Budget",
-                            controller.formatter.format(controller.budget.value),
-                            Colors.white,
-                            icon: HugeIcons.strokeRoundedWallet01,
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildInfoCard(
+                                "Budget",
+                                prov.formatter.format(prov.budget),
+                                Colors.white,
+                                icon: HugeIcons.strokeRoundedWallet01,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildInfoCard(
+                                "Spent",
+                                prov.formatter.format(prov.totalExpense),
+                                Colors.white,
+                                icon: HugeIcons.strokeRoundedMoney01,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildInfoCard(
-                            "Spent",
-                            controller.formatter.format(controller.totalExpense),
-                            Colors.white,
-                            icon: HugeIcons.strokeRoundedMoney01,
+                        const SizedBox(height: 12),
+                        if (prov.isCurrent) ...[
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildInfoCard(
+                                  prov.statusLabel,
+                                  prov.formatter.format(prov.remaining),
+                                  prov.statusColor,
+                                  icon: prov.statusIcon,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildInfoCard(
+                                  "Safe / Day",
+                                  prov.formatter.format(prov.remainPerDay),
+                                  Colors.blueAccent,
+                                  icon: HugeIcons.strokeRoundedCoins01,
+                                ),
+                              ),
+                            ],
                           ),
+                        ] else ...[
+                          _buildInfoCard(
+                            prov.statusLabel,
+                            prov.formatter.format(prov.remaining),
+                            prov.statusColor,
+                            icon: prov.statusIcon,
+                            isFullWidth: true,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      TextButton.icon(
+                        onPressed: prov.showSortDialog,
+                        icon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedArrowUpDown,
+                          color: AppColors.white,
+                          size: 20,
+                        ),
+                        label: Text('Sort by', style: boldText(16)),
+                      ),
+                      TextButton.icon(
+                        onPressed: prov.showCategoryFilterDialog,
+                        icon: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedFilter,
+                          color: AppColors.white,
+                          size: 20,
+                        ),
+                        label: Text('Category Filter', style: boldText(16)),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("Transactions", style: semiBoldText(18, color: Colors.grey.shade400)),
+                        Text(
+                          "${prov.expenses.length}",
+                          style: regularText(14, color: Colors.grey.shade600),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    if (controller.isCurrent) ...[
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildInfoCard(
-                              controller.statusLabel,
-                              controller.formatter.format(controller.remaining),
-                              controller.statusColor,
-                              icon: controller.statusIcon,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildInfoCard(
-                              "Safe / Day",
-                              controller.formatter.format(controller.remainPerDay),
-                              Colors.blueAccent,
-                              icon: HugeIcons.strokeRoundedCoins01,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else ...[
-                      _buildInfoCard(
-                        controller.statusLabel,
-                        controller.formatter.format(controller.remaining),
-                        controller.statusColor,
-                        icon: controller.statusIcon,
-                        isFullWidth: true,
-                      ),
-                    ],
+                  ),
+                  if (prov.expenses.isEmpty)
+                    buildEmptyState(context)
+                  else ...[
+                    buildExpenseList(prov),
+                    buildCategoryTotal(prov),
                   ],
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton.icon(
-                    onPressed: controller.showSortDialog,
-                    icon: HugeIcon(
-                      icon: HugeIcons.strokeRoundedArrowUpDown,
-                      color: AppColors.white,
-                      size: 20,
-                    ),
-                    label: Text('Sort by', style: boldText(16)),
-                  ),
-                  TextButton.icon(
-                    onPressed: controller.showCategoryFilterDialog,
-                    icon: HugeIcon(
-                      icon: HugeIcons.strokeRoundedFilter,
-                      color: AppColors.white,
-                      size: 20,
-                    ),
-                    label: Text('Category Filter', style: boldText(16)),
-                  ),
+                  const SizedBox(height: 100),
                 ],
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text("Transactions", style: semiBoldText(18, color: Colors.grey.shade400)),
-                    Text(
-                      "${controller.expenses.length}",
-                      style: regularText(14, color: Colors.grey.shade600),
-                    ),
-                  ],
-                ),
-              ),
-              if (controller.expenses.isEmpty)
-                buildEmptyState()
-              else ...[
-                buildExpenseList(),
-                buildCategoryTotal(),
-              ],
-              const SizedBox(height: 100),
-            ],
-          ),
-        );
-      }),
+            ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: controller.goToAddExpense,
+        onPressed: () => errorSnackbar("error"), //provider.goToAddExpense,
         label: Text("Add Expense", style: regularText(14)),
-        icon: HugeIcon(icon: HugeIcons.strokeRoundedMoneyAdd01),
+        icon: const HugeIcon(icon: HugeIcons.strokeRoundedMoneyAdd01),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
@@ -192,16 +192,16 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
     );
   }
 
-  Widget buildEmptyState() {
+  Widget buildEmptyState(BuildContext context) {
     return SizedBox(
-      height: Get.height * 0.5,
+      height: MediaQuery.of(context).size.height * 0.5,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+              decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
               child: Icon(
                 Icons.receipt_long_rounded,
                 size: 50,
@@ -216,14 +216,14 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
     );
   }
 
-  Widget buildExpenseList() {
+  Widget buildExpenseList(MonthDetailProvider prov) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: controller.expenses.length,
+      itemCount: prov.expenses.length,
       itemBuilder: (context, index) {
-        final expense = controller.expenses[index];
-        final category = controller.getCategoryById(expense.categoryId);
+        final expense = prov.expenses[index];
+        final category = prov.getCategoryById(expense.categoryId);
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -232,19 +232,19 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
               HapticFeedback.heavyImpact();
               showPullDownMenu(
                 context: context,
-                routeTheme: PullDownMenuRouteTheme(
+                routeTheme: const PullDownMenuRouteTheme(
                   backgroundColor: AppColors.surfaceLight,
                   width: 200,
                 ),
                 items: [
                   PullDownMenuItem(
-                    onTap: () => controller.goToEditExpense(expense),
+                    onTap: () => prov.goToEditExpense(expense),
                     title: "Edit",
                     icon: CupertinoIcons.pen,
                     itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
                   ),
                   PullDownMenuItem(
-                    onTap: () => controller.showDeleteExpenseDialog(expense.id),
+                    onTap: () => prov.showDeleteExpenseDialog(expense.id),
                     title: "Delete",
                     icon: CupertinoIcons.delete,
                     isDestructive: true,
@@ -266,14 +266,14 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
     );
   }
 
-  Widget buildCategoryTotal() {
-    if (controller.selectedFilterCategoryId.value == "All") {
+  Widget buildCategoryTotal(MonthDetailProvider prov) {
+    if (prov.selectedFilterCategoryId == "All") {
       return const SizedBox();
     } else {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
-          "${controller.selectedFilterOption.value} Total : ${controller.formatter.format(controller.filteredExpenseTotal)}",
+          "${prov.selectedFilterOption} Total : ${prov.formatter.format(prov.filteredExpenseTotal)}",
           style: regularText(14, color: AppColors.grey),
           textAlign: TextAlign.center,
         ),
@@ -281,7 +281,7 @@ class MonthDetailScreen extends GetView<MonthDetailController> {
     }
   }
 
-  // MARK:Shimmer Loader
+  // MARK: Shimmer Loader
 
   Widget _buildShimmerLoader() {
     return Shimmer.fromColors(

@@ -2,92 +2,94 @@ import 'package:budgetly/core/import_to_export.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
-class SheetDetailsScreen extends GetView<SheetDetailsController> {
+class SheetDetailsScreen extends ConsumerWidget {
   const SheetDetailsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map? ?? {};
+    final prov = ref.watch(sheetDetailsProvider(args));
+
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: Get.back,
+          onPressed: appRouter.pop,
         ),
-        title: Text(controller.sheetName, style: boldText(20)),
+        title: Text(prov.sheetName, style: boldText(20)),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: controller.goToAddRecord,
+        onPressed: prov.goToAddRecord,
         backgroundColor: AppColors.brandDark,
         elevation: 0,
         icon: const Icon(Icons.add_rounded, color: AppColors.white),
         label: Text('Add Record', style: semiBoldText(14, color: AppColors.white)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return buildShimmerLoader();
-        }
-
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: Column(
-                  spacing: 12,
-                  children: [
-                    Row(
+      body: prov.isLoading
+          ? buildShimmerLoader()
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Column(
                       spacing: 12,
                       children: [
-                        Expanded(
-                          child: buildSummaryCard(
-                            'Total Income',
-                            controller.totalIncome,
-                            AppColors.success,
-                            Icons.arrow_downward_rounded,
-                          ),
+                        Row(
+                          spacing: 12,
+                          children: [
+                            Expanded(
+                              child: buildSummaryCard(
+                                'Total Income',
+                                prov.totalIncome,
+                                AppColors.success,
+                                Icons.arrow_downward_rounded,
+                              ),
+                            ),
+                            Expanded(
+                              child: buildSummaryCard(
+                                'Total Expense',
+                                prov.totalExpense,
+                                AppColors.error,
+                                Icons.arrow_upward_rounded,
+                              ),
+                            ),
+                          ],
                         ),
-                        Expanded(
-                          child: buildSummaryCard(
-                            'Total Expense',
-                            controller.totalExpense,
-                            AppColors.error,
-                            Icons.arrow_upward_rounded,
-                          ),
+                        buildBalanceCard(prov.netBalance, prov.isProfit),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                    child: buildFilterBar(prov),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('Records', style: boldText(18, color: AppColors.white)),
+                        Text(
+                          '${prov.filteredRecords.length}'.padLeft(2, '0'),
+                          style: semiBoldText(12, color: AppColors.grey),
                         ),
                       ],
                     ),
-                    buildBalanceCard(controller.netBalance, controller.isProfit),
-                  ],
-                ),
+                  ),
+
+                  prov.filteredRecords.isEmpty ? buildEmptyState() : buildRecordList(context, prov),
+                ],
               ),
-
-              Padding(padding: const EdgeInsets.fromLTRB(16, 24, 16, 8), child: buildFilterBar()),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text('Records', style: boldText(18, color: AppColors.white)),
-                    Text(
-                      '${controller.filteredRecords.length}'.padLeft(2, '0'),
-                      style: semiBoldText(12, color: AppColors.grey),
-                    ),
-                  ],
-                ),
-              ),
-
-              controller.filteredRecords.isEmpty ? buildEmptyState() : buildRecordList(),
-            ],
-          ),
-        );
-      }),
+            ),
     );
   }
 
@@ -182,76 +184,74 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
     );
   }
 
-  Widget buildFilterBar() {
-    return Obx(() {
-      final filters = [('all', 'All'), ('income', 'Income'), ('expense', 'Expense')];
+  Widget buildFilterBar(SheetDetailsProvider prov) {
+    final filters = [('all', 'All'), ('income', 'Income'), ('expense', 'Expense')];
 
-      final currentIndex = filters.indexWhere((f) => f.$1 == controller.filterType.value);
-      final safeIndex = currentIndex == -1 ? 0 : currentIndex;
+    final currentIndex = filters.indexWhere((f) => f.$1 == prov.filterType);
+    final safeIndex = currentIndex == -1 ? 0 : currentIndex;
 
-      final activeColor = controller.filterType.value == 'income'
-          ? AppColors.success
-          : controller.filterType.value == 'expense'
-          ? AppColors.error
-          : AppColors.brand;
+    final activeColor = prov.filterType == 'income'
+        ? AppColors.success
+        : prov.filterType == 'expense'
+        ? AppColors.error
+        : AppColors.brand;
 
-      return Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
-        ),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final tabWidth = constraints.maxWidth / filters.length;
-            return Stack(
-              children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeOutCubic,
-                  left: safeIndex * tabWidth,
-                  top: 0,
-                  bottom: 0,
-                  child: Container(
-                    width: tabWidth,
-                    decoration: BoxDecoration(
-                      color: activeColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(30),
-                      border: Border.all(color: activeColor.withValues(alpha: 0.5)),
-                    ),
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabWidth = constraints.maxWidth / filters.length;
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                left: safeIndex * tabWidth,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: tabWidth,
+                  decoration: BoxDecoration(
+                    color: activeColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: activeColor.withValues(alpha: 0.5)),
                   ),
                 ),
+              ),
 
-                Row(
-                  children: filters.map((f) {
-                    final isActive = controller.filterType.value == f.$1;
-                    return Expanded(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          controller.setFilter(f.$1);
-                        },
-                        child: Center(
-                          child: AnimatedDefaultTextStyle(
-                            duration: const Duration(milliseconds: 200),
-                            style: isActive
-                                ? boldText(14, color: AppColors.white)
-                                : regularText(14, color: Colors.white.withValues(alpha: 0.5)),
-                            child: Text(f.$2),
-                          ),
+              Row(
+                children: filters.map((f) {
+                  final isActive = prov.filterType == f.$1;
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        prov.setFilter(f.$1);
+                      },
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: isActive
+                              ? boldText(14, color: AppColors.white)
+                              : regularText(14, color: Colors.white.withValues(alpha: 0.5)),
+                          child: Text(f.$2),
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            );
-          },
-        ),
-      );
-    });
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          );
+        },
+      ),
+    );
   }
 
   Widget buildEmptyState() {
@@ -273,8 +273,8 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
     );
   }
 
-  Widget buildRecordList() {
-    final grouped = controller.groupedRecords;
+  Widget buildRecordList(BuildContext context, SheetDetailsProvider prov) {
+    final grouped = prov.groupedRecords;
     final keys = grouped.keys.toList();
 
     return ListView.builder(
@@ -299,7 +299,7 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
             ...monthRecords.map(
               (record) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: buildRecordTile(record),
+                child: buildRecordTile(context, prov, record),
               ),
             ),
           ],
@@ -308,7 +308,7 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
     );
   }
 
-  Widget buildRecordTile(SheetRecord record) {
+  Widget buildRecordTile(BuildContext context, SheetDetailsProvider prov, SheetRecord record) {
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
     final color = record.isIncome ? AppColors.success : AppColors.white;
 
@@ -316,17 +316,20 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
       onLongPressStart: (details) {
         HapticFeedback.heavyImpact();
         showPullDownMenu(
-          context: Get.context!,
-          routeTheme: PullDownMenuRouteTheme(backgroundColor: AppColors.surfaceLight, width: 200),
+          context: context,
+          routeTheme: const PullDownMenuRouteTheme(
+            backgroundColor: AppColors.surfaceLight,
+            width: 200,
+          ),
           items: [
             PullDownMenuItem(
-              onTap: () => controller.goToEditRecord(record),
+              onTap: () => prov.goToEditRecord(record),
               title: "Edit",
               icon: CupertinoIcons.pen,
               itemTheme: PullDownMenuItemTheme(textStyle: mediumText(14)),
             ),
             PullDownMenuItem(
-              onTap: () => controller.showDeleteDialog(record.id),
+              onTap: () => prov.showDeleteDialog(record.id),
               title: "Delete",
               icon: CupertinoIcons.delete,
               isDestructive: true,
@@ -399,7 +402,7 @@ class SheetDetailsScreen extends GetView<SheetDetailsController> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Icon(CupertinoIcons.calendar, size: 14, color: AppColors.hintColor),
+                      const Icon(CupertinoIcons.calendar, size: 14, color: AppColors.hintColor),
                       const SizedBox(width: 8),
                       Text(
                         DateFormat('dd MMMM').format(record.date).toUpperCase(),

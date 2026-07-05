@@ -2,28 +2,22 @@ import 'package:budgetly/core/import_to_export.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
-class CategoryDetailsScreen extends GetView<CategoryDetailsController> {
+class CategoryDetailsScreen extends ConsumerWidget {
   const CategoryDetailsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map? ?? {};
+    final prov = ref.watch(categoryDetailsProvider(args));
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(controller.title, style: boldText(20)),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        return buildList();
-      }),
+      appBar: AppBar(title: Text(prov.title, style: boldText(20)), centerTitle: true, elevation: 0),
+      body: prov.isLoading ? const Center(child: CircularProgressIndicator()) : buildList(prov),
     );
   }
 
-  Widget buildList() {
-    final grouped = controller.groupedExpenses;
+  Widget buildList(CategoryDetailsProvider prov) {
+    final grouped = prov.groupedExpenses;
     final keys = grouped.keys.toList();
 
     if (keys.isEmpty) {
@@ -58,7 +52,6 @@ class CategoryDetailsScreen extends GetView<CategoryDetailsController> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMonthHeader(month, monthTotal),
-              // ...monthExpenses.map((expense) => _buildExpenseTile(expense)),
               ...monthExpenses.asMap().entries.map((entry) {
                 final isLast = entry.key == monthExpenses.length - 1;
                 return Column(
@@ -88,20 +81,20 @@ class CategoryDetailsScreen extends GetView<CategoryDetailsController> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         gradient: LinearGradient(
           colors: [AppColors.brandDark.withValues(alpha: .7), AppColors.black],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          stops: [0.3, 1],
+          stops: const [0.3, 1],
         ),
       ),
       child: Row(
         children: [
-          Icon(CupertinoIcons.calendar, color: AppColors.brand, size: 20),
+          const Icon(CupertinoIcons.calendar, color: AppColors.brand, size: 20),
           const SizedBox(width: 12),
           Text(month, style: boldText(16, color: AppColors.brand)),
-          Spacer(),
+          const Spacer(),
           Text(formatter.format(total), style: boldText(16, color: AppColors.brand)),
         ],
       ),
@@ -125,7 +118,6 @@ class CategoryDetailsScreen extends GetView<CategoryDetailsController> {
             ],
           ),
           const SizedBox(width: 12),
-
           Expanded(
             child: Text(
               expense.detail.isNotEmpty ? expense.detail : 'Expense',

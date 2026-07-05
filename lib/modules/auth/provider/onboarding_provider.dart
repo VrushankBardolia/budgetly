@@ -1,16 +1,14 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class OnboardingController extends GetxController {
+class OnboardingProvider extends ChangeNotifier {
+  final Ref ref;
+
   // ─── Reactive State ───────────────────────────────────────────────────────
-  RxBool isCheckingAuth = true.obs; // Tracks initial auth state resolution
-  RxBool isLoading = false.obs; // Tracks Google Sign-In progress
+  bool isCheckingAuth = true;
+  bool isLoading = false;
+  UserModel? currentUser;
 
-  // Add a reactive variable to hold the logged-in user's data
-  Rxn<UserModel> currentUser = Rxn<UserModel>();
-
-  @override
-  void onInit() {
-    super.onInit();
+  OnboardingProvider(this.ref) {
     _initializeAuth();
   }
 
@@ -21,17 +19,18 @@ class OnboardingController extends GetxController {
         await _fetchAndStoreUserData();
         _loadDataForControllers();
       } else {
-        currentUser.value = null; // Clear data if user logs out
+        currentUser = null; // Clear data if user logs out
       }
-      isCheckingAuth.value = false;
+      isCheckingAuth = false;
+      notifyListeners();
     });
   }
 
   void _loadDataForControllers() {
-    Get.find<DashboardController>().loadData();
-    Get.find<CategoryController>().loadCategories();
-    Get.find<SheetsController>().loadSheets();
-    Get.find<SettingController>().loadUserData();
+    ref.read(dashboardProvider).loadData();
+    ref.read(categoryProvider).loadCategories();
+    ref.read(sheetsProvider).loadSheets();
+    ref.read(settingProvider).loadUserData();
   }
 
   Future<void> _fetchAndStoreUserData() async {
@@ -47,8 +46,9 @@ class OnboardingController extends GetxController {
         final userModel = UserModel.fromJson(data);
         PreferenceHelper.user = userModel;
 
-        // Update the reactive variable so the UI can display the data
-        currentUser.value = userModel;
+        // Update the variable so the UI can display the data
+        currentUser = userModel;
+        notifyListeners();
       }
     } catch (e) {
       debugPrint('Error fetching user data: $e');
@@ -57,8 +57,9 @@ class OnboardingController extends GetxController {
 
   Future<void> googleSignIn() async {
     try {
-      isLoading.value = true;
-      Get.dialog(
+      isLoading = true;
+      notifyListeners();
+      dialog(
         const Center(child: CircularProgressIndicator(color: Colors.white)),
         barrierDismissible: false,
       );
@@ -93,15 +94,16 @@ class OnboardingController extends GetxController {
       _closeDialogIfOpen();
 
       // Navigate to Home only if we successfully have user data
-      if (currentUser.value != null) {
+      if (currentUser != null) {
         _loadDataForControllers();
-        Get.offAllNamed(Routes.HOME);
+        appRouter.pushReplacementNamed(Routes.HOME);
       }
     } catch (e) {
       _closeDialogIfOpen();
       _showErrorDialog();
     } finally {
-      isLoading.value = false;
+      isLoading = false;
+      notifyListeners();
     }
   }
 
@@ -109,7 +111,8 @@ class OnboardingController extends GetxController {
     try {
       await FirebaseHelper.signOut();
       PreferenceHelper.user = null;
-      currentUser.value = null; // Clear the user from memory
+      currentUser = null; // Clear the user from memory
+      notifyListeners();
     } catch (e) {
       debugPrint('Sign out error: $e');
     }
@@ -119,13 +122,13 @@ class OnboardingController extends GetxController {
 
   // Safe helper to close the loading dialog without accidentally popping screens
   void _closeDialogIfOpen() {
-    if (Get.isDialogOpen ?? false) {
-      Get.back();
+    if (isDialogOpen) {
+      appRouter.pop();
     }
   }
 
   void _showErrorDialog() {
-    Get.defaultDialog(
+    defaultDialog(
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

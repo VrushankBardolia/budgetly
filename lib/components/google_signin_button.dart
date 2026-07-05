@@ -1,14 +1,14 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class GoogleSigninButton extends StatelessWidget {
+class GoogleSigninButton extends ConsumerWidget {
   const GoogleSigninButton({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
-      onTap: () => Get.find<OnboardingController>().googleSignIn(),
+      onTap: () => ref.read(onboardingProvider).googleSignIn(),
       child: Container(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.brandDark,
           borderRadius: BorderRadius.circular(12),

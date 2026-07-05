@@ -28,7 +28,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
         // options: const AuthenticationOptions(stickyAuth: true, biometricOnly: false),
       );
       if (didAuthenticate) {
-        Get.offAll(() => const HomeScreen());
+        appRouter.pushReplacementNamed(Routes.HOME);
       }
     } catch (e) {
       debugPrint('Biometric Error: $e');
@@ -46,8 +46,15 @@ class _AppLockScreenState extends State<AppLockScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(color: AppColors.brand.withValues(alpha: 0.12), shape: BoxShape.circle),
-              child: const HugeIcon(icon: HugeIcons.strokeRoundedFingerPrintScan, size: 64, color: AppColors.brand),
+              decoration: BoxDecoration(
+                color: AppColors.brand.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: const HugeIcon(
+                icon: HugeIcons.strokeRoundedFingerPrintScan,
+                size: 64,
+                color: AppColors.brand,
+              ),
             ),
             const SizedBox(height: 32),
             Text('Budgetly is Locked', style: boldText(24, color: Colors.white)),

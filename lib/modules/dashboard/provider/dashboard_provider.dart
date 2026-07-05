@@ -1,25 +1,23 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
 
-class DashboardController extends GetxController {
-  // ─── Reactive State ───────────────────────────────────────────────────────
-  final RxList<Expense> expenses = <Expense>[].obs;
-  final RxList<Category> categories = <Category>[].obs;
-  final RxList<int> availableYears = <int>[].obs;
-  final RxInt selectedYear = DateTime.now().year.obs;
-  final RxBool isLoading = true.obs;
-  final RxBool showMonthly = true.obs;
-  final RxString donutCenterText = ''.obs;
+class DashboardProvider extends ChangeNotifier {
+  final Ref ref;
+
+  // ─── State ───────────────────────────────────────────────────────
+  List<Expense> expenses = [];
+  List<Category> categories = [];
+  List<int> availableYears = [];
+  int selectedYear = DateTime.now().year;
+  bool isLoading = true;
+  bool showMonthly = true;
+  String donutCenterText = '';
 
   // Carousel
-  final RxDouble totalSheetsBalance = 0.0.obs;
-  final RxInt currentCarouselIndex = 0.obs;
+  double totalSheetsBalance = 0.0;
+  int currentCarouselIndex = 0;
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  @override
-  void onInit() {
-    super.onInit();
+  DashboardProvider(this.ref) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       loadData();
     });
@@ -28,27 +26,31 @@ class DashboardController extends GetxController {
   // ─── Initialisation ───────────────────────────────────────────────────────
 
   Future<void> loadData() async {
-    isLoading.value = true;
+    isLoading = true;
+    notifyListeners();
+
     String? userId = FirebaseHelper.currentUser?.uid;
     await Future.delayed(const Duration(milliseconds: 300));
     userId = FirebaseHelper.currentUser?.uid;
     if (userId == null) {
-      isLoading.value = false;
+      isLoading = false;
+      notifyListeners();
       return;
     }
 
     await Future.wait([loadAvailableYears(), loadCategories()]);
 
     if (availableYears.isNotEmpty) {
-      if (!availableYears.contains(selectedYear.value)) {
-        selectedYear.value = availableYears.first;
+      if (!availableYears.contains(selectedYear)) {
+        selectedYear = availableYears.first;
       }
-      await loadExpenses(selectedYear.value);
+      await loadExpenses(selectedYear);
     }
 
     await loadSheetsBalance();
 
-    isLoading.value = false;
+    isLoading = false;
+    notifyListeners();
     WidgetHelper.updateRemainingBudgetWidget();
   }
 
@@ -58,12 +60,14 @@ class DashboardController extends GetxController {
     final results = await FirebaseHelper.getExpenses(DateTime(2000), DateTime(2100));
 
     if (results.isEmpty) {
-      availableYears.assignAll([DateTime.now().year]);
+      availableYears = [DateTime.now().year];
+      notifyListeners();
       return;
     }
 
     final years = results.map((e) => e.date.year).toSet().toList()..sort((a, b) => b.compareTo(a));
-    availableYears.assignAll(years.isEmpty ? [DateTime.now().year] : years);
+    availableYears = years.isEmpty ? [DateTime.now().year] : years;
+    notifyListeners();
   }
 
   Future<void> loadExpenses(int year) async {
@@ -71,36 +75,46 @@ class DashboardController extends GetxController {
       DateTime(year, 1, 1),
       DateTime(year, 12, 31, 23, 59, 59),
     );
-    expenses.assignAll(result);
+    expenses = result;
+    notifyListeners();
   }
 
   Future<void> loadCategories() async {
     final result = await FirebaseHelper.getCategories();
-    categories.assignAll(result);
+    categories = result;
+    notifyListeners();
   }
 
   Future<void> loadSheetsBalance() async {
     try {
-      totalSheetsBalance.value = await FirebaseHelper.getTotalSheetsBalance();
+      totalSheetsBalance = await FirebaseHelper.getTotalSheetsBalance();
     } catch (e) {
-      totalSheetsBalance.value = 0.0;
+      totalSheetsBalance = 0.0;
     }
+    notifyListeners();
   }
 
   // ─── Actions ──────────────────────────────────────────────────────────────
 
   Future<void> changeYear(int year) async {
-    selectedYear.value = year;
+    selectedYear = year;
+    isLoading = true;
+    notifyListeners();
 
-    isLoading.value = true;
     await loadExpenses(year);
-    isLoading.value = false;
+
+    isLoading = false;
+    notifyListeners();
   }
 
-  void toggleMonthlyYearly() => showMonthly.value = !showMonthly.value;
+  void toggleMonthlyYearly() {
+    showMonthly = !showMonthly;
+    notifyListeners();
+  }
 
   void onCarouselPageChanged(int index) {
-    currentCarouselIndex.value = index;
+    currentCarouselIndex = index;
+    notifyListeners();
   }
 
   // ─── Category Helper ──────────────────────────────────────────────────────
@@ -123,15 +137,15 @@ class DashboardController extends GetxController {
   double get currentMonthTotal {
     final month = DateTime.now().month;
     return expenses
-        .where((e) => e.date.month == month && e.date.year == selectedYear.value)
+        .where((e) => e.date.month == month && e.date.year == selectedYear)
         .fold(0.0, (total, e) => total + e.price);
   }
 
-  double get displayTotal => showMonthly.value ? currentMonthTotal : yearlyTotal;
+  double get displayTotal => showMonthly ? currentMonthTotal : yearlyTotal;
 
   String get displayPeriodLabel {
-    final year = selectedYear.value;
-    if (showMonthly.value) {
+    final year = selectedYear;
+    if (showMonthly) {
       final monthName = DateFormat.MMMM().format(DateTime.now());
       return 'For $monthName $year';
     }
@@ -179,13 +193,14 @@ class DashboardController extends GetxController {
   void onDonutSectionTap(ChartPointDetails details) {
     if (details.pointIndex != null) {
       final tappedEntry = sortedCategoryEntries[details.pointIndex!];
-      final value = (tappedEntry).value;
+      final value = tappedEntry.value;
       final pct = piePercentage(value);
-      if ('$pct%' == donutCenterText.value) {
-        donutCenterText.value = '';
+      if ('$pct%' == donutCenterText) {
+        donutCenterText = '';
       } else {
-        donutCenterText.value = '$pct%';
+        donutCenterText = '$pct%';
       }
+      notifyListeners();
     }
   }
 

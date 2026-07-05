@@ -1,26 +1,22 @@
-import 'package:flutter/cupertino.dart';
-
 import '../../../core/import_to_export.dart';
 
-class SettingController extends GetxController {
-  // ─── Reactive State ───────────────────────────────────────────────────────
-  final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
-  final RxString usingSince = ''.obs;
-  final RxBool isLoading = true.obs;
-  final RxBool notificationsEnabled = false.obs;
-  final RxBool isNotificationLoading = false.obs;
-  final RxBool isBiometricEnabled = false.obs;
-  final RxString version = '1.0.0'.obs;
+class SettingProvider extends ChangeNotifier {
+  final Ref ref;
+
+  // ─── State ───────────────────────────────────────────────────────
+  UserModel? currentUser;
+  String usingSince = '';
+  bool isLoading = true;
+  bool notificationsEnabled = false;
+  bool isNotificationLoading = false;
+  bool isBiometricEnabled = false;
+  String version = '1.0.0';
 
   final LocalAuthentication _localAuth = LocalAuthentication();
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
-
-  @override
-  void onInit() {
-    super.onInit();
-    currentUser.value = PreferenceHelper.user;
-    isBiometricEnabled.value = PreferenceHelper.isEnabledBiometric;
+  SettingProvider(this.ref) {
+    currentUser = PreferenceHelper.user;
+    isBiometricEnabled = PreferenceHelper.isEnabledBiometric;
     loadUserData();
     loadVersionInfo();
   }
@@ -30,38 +26,40 @@ class SettingController extends GetxController {
   Future<void> loadUserData() async {
     final user = FirebaseHelper.currentUser;
     if (user?.uid == null) {
-      isLoading.value = false;
+      isLoading = false;
+      notifyListeners();
       return;
     }
 
     try {
-      final doc = await FirebaseHelper.getUserData(user?.email!);
+      final doc = await FirebaseHelper.getUserData(user!.email!);
 
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
-        data['uid'] = user?.uid;
+        data['uid'] = user.uid;
 
         final userModel = UserModel.fromJson(data);
-        currentUser.value = userModel;
+        currentUser = userModel;
         PreferenceHelper.user = userModel;
 
         final Timestamp? ts = data['createdAt'];
-        usingSince.value = ts != null
+        usingSince = ts != null
             ? 'Using since ${_monthName(ts.toDate().month)} ${ts.toDate().year}'
             : '';
       }
     } catch (e) {
       debugPrint('Error loading user data: $e');
     } finally {
-      isLoading.value = false;
+      isLoading = false;
+      notifyListeners();
     }
   }
 
-  String get initials => currentUser.value?.name.isNotEmpty == true
-      ? currentUser.value!.name.trim().split(' ').length > 1
-            ? '${currentUser.value!.name.trim().split(' ')[0][0]}${currentUser.value!.name.trim().split(' ')[1][0]}'
+  String get initials => currentUser?.name.isNotEmpty == true
+      ? currentUser!.name.trim().split(' ').length > 1
+            ? '${currentUser!.name.trim().split(' ')[0][0]}${currentUser!.name.trim().split(' ')[1][0]}'
                   .toUpperCase()
-            : currentUser.value!.name.trim().split(' ')[0][0].toUpperCase()
+            : currentUser!.name.trim().split(' ')[0][0].toUpperCase()
       : 'U';
 
   // ─── Biometric ────────────────────────────────────────────────────────────
@@ -74,51 +72,35 @@ class SettingController extends GetxController {
         final isDeviceSupported = await _localAuth.isDeviceSupported();
 
         if (!canCheck && !isDeviceSupported) {
-          Get.snackbar(
-            'Error',
-            'Biometric authentication is not supported on this device.',
-            backgroundColor: AppColors.error,
-            colorText: Colors.white,
-          );
+          errorSnackbar('Biometric authentication is not supported on this device.');
           return;
         }
-        isBiometricEnabled.value = true;
+        isBiometricEnabled = true;
         PreferenceHelper.isEnabledBiometric = true;
       } catch (e) {
         debugPrint('Biometric Error: $e');
-        Get.snackbar(
-          'Error',
-          'Failed to authenticate.',
-          backgroundColor: AppColors.error,
-          colorText: Colors.white,
-        );
+        errorSnackbar('Failed to authenticate.');
       }
     } else {
-      isBiometricEnabled.value = false;
+      isBiometricEnabled = false;
       PreferenceHelper.isEnabledBiometric = false;
     }
+    notifyListeners();
   }
 
   // ─── Sign Out ─────────────────────────────────────────────────────────────
 
   Future<void> handleSignOut() async {
     HapticFeedback.heavyImpact();
-    Get.dialog(
-      AlertDialog(
-        title: Text('Sign Out'),
-        content: Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(onPressed: Get.back, child: Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              signOut();
-            },
-            child: Text('Sign Out', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+    final confirmed = await confirmationDialog(
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      confirmText: 'Sign Out',
+      isDestructive: true,
     );
+    if (confirmed) {
+      signOut();
+    }
   }
 
   void signOut() async {
@@ -126,25 +108,26 @@ class SettingController extends GetxController {
     PreferenceHelper.clearAll();
     await FirebaseHelper.signOut();
     WidgetHelper.updateRemainingBudgetWidget();
-    Get.find<HomeController>().currentIndex.value = 0;
-    Get.offAllNamed(Routes.ONBOARDING);
+    ref.read(homeProvider).currentIndex = 0;
+    appRouter.pushReplacementNamed(Routes.ONBOARDING);
   }
 
   // ─── About ────────────────────────────────────────────────────────────────
 
   void showAboutAppDialog() {
     HapticFeedback.heavyImpact();
-    AboutSheet.show(version.value);
+    AboutSheet.show(version);
   }
 
   Future<void> loadVersionInfo() async {
     try {
       final info = await PackageInfo.fromPlatform();
-      version.value = info.version;
+      version = info.version;
     } catch (e) {
       debugPrint('Error loading package info: $e');
     } finally {
-      isLoading.value = false;
+      isLoading = false;
+      notifyListeners();
     }
   }
 

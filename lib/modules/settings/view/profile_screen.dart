@@ -1,66 +1,67 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class ProfileScreen extends GetView<ProfileController> {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final prov = ref.watch(profileProvider);
+    final user = prov.currentUser;
+
     return Scaffold(
       backgroundColor: AppColors.black,
       appBar: AppBar(
-        title: Text("Manage Profile", style: boldText(20, color: Colors.white)),
+        title: const Text(
+          "Manage Profile",
+          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: AppColors.black,
         centerTitle: true,
       ),
-      body: Obx(() {
-        final user = controller.currentUser.value;
-        if (user == null) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.brand));
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: CircleAvatar(
-                  radius: 60,
-                  backgroundColor: AppColors.brandDark,
-                  child: Text(
-                    controller.initials,
-                    style: customText(48, FontWeight.w800, color: AppColors.brand),
+      body: user == null
+          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: CircleAvatar(
+                      radius: 60,
+                      backgroundColor: AppColors.brandDark,
+                      child: Text(
+                        prov.initials,
+                        style: customText(48, FontWeight.w800, color: AppColors.brand),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 48),
+                  const SizedBox(height: 48),
 
-              buildProfileField(
-                label: "Name",
-                value: user.name.isNotEmpty ? user.name : "Unknown",
-                icon: HugeIcons.strokeRoundedUserCircle,
-              ),
+                  buildProfileField(
+                    label: "Name",
+                    value: user.name.isNotEmpty ? user.name : "Unknown",
+                    icon: HugeIcons.strokeRoundedUserCircle,
+                  ),
 
-              buildProfileField(
-                label: "Email",
-                value: user.email.isNotEmpty ? user.email : "Unknown",
-                icon: HugeIcons.strokeRoundedMail02,
-              ),
+                  buildProfileField(
+                    label: "Email",
+                    value: user.email.isNotEmpty ? user.email : "Unknown",
+                    icon: HugeIcons.strokeRoundedMail02,
+                  ),
 
-              buildProfileField(
-                label: "Phone Number",
-                value: user.phone.isNotEmpty ? user.phone : "Add Phone Number",
-                icon: HugeIcons.strokeRoundedCall02,
-                showEdit: true,
-                onEdit: controller.changePhone,
-                valueColor: user.phone.isEmpty ? AppColors.grey : AppColors.white,
-              ),
+                  buildProfileField(
+                    label: "Phone Number",
+                    value: user.phone.isNotEmpty ? user.phone : "Add Phone Number",
+                    icon: HugeIcons.strokeRoundedCall02,
+                    showEdit: true,
+                    onEdit: prov.changePhone,
+                    valueColor: user.phone.isEmpty ? AppColors.grey : AppColors.white,
+                  ),
 
-              buildDeleteAccountButton(),
-            ],
-          ),
-        );
-      }),
+                  buildDeleteAccountButton(prov),
+                ],
+              ),
+            ),
     );
   }
 
@@ -95,7 +96,11 @@ class ProfileScreen extends GetView<ProfileController> {
           ),
           if (showEdit)
             IconButton(
-              icon: HugeIcon(icon: HugeIcons.strokeRoundedEdit04, color: AppColors.brand, size: 20),
+              icon: const HugeIcon(
+                icon: HugeIcons.strokeRoundedEdit04,
+                color: AppColors.brand,
+                size: 20,
+              ),
               onPressed: onEdit,
             ),
         ],
@@ -103,9 +108,9 @@ class ProfileScreen extends GetView<ProfileController> {
     );
   }
 
-  Widget buildDeleteAccountButton() {
+  Widget buildDeleteAccountButton(ProfileProvider prov) {
     return GestureDetector(
-      onTap: controller.handleDeleteAccount,
+      onTap: prov.handleDeleteAccount,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),

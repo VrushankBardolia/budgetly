@@ -1,24 +1,20 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class ProfileController extends GetxController {
-  // ─── Reactive State ───────────────────────────────────────────────────────
-  final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
+class ProfileProvider extends ChangeNotifier {
+  final Ref ref;
 
-  @override
-  void onInit() {
-    super.onInit();
-    // Initialize with the data from SettingController or PreferenceHelper
-    if (Get.isRegistered<SettingController>()) {
-      currentUser.value = Get.find<SettingController>().currentUser.value;
-    } else {
-      currentUser.value = PreferenceHelper.user;
-    }
+  // ─── State ───────────────────────────────────────────────────────
+  UserModel? currentUser;
+
+  ProfileProvider(this.ref) {
+    // Initialize with the data from SettingProvider or PreferenceHelper
+    currentUser = ref.read(settingProvider).currentUser ?? PreferenceHelper.user;
   }
 
   // ─── Computed Getters ─────────────────────────────────────────────────────
 
   String get initials {
-    final name = currentUser.value?.name ?? '';
+    final name = currentUser?.name ?? '';
     if (name.isEmpty) return 'U';
     final parts = name.trim().split(' ');
     if (parts.length > 1) {
@@ -31,17 +27,15 @@ class ProfileController extends GetxController {
 
   void changePhone() {
     HapticFeedback.heavyImpact();
-    final controller = TextEditingController(text: currentUser.value?.phone);
-    Get.bottomSheet(
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+    final controller = TextEditingController(text: currentUser?.phone);
+    bottomSheet(
       SafeArea(
         child: Padding(
           padding: EdgeInsets.fromLTRB(
             24,
             24,
             24,
-            MediaQuery.of(Get.context!).viewInsets.bottom + 24,
+            MediaQuery.of(appContext!).viewInsets.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -71,7 +65,7 @@ class ProfileController extends GetxController {
                 width: double.infinity,
                 child: Button(
                   onClick: () {
-                    Get.back(); // Dismiss sheet
+                    appRouter.pop(); // Dismiss sheet
                     updatePhone(controller.text.trim());
                   },
                   child: Text('Save', style: semiBoldText(16, color: Colors.white)),
@@ -81,6 +75,8 @@ class ProfileController extends GetxController {
           ),
         ),
       ),
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
     );
   }
 
@@ -96,70 +92,48 @@ class ProfileController extends GetxController {
     }
 
     try {
-      Get.dialog(
+      dialog(
         const Center(child: CircularProgressIndicator(color: AppColors.brand)),
         barrierDismissible: false,
       );
 
       await FirebaseHelper.updateUserPhone(user.email!, phone);
-      Get.back(); // close loading
+      appRouter.pop(); // close loading
 
-      if (currentUser.value != null) {
-        final updatedUserModel = currentUser.value!.copyWith(phone: phone);
-        currentUser.value = updatedUserModel;
+      if (currentUser != null) {
+        final updatedUserModel = currentUser!.copyWith(phone: phone);
+        currentUser = updatedUserModel;
         PreferenceHelper.user = updatedUserModel;
 
-        // Sync with SettingController
-        if (Get.isRegistered<SettingController>()) {
-          Get.find<SettingController>().currentUser.value = updatedUserModel;
-        }
+        // Sync with SettingProvider
+        ref.read(settingProvider).currentUser = updatedUserModel;
+        ref.read(settingProvider).loadUserData(); // Reload/update settings
 
-        Get.snackbar(
-          'Success',
-          'Phone number updated successfully!',
-          backgroundColor: AppColors.success,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-        );
+        successSnackbar('Phone number updated successfully!');
       }
     } catch (e) {
-      Get.back(); // close loading
-      Get.snackbar(
-        'Error',
-        'Failed to update phone number.',
-        backgroundColor: AppColors.error,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-      );
+      appRouter.pop(); // close loading
+      errorSnackbar('Failed to update phone number.');
     }
+    notifyListeners();
   }
 
-  void handleDeleteAccount() {
-    Get.dialog(
-      AlertDialog(
-        title: Text('Delete Account'),
-        content: Text(
-          'Are you sure you want to delete your account? You will lose your all data permanently.',
-        ),
-        actions: [
-          TextButton(onPressed: Get.back, child: Text('Cancel')),
-          TextButton(
-            onPressed: () {
-              Get.back();
-              deleteAccount();
-            },
-            child: Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+  void handleDeleteAccount() async {
+    final confirmed = await confirmationDialog(
+      title: 'Delete Account',
+      message:
+          'Are you sure you want to delete your account? You will lose all your data permanently.',
+      confirmText: 'Delete',
+      isDestructive: true,
     );
+    if (confirmed) {
+      deleteAccount();
+    }
   }
 
   void deleteAccount() async {
     try {
-      Get.dialog(
+      dialog(
         const Center(child: CircularProgressIndicator(color: AppColors.brand)),
         barrierDismissible: false,
       );
@@ -170,20 +144,13 @@ class ProfileController extends GetxController {
 
       await PreferenceHelper.clearAll();
 
-      Get.find<HomeController>().currentIndex.value = 0;
+      ref.read(homeProvider).currentIndex = 0;
 
-      Get.back();
-      Get.offAllNamed(Routes.ONBOARDING);
+      appRouter.pop();
+      appRouter.pushReplacementNamed(Routes.ONBOARDING);
     } catch (e) {
-      Get.back();
-      Get.snackbar(
-        'Error',
-        'Failed to delete account.',
-        backgroundColor: AppColors.error,
-        colorText: AppColors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-      );
+      appRouter.pop();
+      errorSnackbar('Failed to delete account.');
     }
   }
 }

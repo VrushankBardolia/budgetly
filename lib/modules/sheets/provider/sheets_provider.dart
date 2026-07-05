@@ -1,16 +1,14 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class SheetsController extends GetxController {
-  // ─── Reactive State ───────────────────────────────────────────────────────
-  final RxList<Sheet> sheets = <Sheet>[].obs;
-  final RxMap<String, double> sheetBalances = <String, double>{}.obs;
-  final RxBool isLoading = true.obs;
+class SheetsProvider extends ChangeNotifier {
+  final Ref ref;
 
-  // ─── Lifecycle ────────────────────────────────────────────────────────────
+  // ─── State ───────────────────────────────────────────────────────
+  List<Sheet> sheets = [];
+  Map<String, double> sheetBalances = {};
+  bool isLoading = true;
 
-  @override
-  void onInit() {
-    super.onInit();
+  SheetsProvider(this.ref) {
     loadSheets();
   }
 
@@ -20,18 +18,25 @@ class SheetsController extends GetxController {
     final user = FirebaseHelper.currentUser;
     if (user == null) return;
 
-    isRefresh ? null : isLoading.value = true;
+    if (!isRefresh) {
+      isLoading = true;
+      notifyListeners();
+    }
     try {
       final result = await FirebaseHelper.getSheets();
-      sheets.assignAll(result);
+      sheets = result;
       await _fetchBalance();
     } finally {
-      isRefresh ? null : isLoading.value = false;
+      if (!isRefresh) {
+        isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
   Future<void> _fetchBalance() async {
     try {
+      final newBalances = <String, double>{};
       for (var sheet in sheets) {
         double balance = 0;
         for (var record in sheet.records) {
@@ -41,14 +46,18 @@ class SheetsController extends GetxController {
             balance -= record.amount;
           }
         }
-        sheetBalances[sheet.id] = balance;
+        newBalances[sheet.id] = balance;
       }
+      sheetBalances = newBalances;
     } catch (e) {
       debugPrint(e.toString());
+      final newBalances = <String, double>{};
       for (var sheet in sheets) {
-        sheetBalances[sheet.id] = 0.0;
+        newBalances[sheet.id] = 0.0;
       }
+      sheetBalances = newBalances;
     }
+    notifyListeners();
   }
 
   // ─── Create ───────────────────────────────────────────────────────────────
@@ -57,7 +66,7 @@ class SheetsController extends GetxController {
     final nameCtrl = TextEditingController();
     int selectedYear = DateTime.now().year;
 
-    await Get.dialog(
+    await dialog(
       StatefulBuilder(
         builder: (context, setState) => AlertDialog(
           backgroundColor: AppColors.surface,
@@ -85,7 +94,7 @@ class SheetsController extends GetxController {
           ),
           actions: [
             TextButton(
-              onPressed: Get.back,
+              onPressed: appRouter.pop,
               child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
             ),
             ElevatedButton(
@@ -93,7 +102,7 @@ class SheetsController extends GetxController {
                 final name = nameCtrl.text.trim();
                 if (name.isEmpty) return;
                 await _createSheet(name, selectedYear);
-                Get.back();
+                appRouter.pop();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brand,
@@ -129,7 +138,7 @@ class SheetsController extends GetxController {
   Future<void> showRenameDialog(Sheet sheet) async {
     final nameCtrl = TextEditingController(text: sheet.name);
 
-    await Get.dialog(
+    await dialog(
       AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -154,7 +163,7 @@ class SheetsController extends GetxController {
         ),
         actions: [
           TextButton(
-            onPressed: Get.back,
+            onPressed: appRouter.pop,
             child: Text('Cancel', style: regularText(14, color: AppColors.grey)),
           ),
           ElevatedButton(
@@ -166,7 +175,7 @@ class SheetsController extends GetxController {
                 'updatedAt': Timestamp.fromDate(DateTime.now()),
               });
               await loadSheets(isRefresh: true);
-              Get.back();
+              appRouter.pop();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.brand,
@@ -182,29 +191,14 @@ class SheetsController extends GetxController {
   // ─── Delete ───────────────────────────────────────────────────────────────
 
   Future<void> showDeleteDialog(Sheet sheet) async {
-    final confirmed = await Get.dialog<bool>(
-      AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Delete Sheet', style: regularText(14)),
-        content: Text(
-          'Delete "${sheet.name}"?\nAll records inside will be permanently removed.',
-          style: regularText(14, color: AppColors.grey),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: Text('Cancel', style: regularText(14, color: AppColors.grey)),
-          ),
-          TextButton(
-            onPressed: () => Get.back(result: true),
-            child: Text('Delete', style: boldText(14, color: AppColors.error)),
-          ),
-        ],
-      ),
+    final confirmed = await confirmationDialog(
+      title: 'Delete Sheet',
+      message: 'Delete "${sheet.name}"?\nAll records inside will be permanently removed.',
+      confirmText: 'Delete',
+      isDestructive: true,
     );
 
-    if (confirmed == true) {
+    if (confirmed) {
       await FirebaseHelper.deleteSheet(sheet.id);
       await loadSheets(isRefresh: true);
     }

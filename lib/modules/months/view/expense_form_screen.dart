@@ -1,55 +1,51 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class ExpenseFormScreen extends GetView<ExpenseFormController> {
+class ExpenseFormScreen extends ConsumerWidget {
   const ExpenseFormScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map? ?? {};
+    final prov = ref.watch(expenseFormProvider(args));
+
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: Text(controller.title, style: boldText(20))),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return buildShimmerLoader();
-        }
+      appBar: AppBar(centerTitle: true, title: Text(prov.title, style: boldText(20))),
+      body: prov.isLoading
+          ? buildShimmerLoader()
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: prov.formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    buildSectionLabel('Date'),
+                    DatePickerField(
+                      formattedDate: prov.formattedSelectedDate,
+                      onTap: prov.pickDate,
+                    ),
+                    const SizedBox(height: 16),
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: controller.formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                buildSectionLabel('Date'),
-                DatePickerField(
-                  formattedDate: controller.formattedSelectedDate,
-                  onTap: controller.pickDate,
+                    buildSectionLabel('Amount'),
+                    AmountField(controller: prov.priceController, validator: prov.validatePrice),
+                    const SizedBox(height: 16),
+
+                    buildSectionLabel('Category'),
+                    buildCategoryDropdown(prov),
+                    const SizedBox(height: 16),
+
+                    buildSectionLabel('Details'),
+                    DetailField(
+                      controller: prov.detailController,
+                      hintText: 'Add a note (optional)',
+                    ),
+                    const SizedBox(height: 40),
+
+                    buildSubmitButton(prov),
+                  ],
                 ),
-                const SizedBox(height: 16),
-
-                buildSectionLabel('Amount'),
-                AmountField(
-                  controller: controller.priceController,
-                  validator: controller.validatePrice,
-                ),
-                const SizedBox(height: 16),
-
-                buildSectionLabel('Category'),
-                buildCategoryDropdown(),
-                const SizedBox(height: 16),
-
-                buildSectionLabel('Details'),
-                DetailField(
-                  controller: controller.detailController,
-                  hintText: 'Add a note (optional)',
-                ),
-                const SizedBox(height: 40),
-
-                buildSubmitButton(),
-              ],
+              ),
             ),
-          ),
-        );
-      }),
     );
   }
 
@@ -60,64 +56,58 @@ class ExpenseFormScreen extends GetView<ExpenseFormController> {
     );
   }
 
-  Widget buildCategoryDropdown() {
-    return Obx(() {
-      if (controller.categories.isEmpty) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            'No categories found. Please add categories first.',
-            style: regularText(14, color: Colors.grey),
+  Widget buildCategoryDropdown(ExpenseFormProvider prov) {
+    if (prov.categories.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          'No categories found. Please add categories first.',
+          style: regularText(14, color: Colors.grey),
+        ),
+      );
+    }
+
+    return DropdownButtonFormField<String>(
+      initialValue: prov.selectedCategoryId.isEmpty ? null : prov.selectedCategoryId,
+      decoration: const InputDecoration(
+        hintText: 'Select a category',
+        border: OutlineInputBorder(borderSide: BorderSide.none),
+      ),
+      dropdownColor: AppColors.surfaceLight,
+      items: prov.categories.map((category) {
+        return DropdownMenuItem(
+          value: category.id,
+          child: Row(
+            children: [
+              Text(category.emoji, style: regularText(16)),
+              const SizedBox(width: 12),
+              Text(category.name, style: regularText(14)),
+            ],
           ),
         );
-      }
-
-      return DropdownButtonFormField<String>(
-        initialValue: controller.selectedCategoryId.value.isEmpty
-            ? null
-            : controller.selectedCategoryId.value,
-        decoration: InputDecoration(
-          hintText: 'Select a category',
-          border: OutlineInputBorder(borderSide: BorderSide.none),
-        ),
-        dropdownColor: AppColors.surfaceLight,
-        items: controller.categories.map((category) {
-          return DropdownMenuItem(
-            value: category.id,
-            child: Row(
-              children: [
-                Text(category.emoji, style: regularText(16)),
-                const SizedBox(width: 12),
-                Text(category.name, style: regularText(14)),
-              ],
-            ),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) controller.setCategory(value);
-        },
-        validator: controller.validateCategory,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
-      );
-    });
+      }).toList(),
+      onChanged: (value) {
+        if (value != null) prov.setCategory(value);
+      },
+      validator: prov.validateCategory,
+      autovalidateMode: AutovalidateMode.onUserInteraction,
+    );
   }
 
-  Widget buildSubmitButton() {
-    return Obx(
-      () => Button(
-        onClick: controller.isSubmitting.value ? null : controller.submit,
-        child: controller.isSubmitting.value
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
-            : Text(controller.submitLabel, style: semiBoldText(16)),
-      ),
+  Widget buildSubmitButton(ExpenseFormProvider prov) {
+    return Button(
+      onClick: prov.isSubmitting ? null : prov.submit,
+      child: prov.isSubmitting
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+            )
+          : Text(prov.submitLabel, style: semiBoldText(16)),
     );
   }
 

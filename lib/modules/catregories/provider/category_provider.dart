@@ -1,23 +1,21 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class CategoryController extends GetxController {
-  final RxList<Category> _categories = <Category>[].obs;
-  final RxMap<String, double> _categoryTotals = <String, double>{}.obs;
-  final RxMap<String, int> _categoryTransactionCounts = <String, int>{}.obs;
+class CategoryProvider extends ChangeNotifier {
+  final Ref ref;
 
-  final RxBool _isLoading = true.obs;
+  List<Category> _categories = [];
+  Map<String, double> _categoryTotals = {};
+  Map<String, int> _categoryTransactionCounts = {};
+  bool _isLoading = true;
 
   List<Category> get categories => _categories;
   int get categoryCount => _categories.length;
-  bool get isLoading => _isLoading.value;
+  bool get isLoading => _isLoading;
+  Map<String, double> get categoryTotals => _categoryTotals;
 
-  @override
-  void onInit() {
-    super.onInit();
+  CategoryProvider(this.ref) {
     loadCategories();
   }
-
-  Map<String, double> get categoryTotals => _categoryTotals;
 
   List<Category> get sortedCategories {
     return _categories.toList()..sort((a, b) {
@@ -41,10 +39,13 @@ class CategoryController extends GetxController {
     final user = FirebaseHelper.currentUser;
     if (user == null) return;
 
-    if (isRefresh) _isLoading.value = true;
+    if (isRefresh) {
+      _isLoading = true;
+      notifyListeners();
+    }
     final result = await FirebaseHelper.getCategories();
     final categoriesList = result;
-    _categories.assignAll(result);
+    _categories = result;
 
     final totalsMap = <String, double>{};
     final countsMap = <String, int>{};
@@ -58,10 +59,13 @@ class CategoryController extends GetxController {
       }),
     );
 
-    _categoryTotals.assignAll(totalsMap);
-    _categoryTransactionCounts.assignAll(countsMap);
+    _categoryTotals = totalsMap;
+    _categoryTransactionCounts = countsMap;
 
-    if (isRefresh) _isLoading.value = false;
+    if (isRefresh) {
+      _isLoading = false;
+    }
+    notifyListeners();
   }
 
   Future<void> addCategory(BuildContext context) async {
@@ -94,7 +98,7 @@ class CategoryController extends GetxController {
         ),
         actions: [
           TextButton(
-            onPressed: Get.back,
+            onPressed: appRouter.pop,
             child: Text('Cancel', style: regularText(14, color: Colors.grey)),
           ),
           ElevatedButton(
@@ -103,16 +107,16 @@ class CategoryController extends GetxController {
                 try {
                   await FirebaseHelper.addCategory(nameController.text, emojiController.text);
                   await loadCategories();
-                  if (dialogContext.mounted) Get.back();
+                  if (dialogContext.mounted) appRouter.pop();
                 } catch (e) {
                   if (dialogContext.mounted) {
-                    Get.back();
+                    appRouter.pop();
                     showDialog(
                       context: dialogContext,
                       builder: (context) => AlertDialog(
-                        title: Text("Error"),
+                        title: const Text("Error"),
                         content: Text(e.toString()),
-                        actions: [TextButton(onPressed: Get.back, child: Text("Okay"))],
+                        actions: [TextButton(onPressed: appRouter.pop, child: const Text("Okay"))],
                       ),
                     );
                   }
@@ -133,7 +137,7 @@ class CategoryController extends GetxController {
   Future<void> editCategory(Category category) async {
     final nameController = TextEditingController(text: category.name);
     final emojiController = TextEditingController(text: category.emoji);
-    Get.dialog(
+    dialog(
       AlertDialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -158,7 +162,7 @@ class CategoryController extends GetxController {
         ),
         actions: [
           TextButton(
-            onPressed: Get.back,
+            onPressed: appRouter.pop,
             child: Text('Cancel', style: regularText(14, color: Colors.grey)),
           ),
           ElevatedButton(
@@ -171,7 +175,7 @@ class CategoryController extends GetxController {
                     emoji: emojiController.text.trim(),
                     userId: category.userId,
                   );
-                  Get.back();
+                  appRouter.pop();
                   await FirebaseHelper.updateCategory(updatedCategory);
                   await loadCategories(isRefresh: false);
                 } catch (e) {
@@ -191,37 +195,18 @@ class CategoryController extends GetxController {
   }
 
   Future<void> deleteCategory(BuildContext context, String id, String name) async {
-    await showDialog<bool>(
+    final confirmed = await confirmationDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('Delete Category', style: regularText(14, color: Colors.white)),
-        content: Text(
-          'Are you sure you want to delete "$name"?\nThis cannot be undone.',
-          style: regularText(14, color: Colors.grey),
-        ),
-        actions: [
-          TextButton(
-            onPressed: Get.back,
-            child: Text('Cancel', style: regularText(14, color: Colors.grey)),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await FirebaseHelper.deleteCategory(id);
-              await loadCategories();
-              Get.back();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: Text('Delete', style: regularText(14, color: Colors.white)),
-          ),
-        ],
-      ),
+      title: 'Delete Category',
+      message: 'Are you sure you want to delete "$name"?\nThis cannot be undone.',
+      confirmText: 'Delete',
+      isDestructive: true,
     );
+
+    if (confirmed) {
+      await FirebaseHelper.deleteCategory(id);
+      await loadCategories();
+    }
   }
 
   // MARK: Helpers

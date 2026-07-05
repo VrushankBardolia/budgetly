@@ -1,15 +1,14 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:intl/intl.dart';
 
-class CategoryDetailsController extends GetxController {
+class CategoryDetailsProvider extends ChangeNotifier {
+  final Ref ref;
   late Category category;
-  RxList<Expense> expenses = <Expense>[].obs;
-  RxBool isLoading = true.obs;
+  List<Expense> expenses = [];
+  bool isLoading = true;
 
-  @override
-  void onInit() {
-    super.onInit();
-    category = Get.arguments['category'] as Category;
+  CategoryDetailsProvider(this.ref, Map args) {
+    category = args['category'] as Category;
     loadExpenses();
   }
 
@@ -28,9 +27,11 @@ class CategoryDetailsController extends GetxController {
   }
 
   Future<void> loadExpenses() async {
-    isLoading.value = true;
+    isLoading = true;
+    notifyListeners();
     final result = await FirebaseHelper.getExpensesByCategory(category.id);
-    expenses.assignAll(result);
-    isLoading.value = false;
+    expenses = result;
+    isLoading = false;
+    notifyListeners();
   }
 }

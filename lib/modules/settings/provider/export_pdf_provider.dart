@@ -1,5 +1,4 @@
 import 'package:budgetly/core/import_to_export.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 class MonthInfo {
@@ -11,30 +10,31 @@ class MonthInfo {
   MonthInfo({required this.year, required this.month, required this.label, required this.expenses});
 }
 
-class ExportPdfController extends GetxController {
-  final RxBool isLoading = false.obs;
-  final RxBool isExporting = false.obs;
-  final RxList<MonthInfo> months = <MonthInfo>[].obs;
-  final RxList<Category> categories = <Category>[].obs;
+class ExportPdfProvider extends ChangeNotifier {
+  final Ref ref;
+
+  bool isLoading = false;
+  bool isExporting = false;
+  List<MonthInfo> months = [];
+  List<Category> categories = [];
 
   // Toggle states for PDF layout configurations
-  final RxBool includeCategory = true.obs;
-  final RxBool includeTxList = true.obs;
+  bool includeCategory = true;
+  bool includeTxList = true;
 
   final NumberFormat formatter = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
 
-  @override
-  void onInit() {
-    super.onInit();
+  ExportPdfProvider(this.ref) {
     loadMonths();
   }
 
   Future<void> loadMonths() async {
-    isLoading.value = true;
+    isLoading = true;
+    notifyListeners();
     try {
       final allExpenses = await FirebaseHelper.getYearsWithExpenses();
       final fetchedCategories = await FirebaseHelper.getCategories();
-      categories.assignAll(fetchedCategories);
+      categories = fetchedCategories;
 
       // Group expenses by year and month
       final Map<String, List<Expense>> grouped = {};
@@ -64,93 +64,82 @@ class ExportPdfController extends GetxController {
         return b.month.compareTo(a.month);
       });
 
-      months.assignAll(list);
+      months = list;
     } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to load months data.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error.withValues(alpha: 0.1),
-        colorText: AppColors.error,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 14,
-      );
+      errorSnackbar('Failed to load months data.');
     } finally {
-      isLoading.value = false;
+      isLoading = false;
+      notifyListeners();
     }
   }
 
   void exportToPdf(MonthInfo monthInfo) {
     HapticFeedback.lightImpact();
 
-    Get.bottomSheet(
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Export PDF', style: boldText(20)),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white70),
-                    onPressed: Get.back,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Customize the report PDF for ${monthInfo.label}. You can choose which sections to include.',
-                style: regularText(14, color: AppColors.grey),
-              ),
-              const SizedBox(height: 24),
-              Obx(
-                () => _buildToggleRow(
+    bottomSheet(
+      StatefulBuilder(
+        builder: (context, setBottomSheetState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Export PDF', style: boldText(20)),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.white70),
+                      onPressed: appRouter.pop,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Customize the report PDF for ${monthInfo.label}. You can choose which sections to include.',
+                  style: regularText(14, color: AppColors.grey),
+                ),
+                const SizedBox(height: 24),
+                _buildToggleRow(
                   title: 'Category Breakdown',
                   subtitle: 'Summary and progress bar of category spending',
                   icon: HugeIcons.strokeRoundedBarChartHorizontal,
-                  value: includeCategory.value,
-                  onChanged: (val) => includeCategory.value = val,
+                  value: includeCategory,
+                  onChanged: (val) {
+                    setBottomSheetState(() {
+                      includeCategory = val;
+                    });
+                    notifyListeners();
+                  },
                 ),
-              ),
-              const SizedBox(height: 16),
-              Obx(
-                () => _buildToggleRow(
+                const SizedBox(height: 16),
+                _buildToggleRow(
                   title: 'Transaction List',
                   subtitle: 'Detailed list of all expenses with date and amount',
                   icon: HugeIcons.strokeRoundedLeftToRightListDash,
-                  value: includeTxList.value,
-                  onChanged: (val) => includeTxList.value = val,
+                  value: includeTxList,
+                  onChanged: (val) {
+                    setBottomSheetState(() {
+                      includeTxList = val;
+                    });
+                    notifyListeners();
+                  },
                 ),
-              ),
-              const SizedBox(height: 32),
-              Button(
-                onClick: () {
-                  if (!includeCategory.value && !includeTxList.value) {
-                    Get.snackbar(
-                      'Select Options',
-                      'Please select at least one option',
-                      snackPosition: SnackPosition.BOTTOM,
-                      backgroundColor: AppColors.error.withValues(alpha: 0.1),
-                      colorText: AppColors.error,
-                      icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AppColors.error),
-                    );
-                    return;
-                  }
-                  Get.back();
-                  _generatePdf(monthInfo);
-                },
-                child: Text('Generate Report', style: semiBoldText(16, color: Colors.white)),
-              ),
-            ],
+                const SizedBox(height: 32),
+                Button(
+                  onClick: () {
+                    if (!includeCategory && !includeTxList) {
+                      errorSnackbar('Please select at least one option');
+                      return;
+                    }
+                    appRouter.pop();
+                    _generatePdf(monthInfo);
+                  },
+                  child: Text('Generate Report', style: semiBoldText(16, color: Colors.white)),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -196,10 +185,11 @@ class ExportPdfController extends GetxController {
   }
 
   Future<void> _generatePdf(MonthInfo monthInfo) async {
-    if (isExporting.value) return;
-    isExporting.value = true;
+    if (isExporting) return;
+    isExporting = true;
+    notifyListeners();
 
-    Get.dialog(
+    dialog(
       Dialog(
         backgroundColor: AppColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -235,34 +225,26 @@ class ExportPdfController extends GetxController {
         userName: user?.displayName ?? user?.email ?? 'User',
         budget: budgetVal,
         categoryNames: {for (final cat in categories) cat.id: cat.name},
-        includeCategoryBreakdown: includeCategory.value,
-        includeTransactions: includeTxList.value,
+        includeCategoryBreakdown: includeCategory,
+        includeTransactions: includeTxList,
       );
 
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
+      if (isDialogOpen) {
+        appRouter.pop();
       }
 
-      includeCategory.value = true;
-      includeTxList.value = true;
+      includeCategory = true;
+      includeTxList = true;
 
       await OpenFilex.open(filePath);
     } catch (e) {
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
+      if (isDialogOpen) {
+        appRouter.pop();
       }
-      Get.snackbar(
-        'Export Failed',
-        'Something went wrong. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.error.withValues(alpha: 0.1),
-        colorText: AppColors.error,
-        icon: const Icon(CupertinoIcons.xmark_circle_fill, color: AppColors.error),
-        margin: const EdgeInsets.all(16),
-        borderRadius: 14,
-      );
+      errorSnackbar('Export Failed');
     } finally {
-      isExporting.value = false;
+      isExporting = false;
+      notifyListeners();
     }
   }
 }
