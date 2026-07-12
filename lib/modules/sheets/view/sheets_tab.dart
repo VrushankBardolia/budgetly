@@ -7,28 +7,44 @@ class SheetsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prov = ref.watch(sheetsProvider);
+    final stateAsync = ref.watch(sheetsStateProvider);
+    final controller = ref.read(sheetsControllerProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text('Sheets', style: boldText(24))),
-      body: prov.isLoading
-          ? buildShimmerLoader()
-          : prov.sheets.isEmpty
-          ? buildEmptyState()
-          : ListView.separated(
-              padding: const EdgeInsets.all(16),
-              physics: const BouncingScrollPhysics(),
-              itemCount: prov.sheets.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (_, index) => buildSheetCard(context, prov, prov.sheets[index]),
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: prov.showCreateSheetDialog,
-        backgroundColor: AppColors.brandDark,
-        label: Text('New Sheet', style: regularText(14)),
-        icon: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+    return stateAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(title: Text('Sheets', style: serifText(20))),
+        body: buildShimmerLoader(),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      error: (err, stack) => Scaffold(
+        appBar: AppBar(title: Text('Sheets', style: serifText(20))),
+        body: Center(child: Text('Error loading sheets: $err')),
+      ),
+      data: (state) => Scaffold(
+        appBar: AppBar(title: Text('Sheets', style: serifText(20))),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(sheetsListProvider);
+            ref.invalidate(totalSheetsBalanceProvider);
+          },
+          color: AppColors.brand,
+          child: state.sheets.isEmpty
+              ? buildEmptyState()
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: state.sheets.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (_, index) => buildSheetCard(context, controller, state, state.sheets[index]),
+                ),
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: controller.showCreateSheetDialog,
+          backgroundColor: AppColors.brandDark,
+          label: Text('New Sheet', style: regularText(14, color: AppColors.surface)),
+          icon: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
     );
   }
 
@@ -86,7 +102,7 @@ class SheetsTab extends ConsumerWidget {
     );
   }
 
-  Widget buildSheetCard(BuildContext context, SheetsProvider prov, Sheet sheet) {
+  Widget buildSheetCard(BuildContext context, SheetsController controller, SheetsState state, Sheet sheet) {
     return GestureDetector(
       onTap: () => appRouter.pushNamed(
         Routes.SHEET_DETAIL,
@@ -101,13 +117,13 @@ class SheetsTab extends ConsumerWidget {
           ),
           items: [
             PullDownMenuItem(
-              onTap: () => prov.showRenameDialog(sheet),
+              onTap: () => controller.showRenameDialog(sheet),
               title: "Rename",
               icon: CupertinoIcons.pen,
               itemTheme: PullDownMenuItemTheme(textStyle: mediumText(14)),
             ),
             PullDownMenuItem(
-              onTap: () => prov.showDeleteDialog(sheet),
+              onTap: () => controller.showDeleteDialog(sheet),
               title: "Delete",
               icon: CupertinoIcons.delete,
               isDestructive: true,
@@ -123,31 +139,18 @@ class SheetsTab extends ConsumerWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.borderColor),
-          gradient: AppColors.mainCardGradient,
+          color: AppColors.surface,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.brand.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.brand.withValues(alpha: 0.1)),
-                  ),
-                  child: HugeIcon(
-                    icon: HugeIcons.strokeRoundedFile02,
-                    color: AppColors.brand,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
+                HugeIcon(icon: HugeIcons.strokeRoundedFile02, color: AppColors.brand, size: 20),
+                const SizedBox(width: 8),
 
                 // Sheet Name
                 Expanded(
@@ -158,26 +161,24 @@ class SheetsTab extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.brand.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.brand.withValues(alpha: 0.15)),
-                  ),
-                  child: Text("${sheet.year}", style: mediumText(12, color: AppColors.brand)),
+                Text("${sheet.year}", style: mediumText(14, color: AppColors.brand)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              spacing: 8,
+              children: [
+                _buildBalanceText(state.sheetBalances[sheet.id], sheet),
+                Text(
+                  "TOTAL\nBALANCE",
+                  style: mediumText(
+                    11,
+                    color: AppColors.grey,
+                    height: 1,
+                  ).copyWith(letterSpacing: 1.2),
                 ),
               ],
             ),
-
-            const SizedBox(height: 12),
-            Text(
-              "TOTAL BALANCE",
-              style: mediumText(11, color: AppColors.grey).copyWith(letterSpacing: 1.2),
-            ),
-            const SizedBox(height: 4),
-            _buildBalanceText(prov.sheetBalances[sheet.id], sheet),
           ],
         ),
       ),
@@ -186,18 +187,17 @@ class SheetsTab extends ConsumerWidget {
 
   Widget _buildBalanceText(double? balance, Sheet sheet) {
     final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
-
     if (balance == null) {
       return Text(
         formatter.format(0),
-        style: boldText(32, color: AppColors.grey).copyWith(letterSpacing: -1),
+        style: boldText(28, color: AppColors.grey).copyWith(letterSpacing: -1),
       );
     }
 
     final color = balance >= 0 ? AppColors.success : AppColors.error;
     return Text(
       formatter.format(balance),
-      style: boldText(32, color: color).copyWith(letterSpacing: -1),
+      style: boldText(28, color: color, height: 1).copyWith(letterSpacing: -1),
     );
   }
 

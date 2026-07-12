@@ -27,10 +27,11 @@ class OnboardingProvider extends ChangeNotifier {
   }
 
   void _loadDataForControllers() {
-    ref.read(dashboardProvider).loadData();
-    ref.read(categoryProvider).loadCategories();
-    ref.read(sheetsProvider).loadSheets();
-    ref.read(settingProvider).loadUserData();
+    ref.invalidate(availableYearsProvider);
+    ref.invalidate(categoriesProvider);
+    ref.invalidate(totalSheetsBalanceProvider);
+    ref.invalidate(sheetsListProvider);
+    ref.invalidate(currentUserProvider);
   }
 
   Future<void> _fetchAndStoreUserData() async {
@@ -38,12 +39,9 @@ class OnboardingProvider extends ChangeNotifier {
       final user = FirebaseHelper.currentUser;
       if (user == null) return;
 
-      final doc = await FirebaseHelper.getUserData(user.email);
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        data['uid'] = user.uid;
-
-        final userModel = UserModel.fromJson(data);
+      final userRepo = ref.read(userRepositoryProvider);
+      final userModel = await userRepo.getUserData(user.email);
+      if (userModel != null) {
         PreferenceHelper.user = userModel;
 
         // Update the variable so the UI can display the data
@@ -76,17 +74,18 @@ class OnboardingProvider extends ChangeNotifier {
         return;
       }
 
-      final doc = await FirebaseHelper.getUserData(user.email);
-      if (!doc.exists) {
+      final userRepo = ref.read(userRepositoryProvider);
+      final userModel = await userRepo.getUserData(user.email);
+      if (userModel == null) {
         final userData = UserInputModel(
           name: user.displayName ?? 'User',
           email: user.email!,
           lastLoginAt: DateTime.now(),
           createdAt: DateTime.now(),
         );
-        await FirebaseHelper.saveUserData(user.email!, userData);
+        await userRepo.saveUserData(user.email!, userData);
       } else {
-        await FirebaseHelper.updateUserLastLogin(user.email!);
+        await userRepo.updateUserLastLogin(user.email!);
       }
 
       await _fetchAndStoreUserData();

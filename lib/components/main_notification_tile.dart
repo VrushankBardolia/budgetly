@@ -3,22 +3,18 @@ import 'package:flutter/cupertino.dart';
 
 class MainNotificationTile extends StatelessWidget {
   final IconData icon;
-  final Color iconColor;
   final String title;
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
-  final bool showChevron;
 
   const MainNotificationTile({
     super.key,
     required this.icon,
-    required this.iconColor,
     required this.title,
     required this.subtitle,
     required this.value,
     required this.onChanged,
-    this.showChevron = false,
   });
 
   @override
@@ -28,34 +24,20 @@ class MainNotificationTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: value
-              ? iconColor.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.05),
-        ),
+        border: Border.all(color: AppColors.borderColor),
       ),
       child: Row(
         children: [
           // Icon
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: value
-                  ? iconColor.withValues(alpha: 0.15)
-                  : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 20, color: value ? iconColor : Colors.grey),
-          ),
-          const SizedBox(width: 14),
+          Icon(icon, size: 20, color: AppColors.brand),
+          const SizedBox(width: 12),
 
           // Text
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: semiBoldText(15)),
-                const SizedBox(height: 3),
+                Text(title, style: semiBoldText(16)),
                 Text(subtitle, style: regularText(12, color: Colors.grey)),
               ],
             ),
@@ -63,12 +45,12 @@ class MainNotificationTile extends StatelessWidget {
 
           // Trailing
           Transform.scale(
-            scale: 0.9,
+            scale: 0.8,
             alignment: Alignment.centerRight,
             child: CupertinoSwitch(
               value: value,
               onChanged: onChanged,
-              activeTrackColor: iconColor,
+              activeTrackColor: AppColors.brand,
             ),
           ),
         ],

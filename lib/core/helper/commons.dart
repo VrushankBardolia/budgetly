@@ -1,34 +1,11 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-enum SnackPosition { top, bottom }
-
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
 BuildContext? get appContext => navigatorKey.currentContext;
 
 bool _isDialogOpen = false;
 bool get isDialogOpen => _isDialogOpen;
-
-Object? get arguments {
-  return null;
-}
-
-// Future<T?> toNamed<T>(String routeName, {Object? arguments}) {
-//   return appRouter.push<T>(routeName, extra: arguments);
-// }
-
-// Future<T?> offAllNamed<T>(String routeName, {Object? arguments}) {
-//   appRouter.go(routeName, extra: arguments);
-//   return Future.value(null);
-// }
-
-// void back<T>({T? result}) {
-//   if (appRouter.canPop()) {
-//     appRouter.pop<T>(result);
-//   } else {
-//     navigatorKey.currentState?.pop<T>(result);
-//   }
-// }
 
 Future<void> singleActionDialog(BuildContext context, Widget widget) async {
   return showDialog(context: context, builder: (context) => widget);
@@ -163,7 +140,7 @@ Future<T?> bottomSheet<T>(
   return showModalBottomSheet<T>(
     context: appContext!,
     isScrollControlled: isScrollControlled,
-    backgroundColor: backgroundColor ?? Colors.transparent,
+    backgroundColor: backgroundColor ?? AppColors.surfaceLight,
     shape: shape,
     builder: (context) => widget,
   );

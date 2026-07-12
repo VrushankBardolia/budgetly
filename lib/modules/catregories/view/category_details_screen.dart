@@ -1,5 +1,4 @@
 import 'package:budgetly/core/import_to_export.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 
 class CategoryDetailsScreen extends ConsumerWidget {
@@ -8,16 +7,39 @@ class CategoryDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final args = ModalRoute.of(context)?.settings.arguments as Map? ?? {};
-    final prov = ref.watch(categoryDetailsProvider(args));
+    final category = args['category'] as Category;
+    final stateAsync = ref.watch(categoryDetailsStateProvider(category));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(prov.title, style: boldText(20)), centerTitle: true, elevation: 0),
-      body: prov.isLoading ? const Center(child: CircularProgressIndicator()) : buildList(prov),
+    return stateAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(
+          title: Text("${category.emoji}  ${category.name}", style: serifText(20)),
+          centerTitle: true,
+        ),
+        body: const Center(child: CircularProgressIndicator(color: AppColors.brand)),
+      ),
+      error: (err, stack) => Scaffold(
+        appBar: AppBar(
+          title: Text("${category.emoji}  ${category.name}", style: serifText(20)),
+          centerTitle: true,
+        ),
+        body: Center(child: Text('Error loading details: $err')),
+      ),
+      data: (state) => Scaffold(
+        appBar: AppBar(title: Text(state.title, style: serifText(20)), centerTitle: true),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(categoryExpensesProvider(state.category.id));
+          },
+          color: AppColors.brand,
+          child: buildList(state),
+        ),
+      ),
     );
   }
 
-  Widget buildList(CategoryDetailsProvider prov) {
-    final grouped = prov.groupedExpenses;
+  Widget buildList(CategoryDetailsState state) {
+    final grouped = state.groupedExpenses;
     final keys = grouped.keys.toList();
 
     if (keys.isEmpty) {
@@ -43,32 +65,23 @@ class CategoryDetailsScreen extends ConsumerWidget {
         final monthTotal = monthExpenses.fold(0.0, (total, e) => total + e.price);
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 24),
+          margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: AppColors.borderColor),
+            borderRadius: BorderRadius.circular(16),
+            color: AppColors.surface,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildMonthHeader(month, monthTotal),
-              ...monthExpenses.asMap().entries.map((entry) {
-                final isLast = entry.key == monthExpenses.length - 1;
-                return Column(
-                  children: [
-                    _buildExpenseTile(entry.value),
-                    if (!isLast)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Divider(
-                          height: 1,
-                          thickness: 1,
-                          color: AppColors.borderColor.withValues(alpha: .3),
-                        ),
-                      ),
-                  ],
-                );
-              }),
+              Divider(
+                height: 1,
+                color: AppColors.brand.withValues(alpha: 0.2),
+                indent: 12,
+                endIndent: 12,
+              ),
+              ...monthExpenses.map(_buildExpenseTile),
+              const SizedBox(height: 4),
             ],
           ),
         );
@@ -79,22 +92,11 @@ class CategoryDetailsScreen extends ConsumerWidget {
   Widget _buildMonthHeader(String month, double total) {
     final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        gradient: LinearGradient(
-          colors: [AppColors.brandDark.withValues(alpha: .7), AppColors.black],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          stops: const [0.3, 1],
-        ),
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Icon(CupertinoIcons.calendar, color: AppColors.brand, size: 20),
-          const SizedBox(width: 12),
           Text(month, style: boldText(16, color: AppColors.brand)),
-          const Spacer(),
           Text(formatter.format(total), style: boldText(16, color: AppColors.brand)),
         ],
       ),
@@ -107,26 +109,32 @@ class CategoryDetailsScreen extends ConsumerWidget {
     final formatter = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(8, 4, 12, 4),
       child: Row(
         children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(date, style: boldText(14, color: AppColors.white).copyWith(height: 1.2)),
-              Text(dayName, style: mediumText(10, color: AppColors.grey)),
-            ],
+          SizedBox(
+            width: 32,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(date, style: boldText(14, color: AppColors.textPrimary).copyWith(height: 1.2)),
+                Text(dayName, style: mediumText(10, color: AppColors.textSecondary)),
+              ],
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               expense.detail.isNotEmpty ? expense.detail : 'Expense',
-              style: mediumText(14, color: AppColors.white),
+              style: mediumText(14, color: AppColors.textPrimary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(formatter.format(expense.price), style: mediumText(14, color: AppColors.white)),
+          Text(
+            formatter.format(expense.price),
+            style: mediumText(14, color: AppColors.textSecondary),
+          ),
         ],
       ),
     );

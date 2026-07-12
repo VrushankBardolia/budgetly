@@ -8,7 +8,11 @@ class OnboardingScreen extends ConsumerWidget {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [Color(0xFF02060D), Color(0xFF051021)]),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF02060D), Color(0xFF051021)],
+          ),
         ),
         child: SafeArea(
           child: Column(
@@ -29,7 +33,10 @@ class OnboardingScreen extends ConsumerWidget {
                               opacity: value,
                               child: Container(
                                 padding: EdgeInsets.all(24),
-                                decoration: BoxDecoration(color: AppColors.brandDark, shape: BoxShape.circle),
+                                decoration: BoxDecoration(
+                                  color: AppColors.brandDark,
+                                  shape: BoxShape.circle,
+                                ),
                                 child: Icon(Icons.wallet, size: 120),
                               ),
                             ),
@@ -50,7 +57,12 @@ class OnboardingScreen extends ConsumerWidget {
                         },
                         child: Text(
                           'Welcome to Budgetly',
-                          style: GoogleFonts.staatliches(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white, height: 1),
+                          style: GoogleFonts.staatliches(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            height: 1,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),

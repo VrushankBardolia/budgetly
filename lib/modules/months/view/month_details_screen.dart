@@ -7,145 +7,183 @@ class MonthDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final args = ModalRoute.of(context)?.settings.arguments as Map? ?? {};
-    final prov = ref.watch(monthDetailProvider(args));
+    final stateAsync = ref.watch(monthDetailStateProvider(args));
+    final controller = ref.read(monthDetailControllerProvider(args));
 
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        title: Text(prov.formattedMonth, style: boldText(20)),
-        actions: [
-          IconButton(
-            tooltip: "Export to PDF",
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedPdf02),
-            onPressed: prov.exportToPdf,
+    // Automatically check budget when data finishes loading
+    ref.listen<AsyncValue<MonthDetailState>>(monthDetailStateProvider(args), (previous, next) {
+      next.whenOrNull(
+        data: (state) {
+          if (previous == null || previous.isLoading) {
+            controller.checkBudgetAndShowDialog(state);
+          }
+        },
+      );
+    });
+
+    return stateAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          centerTitle: true,
+          title: const Text('Loading...', style: TextStyle(fontSize: 16)),
+        ),
+        body: _buildShimmerLoader(),
+      ),
+      error: (err, stack) => Scaffold(
+        appBar: AppBar(elevation: 0, centerTitle: true, title: const Text('Error')),
+        body: Center(child: Text('Error loading month details: $err')),
+      ),
+      data: (state) => Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          centerTitle: true,
+          title: Text(state.formattedMonth, style: serifText(20)),
+          actions: [
+            IconButton(
+              tooltip: "Export to PDF",
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedPdf02),
+              onPressed: () => controller.exportToPdf(state),
+            ),
+            IconButton(
+              tooltip: "Change Budget",
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedEdit04),
+              onPressed: () => controller.showBudgetDialog(state),
+            ),
+          ],
+        ),
+        body: _buildBody(ref, state, controller),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: controller.goToAddExpense,
+          label: Text("Add Expense", style: mediumText(14, color: AppColors.white)),
+          icon: const HugeIcon(icon: HugeIcons.strokeRoundedMoneyAdd01),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
+    );
+  }
+
+  Widget _buildBody(WidgetRef ref, MonthDetailState state, MonthDetailController controller) {
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildTopCards(state),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton.icon(
+                onPressed: () => controller.showSortDialog(state, const [
+                  'Date (Newest first)',
+                  'Date (Oldest first)',
+                  'Amount (High to Low)',
+                  'Amount (Low to High)',
+                ]),
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedArrowUpDown,
+                  color: AppColors.brand,
+                  size: 18,
+                ),
+                label: Text('Sort by', style: boldText(14, color: AppColors.brand)),
+              ),
+              TextButton.icon(
+                onPressed: () => controller.showCategoryFilterDialog(state),
+                icon: const HugeIcon(
+                  icon: HugeIcons.strokeRoundedFilter,
+                  color: AppColors.brand,
+                  size: 18,
+                ),
+                label: Text('Category Filter', style: boldText(14, color: AppColors.brand)),
+              ),
+            ],
           ),
-          IconButton(
-            tooltip: "Change Budget",
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedEdit04),
-            onPressed: prov.showBudgetDialog,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Transactions", style: serifText(18)),
+                Text(
+                  "${state.filteredExpenses.length}",
+                  style: regularText(14, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
           ),
+          if (state.filteredExpenses.isEmpty)
+            buildEmptyState()
+          else ...[
+            buildExpenseList(ref, state, controller),
+            buildCategoryTotal(state),
+          ],
+          const SizedBox(height: 100),
         ],
       ),
-      body: prov.isLoading
-          ? _buildShimmerLoader()
-          : SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildInfoCard(
-                                "Budget",
-                                prov.formatter.format(prov.budget),
-                                Colors.white,
-                                icon: HugeIcons.strokeRoundedWallet01,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildInfoCard(
-                                "Spent",
-                                prov.formatter.format(prov.totalExpense),
-                                Colors.white,
-                                icon: HugeIcons.strokeRoundedMoney01,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        if (prov.isCurrent) ...[
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildInfoCard(
-                                  prov.statusLabel,
-                                  prov.formatter.format(prov.remaining),
-                                  prov.statusColor,
-                                  icon: prov.statusIcon,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildInfoCard(
-                                  "Safe / Day",
-                                  prov.formatter.format(prov.remainPerDay),
-                                  Colors.blueAccent,
-                                  icon: HugeIcons.strokeRoundedCoins01,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ] else ...[
-                          _buildInfoCard(
-                            prov.statusLabel,
-                            prov.formatter.format(prov.remaining),
-                            prov.statusColor,
-                            icon: prov.statusIcon,
-                            isFullWidth: true,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      TextButton.icon(
-                        onPressed: prov.showSortDialog,
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedArrowUpDown,
-                          color: AppColors.white,
-                          size: 20,
-                        ),
-                        label: Text('Sort by', style: boldText(16)),
-                      ),
-                      TextButton.icon(
-                        onPressed: prov.showCategoryFilterDialog,
-                        icon: const HugeIcon(
-                          icon: HugeIcons.strokeRoundedFilter,
-                          color: AppColors.white,
-                          size: 20,
-                        ),
-                        label: Text('Category Filter', style: boldText(16)),
-                      ),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("Transactions", style: semiBoldText(18, color: Colors.grey.shade400)),
-                        Text(
-                          "${prov.expenses.length}",
-                          style: regularText(14, color: Colors.grey.shade600),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (prov.expenses.isEmpty)
-                    buildEmptyState(context)
-                  else ...[
-                    buildExpenseList(prov),
-                    buildCategoryTotal(prov),
-                  ],
-                  const SizedBox(height: 100),
-                ],
+    );
+  }
+
+  Widget _buildTopCards(MonthDetailState state) {
+    return Container(
+      clipBehavior: Clip.none,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoCard(
+                  "Budget",
+                  state.formatter.format(state.budget),
+                  AppColors.textPrimary,
+                  icon: HugeIcons.strokeRoundedWallet01,
+                ),
               ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildInfoCard(
+                  "Spent",
+                  state.formatter.format(state.totalExpense),
+                  AppColors.textPrimary,
+                  icon: HugeIcons.strokeRoundedMoney01,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (state.isCurrent) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInfoCard(
+                    state.statusLabel,
+                    state.formatter.format(state.remaining),
+                    state.statusColor,
+                    icon: state.statusIcon,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildInfoCard(
+                    "Safe / Day",
+                    state.formatter.format(state.remainPerDay),
+                    AppColors.info,
+                    icon: HugeIcons.strokeRoundedCoins01,
+                  ),
+                ),
+              ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => errorSnackbar("error"), //provider.goToAddExpense,
-        label: Text("Add Expense", style: regularText(14)),
-        icon: const HugeIcon(icon: HugeIcons.strokeRoundedMoneyAdd01),
+          ] else ...[
+            _buildInfoCard(
+              state.statusLabel,
+              state.formatter.format(state.remaining),
+              state.statusColor,
+              icon: state.statusIcon,
+              isFullWidth: true,
+            ),
+          ],
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
@@ -165,12 +203,12 @@ class MonthDetailScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          border: Border.all(color: AppColors.borderColor),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 0),
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -180,8 +218,12 @@ class MonthDetailScreen extends ConsumerWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: regularText(14, color: Colors.grey)),
-                HugeIcon(icon: icon, size: 20, color: valueColor),
+                Text(title, style: regularText(14, color: AppColors.textSecondary)),
+                HugeIcon(
+                  icon: icon,
+                  size: 20,
+                  color: valueColor == AppColors.textPrimary ? AppColors.brand : valueColor,
+                ),
               ],
             ),
             const SizedBox(height: 8),
@@ -192,39 +234,36 @@ class MonthDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget buildEmptyState(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.5,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
-              child: Icon(
-                Icons.receipt_long_rounded,
-                size: 50,
-                color: Colors.white.withValues(alpha: 0.1),
-              ),
+  Widget buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(color: AppColors.surface, shape: BoxShape.circle),
+            child: Icon(
+              Icons.receipt_long_rounded,
+              size: 50,
+              color: AppColors.textSecondary.withValues(alpha: 0.3),
             ),
-            const SizedBox(height: 16),
-            Text('No transactions', style: regularText(14, color: Colors.grey.shade600)),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          Text('No transactions', style: regularText(14, color: AppColors.textSecondary)),
+        ],
       ),
     );
   }
 
-  Widget buildExpenseList(MonthDetailProvider prov) {
-    return ListView.builder(
+  Widget buildExpenseList(WidgetRef ref, MonthDetailState state, MonthDetailController controller) {
+    return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: prov.expenses.length,
+      itemCount: state.filteredExpenses.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        final expense = prov.expenses[index];
-        final category = prov.getCategoryById(expense.categoryId);
-
+        final expense = state.filteredExpenses[index];
+        final category = state.getCategoryById(expense.categoryId);
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: GestureDetector(
@@ -238,13 +277,13 @@ class MonthDetailScreen extends ConsumerWidget {
                 ),
                 items: [
                   PullDownMenuItem(
-                    onTap: () => prov.goToEditExpense(expense),
+                    onTap: () => controller.goToEditExpense(expense),
                     title: "Edit",
                     icon: CupertinoIcons.pen,
                     itemTheme: PullDownMenuItemTheme(textStyle: regularText(14)),
                   ),
                   PullDownMenuItem(
-                    onTap: () => prov.showDeleteExpenseDialog(expense.id),
+                    onTap: () => controller.showDeleteExpenseDialog(expense.id),
                     title: "Delete",
                     icon: CupertinoIcons.delete,
                     isDestructive: true,
@@ -259,21 +298,25 @@ class MonthDetailScreen extends ConsumerWidget {
                 ),
               );
             },
-            child: ExpenseTile(expense: expense, category: category!),
+            child: ExpenseTile(
+              expense: expense,
+              category:
+                  category ?? Category(id: 'unknown', name: 'Unknown', emoji: '📦', userId: ''),
+            ),
           ),
         );
       },
     );
   }
 
-  Widget buildCategoryTotal(MonthDetailProvider prov) {
-    if (prov.selectedFilterCategoryId == "All") {
+  Widget buildCategoryTotal(MonthDetailState state) {
+    if (state.selectedFilterCategoryId == "All") {
       return const SizedBox();
     } else {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Text(
-          "${prov.selectedFilterOption} Total : ${prov.formatter.format(prov.filteredExpenseTotal)}",
+          "${state.selectedFilterOptionName} Total : ${state.formatter.format(state.filteredExpenseTotal)}",
           style: regularText(14, color: AppColors.grey),
           textAlign: TextAlign.center,
         ),
@@ -341,12 +384,15 @@ class MonthDetailScreen extends ConsumerWidget {
             ),
           ),
           SliverList(
-            delegate: SliverChildBuilderDelegate((context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: _buildShimmerExpenseTile(),
-              );
-            }, childCount: 5),
+            delegate: SliverChildListDelegate(
+              List.generate(
+                5,
+                (index) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: _buildShimmerExpenseTile(),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -357,7 +403,7 @@ class MonthDetailScreen extends ConsumerWidget {
     return Container(
       height: 92,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -368,7 +414,7 @@ class MonthDetailScreen extends ConsumerWidget {
                 height: 14,
                 width: 60,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -376,7 +422,7 @@ class MonthDetailScreen extends ConsumerWidget {
                 height: 20,
                 width: 20,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -386,7 +432,10 @@ class MonthDetailScreen extends ConsumerWidget {
           Container(
             height: 24,
             width: 80,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
         ],
       ),
@@ -402,7 +451,7 @@ class MonthDetailScreen extends ConsumerWidget {
           Container(
             height: 48,
             width: 48,
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: AppColors.surfaceLight, shape: BoxShape.circle),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -413,7 +462,7 @@ class MonthDetailScreen extends ConsumerWidget {
                   height: 16,
                   width: 120,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surfaceLight,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -422,7 +471,7 @@ class MonthDetailScreen extends ConsumerWidget {
                   height: 12,
                   width: 80,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.surfaceLight,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -432,7 +481,10 @@ class MonthDetailScreen extends ConsumerWidget {
           Container(
             height: 18,
             width: 60,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceLight,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
         ],
       ),

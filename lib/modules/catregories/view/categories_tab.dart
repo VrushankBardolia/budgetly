@@ -7,44 +7,69 @@ class CategoriesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prov = ref.watch(categoryProvider);
+    final stateAsync = ref.watch(categoriesStateProvider);
+    final controller = ref.read(categoryControllerProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: Text('Categories', style: boldText(24, color: Colors.white)),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        actions: [
-          Tooltip(
-            triggerMode: TooltipTriggerMode.tap,
-            showDuration: const Duration(seconds: 3),
-            message: "You can make only 10 categories",
-            child: Text("${prov.categoryCount}/10", style: semiBoldText(14, color: Colors.white)),
-          ),
-        ],
+    return stateAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          title: Text('Categories', style: serifText(20)),
+        ),
+        body: _buildShimmer(),
       ),
-      body: _buildBody(context, prov),
-      floatingActionButton: prov.categoryCount >= 10
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => prov.addCategory(context),
-              label: const Text("Add Category"),
-              icon: const Icon(Icons.add),
+      error: (err, stack) => Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          title: Text('Categories', style: serifText(20)),
+        ),
+        body: Center(child: Text('Error loading categories: $err')),
+      ),
+      data: (state) => Scaffold(
+        appBar: AppBar(
+          elevation: 0,
+          title: Text('Categories', style: serifText(20)),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+          actions: [
+            Tooltip(
+              triggerMode: TooltipTriggerMode.tap,
+              showDuration: const Duration(seconds: 3),
+              message: "You can make only 10 categories",
+              child: Text("${state.categoryCount}/10", style: semiBoldText(14)),
             ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+          ],
+        ),
+        body: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(categoriesProvider);
+            ref.invalidate(categoryTotalsProvider);
+            ref.invalidate(categoryTransactionCountsProvider);
+          },
+          color: AppColors.brand,
+          child: _buildBody(context, state, controller),
+        ),
+        floatingActionButton: state.categoryCount >= 10
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () => controller.addCategory(context),
+                label: const Text("Add Category"),
+                icon: const Icon(Icons.add),
+              ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
     );
   }
 
-  Widget _buildBody(BuildContext context, CategoryProvider prov) {
-    if (prov.categories.isEmpty) return _buildEmptyState();
-    if (prov.isLoading) return _buildShimmer();
-    final belowPadding = prov.categoryCount == 10 ? 16.0 : 100.0;
-    return ListView.builder(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, belowPadding),
+  Widget _buildBody(BuildContext context, CategoriesState state, CategoryController controller) {
+    if (state.categories.isEmpty) return _buildEmptyState();
+    final belowPadding = state.categoryCount == 10 ? 16.0 : 100.0;
+    return ListView.separated(
+      padding: EdgeInsets.fromLTRB(16, 0, 16, belowPadding),
       physics: const BouncingScrollPhysics(),
-      itemCount: prov.sortedCategories.length,
+      itemCount: state.sortedCategories.length,
+      separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
-        final category = prov.sortedCategories[index];
+        final category = state.sortedCategories[index];
         final formatter = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
 
         return GestureDetector(
@@ -54,17 +79,17 @@ class CategoriesTab extends ConsumerWidget {
               context: context,
               routeTheme: const PullDownMenuRouteTheme(
                 backgroundColor: AppColors.surfaceLight,
-                width: 201,
+                width: 200,
               ),
               items: [
                 PullDownMenuItem(
-                  onTap: () => prov.editCategory(category),
+                  onTap: () => controller.editCategory(category),
                   title: "Edit",
                   icon: CupertinoIcons.pen,
                   itemTheme: PullDownMenuItemTheme(textStyle: regularText(14, color: Colors.white)),
                 ),
                 PullDownMenuItem(
-                  onTap: () => prov.deleteCategory(context, category.id, category.name),
+                  onTap: () => controller.deleteCategory(context, category.id, category.name),
                   title: "Delete",
                   icon: CupertinoIcons.delete,
                   isDestructive: true,
@@ -83,8 +108,8 @@ class CategoriesTab extends ConsumerWidget {
             emoji: category.emoji,
             name: category.name,
             showProgress: false,
-            formattedAmount: formatter.format(prov.getCategoryTotal(category.id)),
-            transactionCount: prov.getTransactionCount(category.id),
+            formattedAmount: formatter.format(state.getCategoryTotal(category.id)),
+            transactionCount: state.getTransactionCount(category.id),
             onTap: () =>
                 appRouter.pushNamed(Routes.CATEGORY_DETAILS, extra: {'category': category}),
           ),

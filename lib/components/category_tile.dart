@@ -7,7 +7,6 @@ class CategoryTile extends StatelessWidget {
   final double? percentage;
   final String formattedAmount;
   final int transactionCount;
-  final EdgeInsetsGeometry? margin;
   final VoidCallback? onTap;
 
   const CategoryTile({
@@ -18,7 +17,6 @@ class CategoryTile extends StatelessWidget {
     this.percentage,
     required this.formattedAmount,
     this.transactionCount = 0,
-    this.margin,
     this.onTap,
   });
 
@@ -26,26 +24,17 @@ class CategoryTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: margin ?? const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.borderColor),
-          gradient: AppColors.mainCardGradient,
-        ),
-        child: Row(
-          children: [
-            Container(
-              height: 48,
-              width: 48,
-              alignment: Alignment.center,
-              child: Text(emoji, style: regularText(28)),
-            ),
-            const SizedBox(width: 8),
-            Expanded(child: showProgress ? buildProgressView() : buildDefaultView()),
-          ],
-        ),
+      child: Row(
+        children: [
+          Container(
+            height: 40,
+            width: 40,
+            alignment: Alignment.center,
+            child: Text(emoji, style: regularText(20)),
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: showProgress ? buildProgressView() : buildDefaultView()),
+        ],
       ),
     );
   }
@@ -58,7 +47,7 @@ class CategoryTile extends StatelessWidget {
           children: [
             Text(name, style: semiBoldText(16)),
             Spacer(),
-            Text("$transactionCount • ", style: boldText(16, color: AppColors.grey)),
+            Text("$transactionCount • ", style: mediumText(14, color: AppColors.grey)),
             Text(formattedAmount, style: boldText(16)),
           ],
         ),
@@ -67,9 +56,9 @@ class CategoryTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: percentage ?? 0.0,
-            backgroundColor: Colors.white10,
+            backgroundColor: AppColors.brand.withValues(alpha: 0.1),
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.brand),
-            minHeight: 6,
+            minHeight: 4,
           ),
         ),
       ],
@@ -84,7 +73,7 @@ class CategoryTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(name, style: semiBoldText(18)),
+            Text(name, style: semiBoldText(16)),
             Text('$transactionCount transactions', style: regularText(12, color: AppColors.grey)),
           ],
         ),

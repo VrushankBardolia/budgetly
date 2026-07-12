@@ -6,26 +6,36 @@ class SettingsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prov = ref.watch(settingProvider);
+    final stateAsync = ref.watch(settingStateProvider);
+    final controller = ref.read(settingsControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(elevation: 0, title: Text('Settings', style: boldText(24))),
+      appBar: AppBar(elevation: 0, title: Text('Settings', style: serifText(20))),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 300),
         switchInCurve: Curves.easeIn,
         switchOutCurve: Curves.easeIn,
-        child: prov.isLoading ? buildSettingShimmer() : _buildMainContent(context, prov),
+        child: stateAsync.when(
+          loading: () => buildSettingShimmer(),
+          error: (err, stack) => Center(child: Text('Error: $err')),
+          data: (state) => _buildMainContent(context, ref, state, controller),
+        ),
       ),
     );
   }
 
-  Widget _buildMainContent(BuildContext context, SettingProvider prov) {
+  Widget _buildMainContent(
+    BuildContext context,
+    WidgetRef ref,
+    SettingState state,
+    SettingsController controller,
+  ) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         children: [
-          buildProfileHeader(context, prov),
+          buildProfileHeader(context, state),
 
           buildSettingsTile(
             icon: HugeIcons.strokeRoundedNotification02,
@@ -36,10 +46,14 @@ class SettingsTab extends ConsumerWidget {
           buildSettingsTile(
             icon: HugeIcons.strokeRoundedFingerPrintScan,
             title: "Use biometric",
-            trailing: CupertinoSwitch(
-              value: prov.isBiometricEnabled,
-              onChanged: (value) => prov.toggleBiometric(value),
-              activeTrackColor: AppColors.brand,
+            trailing: Transform.scale(
+              scale: 0.8,
+              alignment: Alignment.centerRight,
+              child: CupertinoSwitch(
+                value: state.isBiometricEnabled,
+                onChanged: controller.toggleBiometric,
+                activeTrackColor: AppColors.brand,
+              ),
             ),
           ),
 
@@ -52,7 +66,7 @@ class SettingsTab extends ConsumerWidget {
           buildSettingsTile(
             icon: HugeIcons.strokeRoundedInformationCircle,
             title: "About Budgetly",
-            onTap: prov.showAboutAppDialog,
+            onTap: () => controller.showAboutAppDialog(state.version),
           ),
 
           buildSettingsTile(
@@ -60,7 +74,7 @@ class SettingsTab extends ConsumerWidget {
             title: "Sign Out",
             color: AppColors.error,
             isDestructive: true,
-            onTap: prov.handleSignOut,
+            onTap: controller.handleSignOut,
           ),
           const SizedBox(height: 40),
         ],
@@ -68,7 +82,7 @@ class SettingsTab extends ConsumerWidget {
     );
   }
 
-  Widget buildProfileHeader(BuildContext context, SettingProvider prov) {
+  Widget buildProfileHeader(BuildContext context, SettingState state) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -82,25 +96,27 @@ class SettingsTab extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 40,
-                backgroundColor: Theme.of(context).colorScheme.secondary,
+                backgroundColor: AppColors.surfaceLight,
                 child: Text(
-                  prov.initials,
+                  state.initials,
                   style: customText(32, FontWeight.w900, color: AppColors.brand),
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    prov.currentUser?.name ?? "",
-                    style: boldText(24),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(prov.usingSince, style: regularText(14, color: AppColors.grey)),
-                ],
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      state.currentUser?.name ?? "",
+                      style: boldText(22),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(state.usingSince, style: regularText(14, color: AppColors.grey)),
+                  ],
+                ),
               ),
             ],
           ),
@@ -124,8 +140,8 @@ class SettingsTab extends ConsumerWidget {
     Widget? trailing,
     bool isDestructive = false,
   }) {
-    final iconColor = color ?? Colors.white;
-    final textColor = isDestructive ? AppColors.error : Colors.white;
+    final iconColor = color ?? AppColors.textPrimary;
+    final textColor = isDestructive ? AppColors.error : AppColors.textPrimary;
 
     return Container(
       margin: const EdgeInsets.only(top: 12),
@@ -133,11 +149,8 @@ class SettingsTab extends ConsumerWidget {
       child: ListTile(
         onTap: onTap,
         splashColor: Colors.transparent,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 8),
-          child: HugeIcon(icon: icon, color: iconColor, size: 22),
-        ),
+        contentPadding: const EdgeInsets.fromLTRB(12, 0, 8, 0),
+        leading: HugeIcon(icon: icon, color: iconColor, size: 22),
         title: Text(title, style: semiBoldText(16, color: textColor)),
         trailing:
             trailing ??
@@ -149,8 +162,8 @@ class SettingsTab extends ConsumerWidget {
   }
 
   Widget buildSettingShimmer() {
-    Color baseColor = AppColors.surface;
-    Color highlightColor = AppColors.surfaceLight;
+    const baseColor = AppColors.surface;
+    const highlightColor = AppColors.surfaceLight;
     return Container(
       color: AppColors.black,
       padding: const EdgeInsets.all(16),

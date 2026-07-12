@@ -22,21 +22,25 @@ final GoRouter appRouter = GoRouter(
   initialLocation: Routes.INITIAL,
   routes: [
     GoRoute(
+      name: Routes.INITIAL,
       path: Routes.INITIAL,
       pageBuilder: (context, state) =>
           MaterialPage(key: state.pageKey, child: const InitialScreen(), arguments: state.extra),
     ),
     GoRoute(
+      name: Routes.HOME,
       path: Routes.HOME,
       pageBuilder: (context, state) =>
           MaterialPage(key: state.pageKey, child: const HomeScreen(), arguments: state.extra),
     ),
     GoRoute(
+      name: Routes.ONBOARDING,
       path: Routes.ONBOARDING,
       pageBuilder: (context, state) =>
           MaterialPage(key: state.pageKey, child: const OnboardingScreen(), arguments: state.extra),
     ),
     GoRoute(
+      name: Routes.MONTH_DETAILS,
       path: Routes.MONTH_DETAILS,
       pageBuilder: (context, state) => MaterialPage(
         key: state.pageKey,
@@ -45,6 +49,7 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      name: Routes.NOTIFICATIONS,
       path: Routes.NOTIFICATIONS,
       pageBuilder: (context, state) => MaterialPage(
         key: state.pageKey,
@@ -53,6 +58,7 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      name: Routes.EXPENSE_FORM,
       path: Routes.EXPENSE_FORM,
       pageBuilder: (context, state) => MaterialPage(
         key: state.pageKey,
@@ -61,11 +67,13 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      name: Routes.PROFILE,
       path: Routes.PROFILE,
       pageBuilder: (context, state) =>
           MaterialPage(key: state.pageKey, child: const ProfileScreen(), arguments: state.extra),
     ),
     GoRoute(
+      name: Routes.CATEGORY_DETAILS,
       path: Routes.CATEGORY_DETAILS,
       pageBuilder: (context, state) => MaterialPage(
         key: state.pageKey,
@@ -74,6 +82,7 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      name: Routes.SHEET_DETAIL,
       path: Routes.SHEET_DETAIL,
       pageBuilder: (context, state) => MaterialPage(
         key: state.pageKey,
@@ -82,6 +91,7 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      name: Routes.SHEET_RECORD_FORM,
       path: Routes.SHEET_RECORD_FORM,
       pageBuilder: (context, state) => MaterialPage(
         key: state.pageKey,
@@ -90,6 +100,7 @@ final GoRouter appRouter = GoRouter(
       ),
     ),
     GoRoute(
+      name: Routes.EXPORT_PDF,
       path: Routes.EXPORT_PDF,
       pageBuilder: (context, state) =>
           MaterialPage(key: state.pageKey, child: const ExportPdfScreen(), arguments: state.extra),

@@ -60,7 +60,8 @@ class ExpenseFormProvider extends ChangeNotifier {
   }
 
   Future<void> _loadCategories() async {
-    final result = await FirebaseHelper.getCategories();
+    final categoryRepo = ref.read(categoryRepositoryProvider);
+    final result = await categoryRepo.getCategories();
     categories = result;
     notifyListeners();
   }
@@ -115,12 +116,14 @@ class ExpenseFormProvider extends ChangeNotifier {
         userId: PreferenceHelper.userId,
       );
 
+      final expenseRepo = ref.read(expenseRepositoryProvider);
       if (isEditing) {
-        await FirebaseHelper.updateExpense(editingExpense!.id, expense);
+        await expenseRepo.updateExpense(editingExpense!.id, expense);
       } else {
-        await FirebaseHelper.addExpense(expense);
+        await expenseRepo.addExpense(expense);
       }
-      ref.read(dashboardProvider).loadData();
+      ref.invalidate(expensesProvider(expense.date.year));
+      ref.invalidate(availableYearsProvider);
       appRouter.pop(true);
     } finally {
       isSubmitting = false;

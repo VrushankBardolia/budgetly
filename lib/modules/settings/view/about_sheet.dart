@@ -6,7 +6,7 @@ class AboutSheet {
       AboutSheetContent(version: version),
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     );
   }
 }
@@ -24,19 +24,19 @@ class AboutSheetContent extends StatelessWidget {
         children: [
           // ── Hero ─────────────────────────────────────────────────
           Container(
-            width: 96,
-            height: 96,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               color: AppColors.brandDark,
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [BoxShadow(color: AppColors.brand.withValues(alpha: 0.3), blurRadius: 24)],
             ),
-            child: const Icon(Icons.wallet_rounded, color: Colors.white, size: 48),
+            child: const Icon(Icons.wallet_rounded, color: Colors.white, size: 40),
           ),
           const SizedBox(height: 20),
 
           // App name
-          Text('Budgetly', style: customText(32, FontWeight.w800)),
+          Text('Budgetly', style: serifText(32).copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
 
           // Tagline
@@ -47,12 +47,9 @@ class AboutSheetContent extends StatelessWidget {
           Text(
             'A personal finance tracker designed to help you understand where your money goes and stay within budget every month.',
             textAlign: TextAlign.center,
-            style: regularText(14, color: Colors.grey.shade400),
+            style: regularText(14, color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 36),
-
-          // buildInfoCard('App Version', version),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
           // ── Footer ────────────────────────────────────────────────
           FittedBox(
@@ -64,7 +61,6 @@ class AboutSheetContent extends StatelessWidget {
           ),
           SizedBox(height: 20),
           Text('v$version', style: semiBoldText(14, color: AppColors.grey)),
-          const SizedBox(height: 40),
         ],
       ),
     );

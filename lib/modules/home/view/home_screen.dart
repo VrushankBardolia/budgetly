@@ -17,12 +17,12 @@ class HomeScreen extends ConsumerWidget {
             prov.changeIndex(value);
           },
           type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: boldText(14, color: Colors.white),
-          unselectedLabelStyle: regularText(14, color: Colors.grey),
+          selectedLabelStyle: boldText(12, color: AppColors.brand),
+          unselectedLabelStyle: regularText(12, color: AppColors.grey),
           currentIndex: prov.currentIndex,
-          unselectedItemColor: Colors.grey.shade700,
-          backgroundColor: Theme.of(context).colorScheme.background,
-          selectedItemColor: Theme.of(context).colorScheme.primary,
+          unselectedItemColor: AppColors.grey,
+          backgroundColor: AppColors.background,
+          selectedItemColor: AppColors.brandDark,
           items: [
             BottomNavigationBarItem(
               icon: const HugeIcon(icon: HugeIcons.strokeRoundedHome11),

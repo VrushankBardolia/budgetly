@@ -1,26 +1,39 @@
 import 'package:budgetly/core/import_to_export.dart';
 import 'package:flutter/cupertino.dart';
 
-class NotificationScreen extends ConsumerWidget {
+class NotificationScreen extends ConsumerStatefulWidget {
   const NotificationScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final prov = ref.watch(notificationProvider);
+  ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
+}
+
+class _NotificationScreenState extends ConsumerState<NotificationScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(notificationControllerProvider).checkPermissionState();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isLoading = ref.watch(notificationLoadingProvider);
+    final permissionState = ref.watch(notificationPermissionStateProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.black,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.black,
-        title: const Text('Notifications'),
+        title: Text('Notifications', style: serifText(20)),
         centerTitle: true,
         elevation: 0,
       ),
-      body: prov.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : switch (prov.permissionState) {
-              NotificationPermissionState.denied => _DeniedView(),
-              NotificationPermissionState.granted => _GrantedView(),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
+          : switch (permissionState) {
+              NotificationPermissionState.denied => const _DeniedView(),
+              NotificationPermissionState.granted => const _GrantedView(),
             },
     );
   }
@@ -33,7 +46,7 @@ class _DeniedView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prov = ref.watch(notificationProvider);
+    final controller = ref.read(notificationControllerProvider);
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -53,25 +66,25 @@ class _DeniedView extends ConsumerWidget {
           Text(
             'You\'ve turned off notifications for Budgetly. To receive daily expense reminders, please allow notifications.',
             textAlign: TextAlign.center,
-            style: regularText(15, color: Colors.grey.shade400),
+            style: regularText(15, color: AppColors.textSecondary),
           ),
           const SizedBox(height: 48),
           SizedBox(
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: prov.requestPermission,
+              onPressed: controller.requestPermission,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.brand,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-              child: Text('Allow Notifications', style: semiBoldText(16)),
+              child: Text('Allow Notifications', style: semiBoldText(16, color: Colors.white)),
             ),
           ),
           const SizedBox(height: 16),
           TextButton(
             onPressed: appRouter.pop,
-            child: Text('Go back', style: regularText(14, color: Colors.grey.shade400)),
+            child: Text('Go back', style: regularText(14, color: AppColors.textSecondary)),
           ),
         ],
       ),
@@ -86,18 +99,22 @@ class _GrantedView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prov = ref.watch(notificationProvider);
+    final enabled = ref.watch(notificationsEnabledProvider);
+    final dailyEnabled = ref.watch(dailyReminderEnabledProvider);
+    final controller = ref.read(notificationControllerProvider);
+
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         // ── Main toggle ───────────────────────────────────────────────
-        MainNotificationTile(
+        buildNotificationCard(
           icon: Icons.notifications_rounded,
           iconColor: AppColors.brand,
           title: 'Notifications',
           subtitle: 'Enable or disable all notifications',
-          value: prov.notificationsEnabled,
-          onChanged: (_) => prov.toggleNotifications(),
+          value: enabled,
+          onChanged: (_) => controller.toggleNotifications(),
+          showBorder: true,
         ),
 
         // ── Daily reminder (only shown when notifications are on) ──────
@@ -107,18 +124,17 @@ class _GrantedView extends ConsumerWidget {
             opacity: animation,
             child: SizeTransition(sizeFactor: animation, child: child),
           ),
-          child: prov.notificationsEnabled
+          child: enabled
               ? Padding(
                   key: const ValueKey('daily'),
                   padding: const EdgeInsets.only(top: 12),
-                  child: _NotificationTile(
+                  child: buildNotificationCard(
                     icon: Icons.alarm_rounded,
                     iconColor: AppColors.success,
                     title: 'Daily Reminder',
                     subtitle: 'Reminds you to log expenses at around 11:30 PM every day',
-                    value: prov.dailyReminderEnabled,
-                    onChanged: (_) => prov.toggleDailyReminder(),
-                    showChevron: true,
+                    value: dailyEnabled,
+                    onChanged: (_) => controller.toggleDailyReminder(),
                   ),
                 )
               : const SizedBox.shrink(key: ValueKey('empty')),
@@ -126,65 +142,49 @@ class _GrantedView extends ConsumerWidget {
       ],
     );
   }
-}
 
-// ─── Shared Tile Widget ───────────────────────────────────────────────────────
-
-class _NotificationTile extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-  final bool showChevron;
-
-  const _NotificationTile({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-    this.showChevron = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget buildNotificationCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    bool showBorder = false,
+  }) {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: showBorder ? Border.all(color: AppColors.borderColor) : null,
+      ),
       child: Row(
         children: [
           // Icon
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: value ? iconColor.withValues(alpha: 0.15) : AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 20, color: value ? iconColor : Colors.grey),
-          ),
-          const SizedBox(width: 14),
+          Icon(icon, size: 20, color: value ? iconColor : AppColors.grey),
+          const SizedBox(width: 12),
 
           // Text
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: semiBoldText(15)),
-                const SizedBox(height: 3),
-                Text(subtitle, style: regularText(12, color: Colors.grey.shade500)),
+                Text(title, style: semiBoldText(16)),
+                Text(subtitle, style: regularText(12, color: Colors.grey)),
               ],
             ),
           ),
-          const SizedBox(width: 12),
 
           // Trailing
           Transform.scale(
-            scale: 0.9,
+            scale: 0.8,
             alignment: Alignment.centerRight,
-            child: CupertinoSwitch(value: value, onChanged: onChanged, activeTrackColor: iconColor),
+            child: CupertinoSwitch(
+              value: value,
+              onChanged: onChanged,
+              activeTrackColor: AppColors.brand,
+            ),
           ),
         ],
       ),

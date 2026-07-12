@@ -89,12 +89,15 @@ class SheetRecordFormProvider extends ChangeNotifier {
         'createdAt': Timestamp.fromDate(editingRecord?.createdAt ?? DateTime.now()),
       };
 
+      final sheetRepo = ref.read(sheetRepositoryProvider);
       if (isEditing) {
-        await FirebaseHelper.updateRecord(sheetId, editingRecord!.id, data);
+        await sheetRepo.updateRecord(sheetId, editingRecord!.id, data);
       } else {
-        await FirebaseHelper.addRecord(sheetId, data);
+        await sheetRepo.addRecord(sheetId, data);
       }
-      ref.read(sheetsProvider).loadSheets();
+      ref.invalidate(sheetsListProvider);
+      ref.invalidate(sheetRecordsProvider(sheetId));
+      ref.invalidate(totalSheetsBalanceProvider);
 
       appRouter.pop(true);
     } finally {

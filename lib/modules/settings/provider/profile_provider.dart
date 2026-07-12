@@ -1,33 +1,17 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class ProfileProvider extends ChangeNotifier {
+final profileControllerProvider = Provider.autoDispose<ProfileController>((ref) {
+  return ProfileController(ref);
+});
+
+class ProfileController {
   final Ref ref;
 
-  // ─── State ───────────────────────────────────────────────────────
-  UserModel? currentUser;
+  ProfileController(this.ref);
 
-  ProfileProvider(this.ref) {
-    // Initialize with the data from SettingProvider or PreferenceHelper
-    currentUser = ref.read(settingProvider).currentUser ?? PreferenceHelper.user;
-  }
-
-  // ─── Computed Getters ─────────────────────────────────────────────────────
-
-  String get initials {
-    final name = currentUser?.name ?? '';
-    if (name.isEmpty) return 'U';
-    final parts = name.trim().split(' ');
-    if (parts.length > 1) {
-      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    }
-    return parts[0][0].toUpperCase();
-  }
-
-  // ─── Phone Update Logic ───────────────────────────────────────────────────
-
-  void changePhone() {
+  void changePhone(UserModel user) {
     HapticFeedback.heavyImpact();
-    final controller = TextEditingController(text: currentUser?.phone);
+    final controller = TextEditingController(text: user.phone);
     bottomSheet(
       SafeArea(
         child: Padding(
@@ -66,7 +50,7 @@ class ProfileProvider extends ChangeNotifier {
                 child: Button(
                   onClick: () {
                     appRouter.pop(); // Dismiss sheet
-                    updatePhone(controller.text.trim());
+                    updatePhone(user, controller.text.trim());
                   },
                   child: Text('Save', style: semiBoldText(16, color: Colors.white)),
                 ),
@@ -80,11 +64,10 @@ class ProfileProvider extends ChangeNotifier {
     );
   }
 
-  Future<void> updatePhone(String phone) async {
-    final user = FirebaseHelper.currentUser;
-    if (user == null || user.email == null) return;
+  Future<void> updatePhone(UserModel user, String phone) async {
+    final firebaseUser = FirebaseHelper.currentUser;
+    if (firebaseUser == null || firebaseUser.email == null) return;
 
-    // Optional: add country code if missing
     if (phone.isNotEmpty && !phone.startsWith('+91')) {
       if (phone.length == 10) {
         phone = '+91 $phone';
@@ -97,25 +80,21 @@ class ProfileProvider extends ChangeNotifier {
         barrierDismissible: false,
       );
 
-      await FirebaseHelper.updateUserPhone(user.email!, phone);
+      final userRepo = ref.read(userRepositoryProvider);
+      await userRepo.updateUserPhone(firebaseUser.email!, phone);
       appRouter.pop(); // close loading
 
-      if (currentUser != null) {
-        final updatedUserModel = currentUser!.copyWith(phone: phone);
-        currentUser = updatedUserModel;
-        PreferenceHelper.user = updatedUserModel;
+      final updatedUserModel = user.copyWith(phone: phone);
+      PreferenceHelper.user = updatedUserModel;
 
-        // Sync with SettingProvider
-        ref.read(settingProvider).currentUser = updatedUserModel;
-        ref.read(settingProvider).loadUserData(); // Reload/update settings
+      ref.invalidate(currentUserProvider);
+      ref.invalidate(settingStateProvider);
 
-        successSnackbar('Phone number updated successfully!');
-      }
+      successSnackbar('Phone number updated successfully!');
     } catch (e) {
       appRouter.pop(); // close loading
       errorSnackbar('Failed to update phone number.');
     }
-    notifyListeners();
   }
 
   void handleDeleteAccount() async {
@@ -137,14 +116,19 @@ class ProfileProvider extends ChangeNotifier {
         const Center(child: CircularProgressIndicator(color: AppColors.brand)),
         barrierDismissible: false,
       );
-      await FirebaseHelper.deleteUserExpenses();
-      await FirebaseHelper.deleteUserBudgets();
-      await FirebaseHelper.deleteUserCategories();
-      await FirebaseHelper.deleteAccount();
+      final expenseRepo = ref.read(expenseRepositoryProvider);
+      final budgetRepo = ref.read(budgetRepositoryProvider);
+      final categoryRepo = ref.read(categoryRepositoryProvider);
+      final userRepo = ref.read(userRepositoryProvider);
+
+      await expenseRepo.deleteUserExpenses();
+      await budgetRepo.deleteUserBudgets();
+      await categoryRepo.deleteUserCategories();
+      await userRepo.deleteAccount();
 
       await PreferenceHelper.clearAll();
 
-      ref.read(homeProvider).currentIndex = 0;
+      ref.read(homeProvider).changeIndex(0);
 
       appRouter.pop();
       appRouter.pushReplacementNamed(Routes.ONBOARDING);

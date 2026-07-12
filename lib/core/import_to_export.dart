@@ -29,11 +29,18 @@ export 'package:printing/printing.dart';
 export 'package:open_filex/open_filex.dart';
 export 'package:go_router/go_router.dart';
 
-export 'package:budgetly/core/providers.dart';
 // ─── Core & Theme ──────────────────────────────────────────────────────────
 export 'package:budgetly/core/theme/app_colors.dart';
 export 'package:budgetly/core/theme/app_theme.dart';
 export 'package:budgetly/core/theme/text_theme.dart';
+export 'package:budgetly/core/providers.dart';
+
+// ─── Repositories ─────────────────────────────────────────────────────────────
+export 'package:budgetly/core/repositories/expense_repository.dart';
+export 'package:budgetly/core/repositories/budget_repository.dart';
+export 'package:budgetly/core/repositories/category_repository.dart';
+export 'package:budgetly/core/repositories/sheet_repository.dart';
+export 'package:budgetly/core/repositories/user_repository.dart';
 
 // ─── Components ────────────────────────────────────────────────────────────
 export 'package:budgetly/components/amount_field.dart';
@@ -48,7 +55,7 @@ export 'package:budgetly/components/main_notification_tile.dart';
 // ─── Helpers ───────────────────────────────────────────────────────────────
 export 'package:budgetly/core/helper/firebase_helper.dart';
 export 'package:budgetly/core/helper/firebase_logger.dart';
-export 'package:budgetly/core/helper/get_replacement.dart';
+export 'package:budgetly/core/helper/commons.dart';
 export 'package:budgetly/core/helper/firebase_options.dart';
 export 'package:budgetly/core/helper/notification_service.dart';
 export 'package:budgetly/core/helper/preference_helper.dart';
@@ -78,6 +85,8 @@ export 'package:budgetly/modules/auth/view/onboarding_screen.dart';
 export 'package:budgetly/modules/auth/view/initial_loader_screen.dart';
 
 // ─── Modules (Categories) ──────────────────────────────────────────────────
+export 'package:budgetly/modules/catregories/state/categories_state.dart';
+export 'package:budgetly/modules/catregories/state/category_details_state.dart';
 export 'package:budgetly/modules/catregories/provider/category_provider.dart';
 export 'package:budgetly/modules/catregories/provider/category_details_provider.dart';
 export 'package:budgetly/modules/catregories/view/categories_tab.dart';
@@ -86,8 +95,11 @@ export 'package:budgetly/modules/catregories/view/category_details_screen.dart';
 // ─── Modules (Dashboard) ───────────────────────────────────────────────────
 export 'package:budgetly/modules/dashboard/view/dashboard_tab.dart';
 export 'package:budgetly/modules/dashboard/provider/dashboard_provider.dart';
+export 'package:budgetly/modules/dashboard/state/dashboard_state.dart';
 
 // ─── Modules (Months) ──────────────────────────────────────────────────────
+export 'package:budgetly/modules/months/state/month_state.dart';
+export 'package:budgetly/modules/months/state/month_detail_state.dart';
 export 'package:budgetly/modules/months/view/expense_form_screen.dart';
 export 'package:budgetly/modules/months/view/month_details_screen.dart';
 export 'package:budgetly/modules/months/view/months_tab.dart';
@@ -96,6 +108,8 @@ export 'package:budgetly/modules/months/provider/expense_form_provider.dart';
 export 'package:budgetly/modules/months/provider/month_details_provider.dart';
 
 // ─── Modules (Sheets) ──────────────────────────────────────────────────────
+export 'package:budgetly/modules/sheets/state/sheets_state.dart';
+export 'package:budgetly/modules/sheets/state/sheet_details_state.dart';
 export 'package:budgetly/modules/sheets/view/sheet_details_screen.dart';
 export 'package:budgetly/modules/sheets/view/sheet_record_form_screen.dart';
 export 'package:budgetly/modules/sheets/view/sheets_tab.dart';
@@ -104,6 +118,7 @@ export 'package:budgetly/modules/sheets/provider/sheet_details_provider.dart';
 export 'package:budgetly/modules/sheets/provider/sheet_record_form_provider.dart';
 
 // ─── Modules (Settings) ────────────────────────────────────────────────────
+export 'package:budgetly/modules/settings/state/setting_state.dart';
 export 'package:budgetly/modules/settings/provider/export_pdf_provider.dart';
 export 'package:budgetly/modules/settings/provider/notification_provider.dart';
 export 'package:budgetly/modules/settings/provider/setting_provider.dart';

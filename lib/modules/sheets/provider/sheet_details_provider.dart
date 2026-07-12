@@ -1,73 +1,79 @@
 import 'package:budgetly/core/import_to_export.dart';
-import 'package:intl/intl.dart';
 
-class SheetDetailsProvider extends ChangeNotifier {
+// ─── Asynchronous Data Providers ─────────────────────────────────────────────
+
+/// Fetches and caches records for a specific sheet.
+final sheetRecordsProvider = FutureProvider.family.autoDispose<List<SheetRecord>, String>((
+  ref,
+  sheetId,
+) async {
+  final repo = ref.watch(sheetRepositoryProvider);
+  return repo.getRecords(sheetId);
+});
+
+// ─── Local UI State Providers ────────────────────────────────────────────────
+
+/// Holds the filter type ('all' | 'income' | 'expense') for a specific sheet.
+final sheetFilterTypeProvider = StateProvider.family.autoDispose<String, String>((ref, sheetId) {
+  return 'all';
+});
+
+// ─── Combined Sheet Details State Provider ───────────────────────────────────
+
+final sheetDetailsStateProvider = Provider.family.autoDispose<AsyncValue<SheetDetailsState>, Map>((
+  ref,
+  args,
+) {
+  final sheetId = args['sheetId'] ?? '';
+  final sheetName = args['sheetName'] ?? 'Sheet';
+
+  final asyncValues = [ref.watch(sheetRecordsProvider(sheetId))];
+
+  for (final value in asyncValues) {
+    if (value.isLoading) return const AsyncValue.loading();
+    if (value.hasError) return AsyncValue.error(value.error!, value.stackTrace!);
+  }
+
+  final records = (asyncValues[0]).value ?? [];
+  final filterType = ref.watch(sheetFilterTypeProvider(sheetId));
+
+  return AsyncValue.data(
+    SheetDetailsState(
+      sheetId: sheetId,
+      sheetName: sheetName,
+      records: records,
+      filterType: filterType,
+    ),
+  );
+});
+
+// ─── Sheet Details Action Controller ─────────────────────────────────────────
+
+final sheetDetailsControllerProvider = Provider.family.autoDispose<SheetDetailsController, Map>((
+  ref,
+  args,
+) {
+  return SheetDetailsController(ref, args);
+});
+
+class SheetDetailsController {
   final Ref ref;
-
-  // ─── Arguments ────────────────────────────────────────────────────────────
+  final Map args;
   final String sheetId;
-  final String sheetName;
 
-  // ─── State ───────────────────────────────────────────────────────
-  List<SheetRecord> records = [];
-  bool isLoading = true;
-  String filterType = 'all'; // 'all' | 'income' | 'expense'
-
-  SheetDetailsProvider(this.ref, Map args)
-    : sheetId = args['sheetId'] ?? '',
-      sheetName = args['sheetName'] ?? 'Sheet' {
-    loadRecords();
-  }
-
-  // ─── Data ─────────────────────────────────────────────────────────────────
-
-  Future<void> loadRecords({bool isRefresh = false}) async {
-    if (!isRefresh) {
-      isLoading = true;
-      notifyListeners();
-    }
-    try {
-      final recordsList = await FirebaseHelper.getRecords(sheetId);
-      records = recordsList;
-    } finally {
-      if (!isRefresh) {
-        isLoading = false;
-      }
-      notifyListeners();
-    }
-  }
-
-  // ─── Filter ───────────────────────────────────────────────────────────────
+  SheetDetailsController(this.ref, this.args) : sheetId = args['sheetId'] ?? '';
 
   void setFilter(String type) {
-    filterType = type;
-    notifyListeners();
+    ref.read(sheetFilterTypeProvider(sheetId).notifier).state = type;
   }
-
-  List<SheetRecord> get filteredRecords {
-    if (filterType == 'all') return records;
-    final type = filterType == 'income' ? RecordType.income : RecordType.expense;
-    return records.where((r) => r.type == type).toList();
-  }
-
-  Map<String, List<SheetRecord>> get groupedRecords {
-    final filtered = filteredRecords;
-    final map = <String, List<SheetRecord>>{};
-    for (var record in filtered) {
-      final monthStr = DateFormat('MMMM').format(record.date);
-      if (!map.containsKey(monthStr)) {
-        map[monthStr] = [];
-      }
-      map[monthStr]!.add(record);
-    }
-    return map;
-  }
-
-  // ─── Navigation ───────────────────────────────────────────────────────────
 
   Future<void> goToAddRecord() async {
     final result = await appRouter.pushNamed(Routes.SHEET_RECORD_FORM, extra: {'sheetId': sheetId});
-    if (result == true) await loadRecords();
+    if (result == true) {
+      ref.invalidate(sheetRecordsProvider(sheetId));
+      ref.invalidate(sheetsListProvider);
+      ref.invalidate(totalSheetsBalanceProvider);
+    }
   }
 
   Future<void> goToEditRecord(SheetRecord record) async {
@@ -75,10 +81,12 @@ class SheetDetailsProvider extends ChangeNotifier {
       Routes.SHEET_RECORD_FORM,
       extra: {'sheetId': sheetId, 'record': record},
     );
-    if (result == true) await loadRecords();
+    if (result == true) {
+      ref.invalidate(sheetRecordsProvider(sheetId));
+      ref.invalidate(sheetsListProvider);
+      ref.invalidate(totalSheetsBalanceProvider);
+    }
   }
-
-  // ─── Delete ───────────────────────────────────────────────────────────────
 
   Future<void> showDeleteDialog(String recordId) async {
     final confirmed = await confirmationDialog(
@@ -89,20 +97,11 @@ class SheetDetailsProvider extends ChangeNotifier {
     );
 
     if (confirmed) {
-      await FirebaseHelper.deleteRecord(sheetId, recordId);
-      await loadRecords();
+      final sheetRepo = ref.read(sheetRepositoryProvider);
+      await sheetRepo.deleteRecord(sheetId, recordId);
+      ref.invalidate(sheetRecordsProvider(sheetId));
+      ref.invalidate(sheetsListProvider);
+      ref.invalidate(totalSheetsBalanceProvider);
     }
   }
-
-  // ─── Summary Getters ──────────────────────────────────────────────────────
-
-  double get totalIncome =>
-      records.where((r) => r.isIncome).fold(0.0, (total, r) => total + r.amount);
-
-  double get totalExpense =>
-      records.where((r) => r.isExpense).fold(0.0, (total, r) => total + r.amount);
-
-  double get netBalance => totalIncome - totalExpense;
-
-  bool get isProfit => netBalance >= 0;
 }

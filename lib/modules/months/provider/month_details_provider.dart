@@ -1,56 +1,156 @@
 import 'package:budgetly/core/import_to_export.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:intl/intl.dart';
 
-class MonthDetailProvider extends ChangeNotifier {
+// ─── Local UI State Providers ────────────────────────────────────────────────
+
+final monthDetailSortOptionProvider = StateProvider.family.autoDispose<String, Map>((ref, args) {
+  return 'Date (Newest first)';
+});
+
+final monthDetailFilterCategoryIdProvider = StateProvider.family.autoDispose<String, Map>((
+  ref,
+  args,
+) {
+  return 'All';
+});
+
+final monthDetailIncludeCategoryProvider = StateProvider.family.autoDispose<bool, Map>((ref, args) {
+  return true;
+});
+
+final monthDetailIncludeTxListProvider = StateProvider.family.autoDispose<bool, Map>((ref, args) {
+  return true;
+});
+
+final monthDetailIsExportingProvider = StateProvider.family.autoDispose<bool, Map>((ref, args) {
+  return false;
+});
+
+// ─── Asynchronous Raw Providers ──────────────────────────────────────────────
+
+final monthDetailExpensesRawProvider = FutureProvider.family.autoDispose<List<Expense>, Map>((
+  ref,
+  args,
+) async {
+  final int year = args['year'] ?? DateTime.now().year;
+  final int month = args['month'] ?? DateTime.now().month;
+  final repo = ref.watch(expenseRepositoryProvider);
+  return repo.getExpensesInRange(
+    DateTime(year, month, 1),
+    DateTime(year, month + 1, 0, 23, 59, 59),
+  );
+});
+
+final monthDetailBudgetRawProvider = FutureProvider.family.autoDispose<int, Map>((ref, args) async {
+  final int year = args['year'] ?? DateTime.now().year;
+  final int month = args['month'] ?? DateTime.now().month;
+  final repo = ref.watch(budgetRepositoryProvider);
+  final result = await repo.getBudgetForMonth(year, month);
+  return result?.budget.toInt() ?? 0;
+});
+
+// ─── Combined State Provider ─────────────────────────────────────────────────
+
+final monthDetailStateProvider = Provider.family.autoDispose<AsyncValue<MonthDetailState>, Map>((
+  ref,
+  args,
+) {
+  final int year = args['year'] ?? DateTime.now().year;
+  final int month = args['month'] ?? DateTime.now().month;
+
+  final asyncValues = [
+    ref.watch(monthDetailExpensesRawProvider(args)),
+    ref.watch(monthDetailBudgetRawProvider(args)),
+    ref.watch(categoriesProvider),
+  ];
+
+  for (final value in asyncValues) {
+    if (value.isLoading) return const AsyncValue.loading();
+    if (value.hasError) return AsyncValue.error(value.error!, value.stackTrace!);
+  }
+
+  final allExpenses = (asyncValues[0] as AsyncValue<List<Expense>>).value ?? [];
+  final budget = (asyncValues[1] as AsyncValue<int>).value ?? 0;
+  final categories = (asyncValues[2] as AsyncValue<List<Category>>).value ?? [];
+
+  final sortOption = ref.watch(monthDetailSortOptionProvider(args));
+  final filterCategoryId = ref.watch(monthDetailFilterCategoryIdProvider(args));
+  final includeCategory = ref.watch(monthDetailIncludeCategoryProvider(args));
+  final includeTxList = ref.watch(monthDetailIncludeTxListProvider(args));
+  final isExporting = ref.watch(monthDetailIsExportingProvider(args));
+
+  List<Expense> result = allExpenses.toList();
+  String selectedFilterOptionName = 'All';
+
+  if (filterCategoryId != 'All') {
+    result = result.where((e) => e.categoryId == filterCategoryId).toList();
+    final cat = categories.where((c) => c.id == filterCategoryId).firstOrNull;
+    selectedFilterOptionName = cat?.name ?? 'Unknown';
+  }
+
+  switch (sortOption) {
+    case 'Date (Newest first)':
+      result.sort((a, b) => b.date.compareTo(a.date));
+      break;
+    case 'Date (Oldest first)':
+      result.sort((a, b) => a.date.compareTo(b.date));
+      break;
+    case 'Amount (High to Low)':
+      result.sort((a, b) => b.price.compareTo(a.price));
+      break;
+    case 'Amount (Low to High)':
+      result.sort((a, b) => a.price.compareTo(b.price));
+      break;
+  }
+
+  return AsyncValue.data(
+    MonthDetailState(
+      year: year,
+      month: month,
+      allExpenses: allExpenses,
+      filteredExpenses: result,
+      categories: categories,
+      budget: budget,
+      selectedSortOption: sortOption,
+      selectedFilterCategoryId: filterCategoryId,
+      selectedFilterOptionName: selectedFilterOptionName,
+      includeCategory: includeCategory,
+      includeTxList: includeTxList,
+      isExporting: isExporting,
+    ),
+  );
+});
+
+// ─── Month Detail Action Controller ──────────────────────────────────────────
+
+final monthDetailControllerProvider = Provider.family.autoDispose<MonthDetailController, Map>((
+  ref,
+  args,
+) {
+  return MonthDetailController(ref, args);
+});
+
+class MonthDetailController {
   final Ref ref;
-
-  // ─── Arguments via constructor ───────────────────────────────────────────────────
+  final Map args;
   final int year;
   final int month;
 
-  // ─── State ───────────────────────────────────────────────────────
-  List<Expense> expenses = [];
-  List<Category> categories = [];
-  int budget = 0;
-  int selectedCategoryTotal = 0;
-  bool isLoading = true;
-  bool isExporting = false;
-  bool includeCategory = true;
-  bool includeTxList = true;
-
-  // ─── Sort ────────────────────────────────────────────────────────────
-  final List sortOptions = [
-    'Date (Newest first)',
-    'Date (Oldest first)',
-    'Amount (High to Low)',
-    'Amount (Low to High)',
-  ];
-  String selectedSortOption = 'Date (Newest first)';
-
-  // ─── Filter ────────────────────────────────────────────────────────────
-  List<String> filterOptions = ['All'];
-  String selectedFilterOption = 'All';
-
-  List<Expense> _allExpenses = [];
-  String selectedFilterCategoryId = 'All';
-
-  MonthDetailProvider(this.ref, Map args)
+  MonthDetailController(this.ref, this.args)
     : year = args['year'] ?? DateTime.now().year,
-      month = args['month'] ?? DateTime.now().month {
-    loadAll();
-  }
+      month = args['month'] ?? DateTime.now().month;
 
-  // ─── Budget Dialog ────────────────────────────────────────────────────────
+  // ─── Budget Dialog / CRUD ──────────────────────────────────────────────────
 
-  void _checkBudgetAndShowDialog() {
-    if (!isLoading && !hasBudget) {
-      showBudgetDialog();
+  void checkBudgetAndShowDialog(MonthDetailState state) {
+    if (!state.hasBudget) {
+      showBudgetDialog(state);
     }
   }
 
-  Future<void> showBudgetDialog() async {
-    final budgetField = TextEditingController(text: budget > 0 ? budget.toString() : '');
+  Future<void> showBudgetDialog(MonthDetailState state) async {
+    final budgetField = TextEditingController(
+      text: state.budget > 0 ? state.budget.toString() : '',
+    );
 
     dialog(
       AlertDialog(
@@ -65,7 +165,7 @@ class MonthDetailProvider extends ChangeNotifier {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(formattedMonth, style: regularText(14, color: AppColors.grey)),
+            Text(state.formattedMonth, style: regularText(14, color: AppColors.grey)),
             const SizedBox(height: 16),
             TextField(
               controller: budgetField,
@@ -117,14 +217,36 @@ class MonthDetailProvider extends ChangeNotifier {
     );
   }
 
-  // ─── Navigation to Expense Screen ─────────────────────────────────────────
+  Future<void> setBudget(int value) async {
+    final budgetRepo = ref.read(budgetRepositoryProvider);
+    final result = await budgetRepo.getBudgetForMonth(year, month);
+    if (result == null) {
+      await budgetRepo.addBudget({
+        'userId': PreferenceHelper.userId,
+        'year': year,
+        'month': month,
+        'budget': value,
+      });
+    } else {
+      await budgetRepo.updateBudget(result.id, value);
+    }
+    ref.invalidate(monthDetailBudgetRawProvider(args));
+    ref.invalidate(budgetsProvider(year));
+    WidgetHelper.updateRemainingBudgetWidget();
+  }
+
+  // ─── Navigation ────────────────────────────────────────────────────────────
 
   Future<void> goToAddExpense() async {
     final result = await appRouter.pushNamed(
       Routes.EXPENSE_FORM,
       extra: {'year': year, 'month': month},
     );
-    if (result == true) await loadExpenses();
+    if (result == true) {
+      ref.invalidate(monthDetailExpensesRawProvider(args));
+      ref.invalidate(expensesProvider(year));
+      ref.invalidate(availableYearsProvider);
+    }
   }
 
   Future<void> goToEditExpense(Expense expense) async {
@@ -132,10 +254,14 @@ class MonthDetailProvider extends ChangeNotifier {
       Routes.EXPENSE_FORM,
       extra: {'year': year, 'month': month, 'expense': expense},
     );
-    if (result == true) await loadExpenses();
+    if (result == true) {
+      ref.invalidate(monthDetailExpensesRawProvider(args));
+      ref.invalidate(expensesProvider(year));
+      ref.invalidate(availableYearsProvider);
+    }
   }
 
-  // ─── Delete Dialog ────────────────────────────────────────────────────────
+  // ─── Delete Expense ────────────────────────────────────────────────────────
 
   Future<void> showDeleteExpenseDialog(String id) async {
     final confirmed = await confirmationDialog(
@@ -145,81 +271,18 @@ class MonthDetailProvider extends ChangeNotifier {
       isDestructive: true,
     );
 
-    if (confirmed) await deleteExpense(id);
-  }
-
-  // ─── Data Loading ─────────────────────────────────────────────────────────
-
-  Future<void> loadAll() async {
-    isLoading = true;
-    notifyListeners();
-    await Future.wait([loadExpenses(), loadBudget(), loadCategories()]);
-    isLoading = false;
-    notifyListeners();
-    _checkBudgetAndShowDialog();
-  }
-
-  Future<void> loadExpenses() async {
-    final result = await FirebaseHelper.getExpenses(
-      DateTime(year, month, 1),
-      DateTime(year, month + 1, 0, 23, 59, 59),
-    );
-    _allExpenses = result;
-    applyFiltersAndSorts();
-  }
-
-  Future<void> loadBudget() async {
-    final result = await FirebaseHelper.getBudgetForMonth(year, month);
-    if (result != null) {
-      budget = result.budget.toInt();
-    }
-    notifyListeners();
-  }
-
-  Future<void> loadCategories() async {
-    final result = await FirebaseHelper.getCategories();
-    categories = result;
-    notifyListeners();
-  }
-
-  // ─── Budget CRUD ──────────────────────────────────────────────────────────
-
-  Future<void> setBudget(int value) async {
-    final result = await FirebaseHelper.getBudgetForMonth(year, month);
-    if (result == null) {
-      await FirebaseHelper.addBudget({
-        'userId': PreferenceHelper.userId,
-        'year': year,
-        'month': month,
-        'budget': value,
-      });
-    } else {
-      await FirebaseHelper.updateBudget(result.id, value);
-    }
-    budget = value;
-    notifyListeners();
-  }
-
-  // ─── Expense CRUD ─────────────────────────────────────────────────────────
-
-  Future<void> deleteExpense(String id) async {
-    await FirebaseHelper.deleteExpense(id);
-    await loadExpenses();
-  }
-
-  // ─── Category Helper ──────────────────────────────────────────────────────
-
-  Category? getCategoryById(String id) {
-    try {
-      return categories.firstWhere((c) => c.id == id);
-    } catch (_) {
-      return null;
+    if (confirmed) {
+      final expenseRepo = ref.read(expenseRepositoryProvider);
+      await expenseRepo.deleteExpense(id);
+      ref.invalidate(monthDetailExpensesRawProvider(args));
+      ref.invalidate(expensesProvider(year));
+      ref.invalidate(availableYearsProvider);
     }
   }
 
-  // ─── Sorting ────────────────────────────────────────────────────────
+  // ─── Sort and Filter dialogs ───────────────────────────────────────────────
 
-  void showSortDialog() {
+  void showSortDialog(MonthDetailState state, List sortOptions) {
     dialog(
       StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
@@ -235,10 +298,11 @@ class MonthDetailProvider extends ChangeNotifier {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: sortOptions.map((option) {
-                bool isSelected = option == selectedSortOption;
+                bool isSelected = option == state.selectedSortOption;
                 return GestureDetector(
                   onTap: () {
-                    onSortOptionSelected(option);
+                    ref.read(monthDetailSortOptionProvider(args).notifier).state = option;
+                    appRouter.pop();
                   },
                   child: AnimatedContainer(
                     margin: const EdgeInsets.only(top: 12),
@@ -285,15 +349,7 @@ class MonthDetailProvider extends ChangeNotifier {
     );
   }
 
-  void onSortOptionSelected(String option) {
-    selectedSortOption = option;
-    appRouter.pop();
-    applyFiltersAndSorts();
-  }
-
-  // ─── Filter ────────────────────────────────────────────────────────────
-
-  void showCategoryFilterDialog() {
+  void showCategoryFilterDialog(MonthDetailState state) {
     dialog(
       AlertDialog(
         backgroundColor: AppColors.surface,
@@ -305,10 +361,10 @@ class MonthDetailProvider extends ChangeNotifier {
         titlePadding: const EdgeInsets.only(top: 16, bottom: 0),
         content: SizedBox(
           width: appContext != null ? MediaQuery.of(appContext!).size.width : 300,
-          child: StatefulBuilder(
-            builder: (context, setDialogState) {
-              final activeCategoryIds = _allExpenses.map((e) => e.categoryId).toSet();
-              final activeCategories = categories
+          child: Builder(
+            builder: (context) {
+              final activeCategoryIds = state.allExpenses.map((e) => e.categoryId).toSet();
+              final activeCategories = state.categories
                   .where((c) => activeCategoryIds.contains(c.id))
                   .toList();
               final options = [null, ...activeCategories];
@@ -318,11 +374,12 @@ class MonthDetailProvider extends ChangeNotifier {
                 children: options.map((category) {
                   final String id = category?.id ?? 'All';
                   final String name = category?.name ?? 'All';
-                  bool isSelected = selectedFilterCategoryId == id;
+                  bool isSelected = state.selectedFilterCategoryId == id;
 
                   return GestureDetector(
                     onTap: () {
-                      onCategorySelected(id, name);
+                      ref.read(monthDetailFilterCategoryIdProvider(args).notifier).state = id;
+                      appRouter.pop();
                     },
                     child: AnimatedContainer(
                       margin: const EdgeInsets.only(top: 12),
@@ -330,13 +387,9 @@ class MonthDetailProvider extends ChangeNotifier {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.brandDark.withValues(alpha: 0.2)
-                            : AppColors.black,
+                            ? AppColors.brandDark.withValues(alpha: 0.1)
+                            : AppColors.surfaceLight,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: isSelected ? AppColors.brand : Colors.transparent,
-                          width: 1.5,
-                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -370,45 +423,9 @@ class MonthDetailProvider extends ChangeNotifier {
     );
   }
 
-  void onCategorySelected(String categoryId, String categoryName) {
-    selectedFilterCategoryId = categoryId;
-    selectedFilterOption = categoryName;
-    appRouter.pop();
-    applyFiltersAndSorts();
-  }
+  // ─── PDF Report Generation ─────────────────────────────────────────────────
 
-  void applyFiltersAndSorts() {
-    List<Expense> result = _allExpenses.toList();
-
-    // 1. Filter
-    if (selectedFilterCategoryId != 'All') {
-      result = result.where((e) => e.categoryId == selectedFilterCategoryId).toList();
-      selectedCategoryTotal = result.fold(0, (total, item) => total + item.price.toInt());
-    } else {
-      selectedCategoryTotal = 0;
-    }
-
-    // 2. Sort
-    switch (selectedSortOption) {
-      case 'Date (Newest first)':
-        result.sort((a, b) => b.date.compareTo(a.date));
-        break;
-      case 'Date (Oldest first)':
-        result.sort((a, b) => a.date.compareTo(b.date));
-        break;
-      case 'Amount (High to Low)':
-        result.sort((a, b) => b.price.compareTo(a.price));
-        break;
-      case 'Amount (Low to High)':
-        result.sort((a, b) => a.price.compareTo(b.price));
-        break;
-    }
-
-    expenses = result;
-    notifyListeners();
-  }
-
-  void exportToPdf() {
+  void exportToPdf(MonthDetailState state) {
     HapticFeedback.lightImpact();
 
     bottomSheet(
@@ -440,12 +457,10 @@ class MonthDetailProvider extends ChangeNotifier {
                   title: 'Category Breakdown',
                   subtitle: 'Summary and progress bar of category spending',
                   icon: HugeIcons.strokeRoundedBarChartHorizontal,
-                  value: includeCategory,
+                  value: state.includeCategory,
                   onChanged: (val) {
-                    setBottomSheetState(() {
-                      includeCategory = val;
-                    });
-                    notifyListeners();
+                    ref.read(monthDetailIncludeCategoryProvider(args).notifier).state = val;
+                    setBottomSheetState(() {});
                   },
                 ),
                 const SizedBox(height: 16),
@@ -453,23 +468,21 @@ class MonthDetailProvider extends ChangeNotifier {
                   title: 'Transaction List',
                   subtitle: 'Detailed list of all expenses with date and amount',
                   icon: HugeIcons.strokeRoundedLeftToRightListDash,
-                  value: includeTxList,
+                  value: state.includeTxList,
                   onChanged: (val) {
-                    setBottomSheetState(() {
-                      includeTxList = val;
-                    });
-                    notifyListeners();
+                    ref.read(monthDetailIncludeTxListProvider(args).notifier).state = val;
+                    setBottomSheetState(() {});
                   },
                 ),
                 const SizedBox(height: 32),
                 Button(
                   onClick: () {
-                    if (!includeCategory && !includeTxList) {
+                    if (!state.includeCategory && !state.includeTxList) {
                       warningSnackbar('Please select at least one option');
                       return;
                     }
                     appRouter.pop();
-                    _generatePdf();
+                    _generatePdf(state);
                   },
                   child: Text('Generate Report', style: semiBoldText(16, color: Colors.white)),
                 ),
@@ -519,10 +532,8 @@ class MonthDetailProvider extends ChangeNotifier {
     );
   }
 
-  Future<void> _generatePdf() async {
-    if (isExporting) return;
-    isExporting = true;
-    notifyListeners();
+  Future<void> _generatePdf(MonthDetailState state) async {
+    ref.read(monthDetailIsExportingProvider(args).notifier).state = true;
 
     dialog(
       Dialog(
@@ -545,23 +556,26 @@ class MonthDetailProvider extends ChangeNotifier {
 
     try {
       final user = FirebaseHelper.currentUser;
+      final categoriesList = await ref.read(categoriesProvider.future);
+
       final filePath = await PdfExportService.exportMonthlyReport(
-        expenses: expenses,
+        expenses: state.filteredExpenses,
         month: month,
         year: year,
         userName: user?.displayName ?? user?.email ?? 'User',
-        budget: budget.toDouble(),
-        categoryNames: {for (final cat in categories) cat.id: cat.name},
-        includeCategoryBreakdown: includeCategory,
-        includeTransactions: includeTxList,
+        budget: state.budget.toDouble(),
+        categoryNames: {for (final cat in categoriesList) cat.id: cat.name},
+        includeCategoryBreakdown: state.includeCategory,
+        includeTransactions: state.includeTxList,
       );
 
       if (isDialogOpen) {
         appRouter.pop();
       }
 
-      includeCategory = true;
-      includeTxList = true;
+      // Reset PDF export options
+      ref.read(monthDetailIncludeCategoryProvider(args).notifier).state = true;
+      ref.read(monthDetailIncludeTxListProvider(args).notifier).state = true;
 
       await OpenFilex.open(filePath);
     } catch (e) {
@@ -570,52 +584,7 @@ class MonthDetailProvider extends ChangeNotifier {
       }
       errorSnackbar('Export Failed. Please try again.');
     } finally {
-      isExporting = false;
-      notifyListeners();
+      ref.read(monthDetailIsExportingProvider(args).notifier).state = false;
     }
   }
-
-  // ─── Derived Getters ──────────────────────────────────────────────────────
-
-  double get totalExpense => _allExpenses.fold(0.0, (total, e) => total + e.price);
-  double get filteredExpenseTotal => expenses.fold(0.0, (total, e) => total + e.price);
-  double get remaining => budget - totalExpense;
-  int get totalDays => DateTime(year, month + 1, 0).day;
-
-  int get remainingDays {
-    final diff = totalDays - DateTime.now().day + 1;
-    return diff > 0 ? diff : 0;
-  }
-
-  double get remainPerDay => remainingDays > 0 ? remaining / remainingDays : 0.0;
-  bool get hasBudget => budget > 0;
-
-  bool get isCurrent {
-    final now = DateTime.now();
-    return year == now.year && month == now.month;
-  }
-
-  bool get isBalanced => remaining == 0;
-  bool get isSaved => remaining > 0;
-
-  Color get statusColor {
-    if (isBalanced) return AppColors.warning;
-    if (isSaved) return AppColors.success;
-    return AppColors.error;
-  }
-
-  String get statusLabel {
-    if (isBalanced) return 'On Target';
-    if (isSaved) return isCurrent ? 'Remaining' : 'Saved';
-    return 'Overspent';
-  }
-
-  dynamic get statusIcon {
-    if (isBalanced) return HugeIcons.strokeRoundedAlert02;
-    if (isSaved) return HugeIcons.strokeRoundedCheckmarkCircle03;
-    return HugeIcons.strokeRoundedCancelCircle;
-  }
-
-  String get formattedMonth => DateFormat('MMMM yyyy').format(DateTime(year, month));
-  NumberFormat get formatter => NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
 }

@@ -94,7 +94,7 @@ class FirebaseHelper {
     }
   }
 
-  static Future<DocumentSnapshot<Map<String, dynamic>>> getUserData(String? authEmail) async {
+  static Future<UserModel?> getUserData(String? authEmail) async {
     FirebaseLogger.request('getUserData', {'authEmail': authEmail});
     try {
       if (authEmail == null || authEmail.isEmpty) {
@@ -103,7 +103,10 @@ class FirebaseHelper {
       }
       final result = await db.collection('users').doc(authEmail).get();
       FirebaseLogger.response('getUserData', result.data());
-      return result;
+      final data = result.data();
+      if (data == null) return null;
+      data['uid'] = currentUser?.uid ?? '';
+      return UserModel.fromJson(data);
     } catch (e, stackTrace) {
       FirebaseLogger.error('getUserData', e, stackTrace);
       rethrow;

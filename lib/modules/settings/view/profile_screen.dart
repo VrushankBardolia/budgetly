@@ -5,63 +5,71 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prov = ref.watch(profileProvider);
-    final user = prov.currentUser;
+    final userAsync = ref.watch(currentUserProvider);
+    final controller = ref.read(profileControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.black,
-      appBar: AppBar(
-        title: const Text(
-          "Manage Profile",
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: AppColors.black,
-        centerTitle: true,
-      ),
-      body: user == null
-          ? const Center(child: CircularProgressIndicator(color: AppColors.brand))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundColor: AppColors.brandDark,
-                      child: Text(
-                        prov.initials,
-                        style: customText(48, FontWeight.w800, color: AppColors.brand),
-                      ),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(title: Text("Manage Profile", style: serifText(20)), centerTitle: true),
+      body: userAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.brand)),
+        error: (err, stack) => Center(child: Text('Error loading profile: $err')),
+        data: (user) {
+          if (user == null) {
+            return const Center(child: Text('No user logged in'));
+          }
+
+          final initials = user.name.isNotEmpty == true
+              ? user.name.trim().split(' ').length > 1
+                  ? '${user.name.trim().split(' ')[0][0]}${user.name.trim().split(' ')[1][0]}'
+                      .toUpperCase()
+                  : user.name.trim().split(' ')[0][0].toUpperCase()
+              : 'U';
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: CircleAvatar(
+                    radius: 60,
+                    backgroundColor: AppColors.accent,
+                    child: Text(
+                      initials,
+                      style: customText(48, FontWeight.w800, color: AppColors.brand),
                     ),
                   ),
-                  const SizedBox(height: 48),
+                ),
+                const SizedBox(height: 48),
 
-                  buildProfileField(
-                    label: "Name",
-                    value: user.name.isNotEmpty ? user.name : "Unknown",
-                    icon: HugeIcons.strokeRoundedUserCircle,
-                  ),
+                buildProfileField(
+                  label: "Name",
+                  value: user.name.isNotEmpty ? user.name : "Unknown",
+                  icon: HugeIcons.strokeRoundedUserCircle,
+                ),
 
-                  buildProfileField(
-                    label: "Email",
-                    value: user.email.isNotEmpty ? user.email : "Unknown",
-                    icon: HugeIcons.strokeRoundedMail02,
-                  ),
+                buildProfileField(
+                  label: "Email",
+                  value: user.email.isNotEmpty ? user.email : "Unknown",
+                  icon: HugeIcons.strokeRoundedMail02,
+                ),
 
-                  buildProfileField(
-                    label: "Phone Number",
-                    value: user.phone.isNotEmpty ? user.phone : "Add Phone Number",
-                    icon: HugeIcons.strokeRoundedCall02,
-                    showEdit: true,
-                    onEdit: prov.changePhone,
-                    valueColor: user.phone.isEmpty ? AppColors.grey : AppColors.white,
-                  ),
+                buildProfileField(
+                  label: "Phone Number",
+                  value: user.phone.isNotEmpty ? user.phone : "Add Phone Number",
+                  icon: HugeIcons.strokeRoundedCall02,
+                  showEdit: true,
+                  onEdit: () => controller.changePhone(user),
+                  valueColor: user.phone.isEmpty ? AppColors.grey : AppColors.textPrimary,
+                ),
 
-                  buildDeleteAccountButton(prov),
-                ],
-              ),
+                buildDeleteAccountButton(controller),
+              ],
             ),
+          );
+        },
+      ),
     );
   }
 
@@ -71,7 +79,7 @@ class ProfileScreen extends ConsumerWidget {
     required dynamic icon,
     bool showEdit = false,
     VoidCallback? onEdit,
-    Color valueColor = Colors.white,
+    Color valueColor = AppColors.textPrimary,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
@@ -83,7 +91,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          HugeIcon(icon: icon, color: Colors.white, size: 24),
+          HugeIcon(icon: icon, color: AppColors.textPrimary, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -108,9 +116,9 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Widget buildDeleteAccountButton(ProfileProvider prov) {
+  Widget buildDeleteAccountButton(ProfileController controller) {
     return GestureDetector(
-      onTap: prov.handleDeleteAccount,
+      onTap: controller.handleDeleteAccount,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -121,7 +129,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         child: Text(
           "Delete Account",
-          style: semiBoldText(16, color: AppColors.white),
+          style: semiBoldText(16, color: AppColors.error),
           textAlign: TextAlign.center,
         ),
       ),

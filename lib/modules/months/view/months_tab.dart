@@ -5,96 +5,107 @@ class MonthsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prov = ref.watch(monthProvider);
+    final monthStateAsync = ref.watch(monthStateProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.black,
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        elevation: 0,
-        title: Text('Monthly Overview', style: boldText(24)),
-      ),
-      body: prov.isLoading
-          ? _buildShimmerLoader()
-          : GridView.builder(
-              padding: const EdgeInsets.all(16),
-              physics: const BouncingScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.3,
-              ),
-              itemCount: prov.monthSummaries.length,
-              itemBuilder: (ctx, index) => MonthCard(
-                summary: prov.monthSummaries[index],
-                onTap: () => prov.navigateToMonth(prov.monthSummaries[index].month),
-              ),
+      appBar: AppBar(title: Text('Monthly Overview', style: serifText(20))),
+      body: monthStateAsync.when(
+        loading: () => _buildShimmerLoader(),
+        error: (err, stack) => Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text('Error loading months: $err', style: boldText(14)),
+            ],
+          ),
+        ),
+        data: (state) => RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(expensesProvider(state.selectedYear));
+            ref.invalidate(budgetsProvider(state.selectedYear));
+          },
+          color: AppColors.brand,
+          child: GridView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            physics: const BouncingScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 1.3,
             ),
+            itemCount: state.monthSummaries.length,
+            itemBuilder: (ctx, index) => MonthCard(
+              summary: state.monthSummaries[index],
+              onTap: () async {
+                await appRouter.pushNamed(
+                  Routes.MONTH_DETAILS,
+                  extra: {'year': state.selectedYear, 'month': state.monthSummaries[index].month},
+                );
+              },
+            ),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _buildShimmerLoader() {
-    const baseColor = Color(0xFF1E1E1E);
-    const highlightColor = Color(0xFF2C2C2C);
-    const backgroundColor = AppColors.black;
-
-    return Container(
-      color: backgroundColor,
-      child: Shimmer.fromColors(
-        baseColor: baseColor,
-        highlightColor: highlightColor,
-        child: GridView.builder(
-          padding: const EdgeInsets.all(16),
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.3,
-          ),
-          itemCount: 12,
-          itemBuilder: (ctx, index) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(color: baseColor, borderRadius: BorderRadius.circular(16)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(width: 60, height: 16, color: Colors.white),
-                      Container(
-                        width: 20,
-                        height: 20,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  Container(width: 50, height: 10, color: Colors.white),
-                  const SizedBox(height: 6),
-                  Container(width: 80, height: 20, color: Colors.white),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(width: 60, height: 10, color: Colors.white),
-                ],
-              ),
-            );
-          },
+    return Shimmer.fromColors(
+      baseColor: AppColors.background,
+      highlightColor: AppColors.surface,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(16),
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.3,
         ),
+        itemCount: 12,
+        itemBuilder: (ctx, index) {
+          return Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(width: 60, height: 16, color: Colors.white),
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.white),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Container(width: 50, height: 10, color: Colors.white),
+                const SizedBox(height: 6),
+                Container(width: 80, height: 20, color: Colors.white),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(width: 60, height: 10, color: Colors.white),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -115,18 +126,11 @@ class MonthCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
-          border: summary.isCurrent
-              ? Border.all(color: AppColors.brand, width: 2)
-              : Border.all(color: AppColors.borderColor),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-          gradient: AppColors.mainCardGradient,
+          border: Border.all(
+            color: summary.isCurrent ? AppColors.secondaryAccent : AppColors.surface,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,14 +139,7 @@ class MonthCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  summary.monthName,
-                  style: GoogleFonts.plusJakartaSans(
-                    color: summary.isCurrent ? AppColors.brand : Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+                Text(summary.monthName, style: boldText(16)),
                 if (summary.hasData)
                   HugeIcon(icon: summary.statusIcon, color: summary.statusColor, size: 20),
               ],
@@ -152,23 +149,16 @@ class MonthCard extends StatelessWidget {
 
             // ── Body ────────────────────────────────────────────────────────
             if (summary.hasData) ...[
-              Text(
-                summary.statusLabel,
-                style: GoogleFonts.plusJakartaSans(color: AppColors.grey, fontSize: 12),
-              ),
+              Text(summary.statusLabel, style: regularText(12, color: AppColors.grey)),
               Text(
                 '₹${summary.difference.abs().toStringAsFixed(0)}',
-                style: GoogleFonts.plusJakartaSans(
-                  color: summary.statusColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 20,
-                ),
+                style: boldText(20, color: summary.statusColor),
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: summary.progressValue,
-                  backgroundColor: Colors.grey[800],
+                  backgroundColor: AppColors.borderColor,
                   valueColor: AlwaysStoppedAnimation<Color>(summary.statusColor),
                   minHeight: 4,
                 ),
@@ -176,19 +166,19 @@ class MonthCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 'Spent: ₹${summary.expense.toStringAsFixed(0)}',
-                style: GoogleFonts.plusJakartaSans(color: AppColors.grey, fontSize: 12),
+                style: regularText(12, color: AppColors.grey),
               ),
             ] else ...[
               Center(
                 child: HugeIcon(
                   icon: HugeIcons.strokeRoundedCalendarMinus02,
-                  strokeWidth: 1.5,
-                  color: Colors.grey.shade800,
-                  size: 36,
+                  strokeWidth: 1,
+                  color: AppColors.grey,
+                  size: 32,
                 ),
               ),
               const Spacer(),
-              Text('No Data', style: TextStyle(color: Colors.white.withValues(alpha: 0.2))),
+              Text('No Data', style: regularText(12, color: AppColors.textSecondary)),
             ],
           ],
         ),

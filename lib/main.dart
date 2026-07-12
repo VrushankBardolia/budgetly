@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp.router(
         title: 'Budgetly',
         debugShowCheckedModeBanner: false,
-        themeMode: ThemeMode.dark,
+        themeMode: ThemeMode.light,
         theme: themeData,
         routerConfig: appRouter,
         scaffoldMessengerKey: scaffoldMessengerKey,

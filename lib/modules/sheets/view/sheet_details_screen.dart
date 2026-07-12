@@ -8,88 +8,102 @@ class SheetDetailsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final args = ModalRoute.of(context)?.settings.arguments as Map? ?? {};
-    final prov = ref.watch(sheetDetailsProvider(args));
+    final stateAsync = ref.watch(sheetDetailsStateProvider(args));
+    final controller = ref.read(sheetDetailsControllerProvider(args));
 
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-          onPressed: appRouter.pop,
+    return stateAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: Text(args['sheetName'] ?? 'Loading...', style: serifText(20)),
         ),
-        title: Text(prov.sheetName, style: boldText(20)),
+        body: buildShimmerLoader(),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: prov.goToAddRecord,
-        backgroundColor: AppColors.brandDark,
-        elevation: 0,
-        icon: const Icon(Icons.add_rounded, color: AppColors.white),
-        label: Text('Add Record', style: semiBoldText(14, color: AppColors.white)),
+      error: (err, stack) => Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          title: const Text('Error'),
+        ),
+        body: Center(child: Text('Error loading sheet records: $err')),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      body: prov.isLoading
-          ? buildShimmerLoader()
-          : SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: Column(
-                      spacing: 12,
-                      children: [
-                        Row(
-                          spacing: 12,
-                          children: [
-                            Expanded(
-                              child: buildSummaryCard(
-                                'Total Income',
-                                prov.totalIncome,
-                                AppColors.success,
-                                Icons.arrow_downward_rounded,
-                              ),
+      data: (state) => Scaffold(
+        appBar: AppBar(centerTitle: true, title: Text(state.sheetName, style: serifText(20))),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: controller.goToAddRecord,
+          backgroundColor: AppColors.brandDark,
+          elevation: 0,
+          icon: const Icon(Icons.add_rounded, color: AppColors.white),
+          label: Text('Add Record', style: semiBoldText(14, color: AppColors.white)),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        body: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(sheetRecordsProvider(state.sheetId));
+            ref.invalidate(sheetsListProvider);
+            ref.invalidate(totalSheetsBalanceProvider);
+          },
+          color: AppColors.brand,
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Column(
+                    spacing: 12,
+                    children: [
+                      Row(
+                        spacing: 12,
+                        children: [
+                          Expanded(
+                            child: buildSummaryCard(
+                              'Total Income',
+                              state.totalIncome,
+                              AppColors.success,
+                              Icons.arrow_downward_rounded,
                             ),
-                            Expanded(
-                              child: buildSummaryCard(
-                                'Total Expense',
-                                prov.totalExpense,
-                                AppColors.error,
-                                Icons.arrow_upward_rounded,
-                              ),
+                          ),
+                          Expanded(
+                            child: buildSummaryCard(
+                              'Total Expense',
+                              state.totalExpense,
+                              AppColors.error,
+                              Icons.arrow_upward_rounded,
                             ),
-                          ],
-                        ),
-                        buildBalanceCard(prov.netBalance, prov.isProfit),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                      buildBalanceCard(state.netBalance, state.isProfit),
+                    ],
                   ),
-
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                    child: buildFilterBar(prov),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                  child: buildFilterBar(state, controller),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('Records', style: serifText(18)),
+                      Text(
+                        '${state.filteredRecords.length}'.padLeft(2, '0'),
+                        style: semiBoldText(12, color: AppColors.grey),
+                      ),
+                    ],
                   ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('Records', style: boldText(18, color: AppColors.white)),
-                        Text(
-                          '${prov.filteredRecords.length}'.padLeft(2, '0'),
-                          style: semiBoldText(12, color: AppColors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  prov.filteredRecords.isEmpty ? buildEmptyState() : buildRecordList(context, prov),
-                ],
-              ),
+                ),
+                state.filteredRecords.isEmpty
+                    ? buildEmptyState()
+                    : buildRecordList(context, state, controller),
+              ],
             ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -97,36 +111,18 @@ class SheetDetailsScreen extends ConsumerWidget {
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.15)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.03),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 14, color: color),
-              ),
-              const SizedBox(width: 8),
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 4),
               Text(label, style: mediumText(13, color: AppColors.grey)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Text(
             fmt.format(amount),
             style: boldText(22, color: color),
@@ -146,13 +142,8 @@ class SheetDetailsScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.01)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.borderColor),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,49 +151,39 @@ class SheetDetailsScreen extends ConsumerWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Net Balance',
-                style: mediumText(14, color: Colors.white.withValues(alpha: 0.8)),
-              ),
+              Text('Net Balance', style: mediumText(14, color: AppColors.textSecondary)),
               const SizedBox(height: 4),
               Text(fmt.format(balance), style: customText(28, FontWeight.w800, color: color)),
             ],
           ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: HugeIcon(
-              icon: isProfit
-                  ? HugeIcons.strokeRoundedArrowUpRight01
-                  : HugeIcons.strokeRoundedArrowDownRight01,
-              color: color,
-              size: 28,
-            ),
+          HugeIcon(
+            icon: isProfit
+                ? HugeIcons.strokeRoundedArrowUpRight01
+                : HugeIcons.strokeRoundedArrowDownRight01,
+            color: color,
+            size: 32,
           ),
         ],
       ),
     );
   }
 
-  Widget buildFilterBar(SheetDetailsProvider prov) {
-    final filters = [('all', 'All'), ('income', 'Income'), ('expense', 'Expense')];
+  Widget buildFilterBar(SheetDetailsState state, SheetDetailsController controller) {
+    final filters = [('income', 'Income'), ('expense', 'Expense')];
 
-    final currentIndex = filters.indexWhere((f) => f.$1 == prov.filterType);
-    final safeIndex = currentIndex == -1 ? 0 : currentIndex;
+    final currentIndex = filters.indexWhere((f) => f.$1 == state.filterType);
+    final hasSelection = currentIndex != -1;
+    final safeIndex = hasSelection ? currentIndex : 0;
 
-    final activeColor = prov.filterType == 'income'
+    final activeColor = state.filterType == 'income'
         ? AppColors.success
-        : prov.filterType == 'expense'
+        : state.filterType == 'expense'
         ? AppColors.error
-        : AppColors.brand;
+        : AppColors.info;
 
     return Container(
       height: 44,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.04)),
-      ),
+      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(30)),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final tabWidth = constraints.maxWidth / filters.length;
@@ -214,32 +195,40 @@ class SheetDetailsScreen extends ConsumerWidget {
                 left: safeIndex * tabWidth,
                 top: 0,
                 bottom: 0,
-                child: Container(
-                  width: tabWidth,
-                  decoration: BoxDecoration(
-                    color: activeColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: activeColor.withValues(alpha: 0.5)),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: hasSelection ? 1.0 : 0.0,
+                  child: Container(
+                    width: tabWidth,
+                    decoration: BoxDecoration(
+                      color: activeColor.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(color: activeColor.withValues(alpha: 0.2)),
+                    ),
                   ),
                 ),
               ),
 
               Row(
                 children: filters.map((f) {
-                  final isActive = prov.filterType == f.$1;
+                  final isActive = state.filterType == f.$1;
                   return Expanded(
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
                       onTap: () {
                         HapticFeedback.lightImpact();
-                        prov.setFilter(f.$1);
+                        if (isActive) {
+                          controller.setFilter('all');
+                        } else {
+                          controller.setFilter(f.$1);
+                        }
                       },
                       child: Center(
                         child: AnimatedDefaultTextStyle(
                           duration: const Duration(milliseconds: 200),
                           style: isActive
-                              ? boldText(14, color: AppColors.white)
-                              : regularText(14, color: Colors.white.withValues(alpha: 0.5)),
+                              ? boldText(14, color: activeColor)
+                              : regularText(14, color: AppColors.textSecondary),
                           child: Text(f.$2),
                         ),
                       ),
@@ -273,8 +262,8 @@ class SheetDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget buildRecordList(BuildContext context, SheetDetailsProvider prov) {
-    final grouped = prov.groupedRecords;
+  Widget buildRecordList(BuildContext context, SheetDetailsState state, SheetDetailsController controller) {
+    final grouped = state.groupedRecords;
     final keys = grouped.keys.toList();
 
     return ListView.builder(
@@ -299,7 +288,7 @@ class SheetDetailsScreen extends ConsumerWidget {
             ...monthRecords.map(
               (record) => Padding(
                 padding: const EdgeInsets.only(bottom: 12),
-                child: buildRecordTile(context, prov, record),
+                child: buildRecordTile(context, controller, record),
               ),
             ),
           ],
@@ -308,9 +297,9 @@ class SheetDetailsScreen extends ConsumerWidget {
     );
   }
 
-  Widget buildRecordTile(BuildContext context, SheetDetailsProvider prov, SheetRecord record) {
+  Widget buildRecordTile(BuildContext context, SheetDetailsController controller, SheetRecord record) {
     final fmt = NumberFormat.simpleCurrency(locale: 'en_IN', decimalDigits: 0);
-    final color = record.isIncome ? AppColors.success : AppColors.white;
+    final color = record.isIncome ? AppColors.success : AppColors.textPrimary;
 
     return GestureDetector(
       onLongPressStart: (details) {
@@ -323,13 +312,13 @@ class SheetDetailsScreen extends ConsumerWidget {
           ),
           items: [
             PullDownMenuItem(
-              onTap: () => prov.goToEditRecord(record),
+              onTap: () => controller.goToEditRecord(record),
               title: "Edit",
               icon: CupertinoIcons.pen,
               itemTheme: PullDownMenuItemTheme(textStyle: mediumText(14)),
             ),
             PullDownMenuItem(
-              onTap: () => prov.showDeleteDialog(record.id),
+              onTap: () => controller.showDeleteDialog(record.id),
               title: "Delete",
               icon: CupertinoIcons.delete,
               isDestructive: true,
@@ -345,47 +334,21 @@ class SheetDetailsScreen extends ConsumerWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: AppColors.surface,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.borderColor.withValues(alpha: 0.5)),
-          gradient: RadialGradient(
-            center: Alignment.centerLeft,
-            radius: 2.5,
-            colors: [
-              record.isIncome
-                  ? AppColors.success.withValues(alpha: 0.08)
-                  : Colors.white.withValues(alpha: 0.03),
-              AppColors.surface.withValues(alpha: 0.0),
-            ],
-          ),
         ),
         child: Row(
           children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: record.isIncome
-                    ? AppColors.success.withValues(alpha: 0.1)
-                    : Colors.white.withValues(alpha: 0.05),
-                border: Border.all(
-                  color: record.isIncome
-                      ? AppColors.success.withValues(alpha: 0.2)
-                      : Colors.white.withValues(alpha: 0.1),
-                ),
-              ),
-              child: Center(
-                child: Icon(
-                  record.isIncome ? CupertinoIcons.arrow_down_left : CupertinoIcons.arrow_up_right,
-                  color: color,
-                  size: 20,
-                ),
+            Center(
+              child: Icon(
+                record.isIncome ? CupertinoIcons.arrow_down_left : CupertinoIcons.arrow_up_right,
+                color: color,
+                size: 20,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
 
             Expanded(
               child: Column(
@@ -394,21 +357,16 @@ class SheetDetailsScreen extends ConsumerWidget {
                 children: [
                   Text(
                     record.detail,
-                    style: semiBoldText(16, color: Colors.white),
+                    style: semiBoldText(16, color: AppColors.textPrimary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Icon(CupertinoIcons.calendar, size: 14, color: AppColors.hintColor),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('dd MMMM').format(record.date).toUpperCase(),
-                        style: mediumText(12, color: AppColors.grey).copyWith(letterSpacing: 0.7),
-                      ),
-                    ],
+                  Text(
+                    DateFormat('dd MMMM').format(record.date).toUpperCase(),
+                    style: mediumText(
+                      12,
+                      color: AppColors.textSecondary,
+                    ).copyWith(letterSpacing: 0.7),
                   ),
                 ],
               ),
@@ -420,7 +378,7 @@ class SheetDetailsScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '${record.isIncome ? '+' : ''}${fmt.format(record.amount)}',
+                  '${record.isIncome ? '+ ' : ''}${fmt.format(record.amount)}',
                   style: boldText(16, color: color).copyWith(letterSpacing: -0.5),
                 ),
                 Text(
@@ -429,8 +387,8 @@ class SheetDetailsScreen extends ConsumerWidget {
                     10,
                     color: record.isIncome
                         ? AppColors.success.withValues(alpha: 0.8)
-                        : AppColors.white.withValues(alpha: 0.6),
-                  ).copyWith(letterSpacing: 1.2),
+                        : AppColors.textSecondary.withValues(alpha: 0.8),
+                  ),
                 ),
               ],
             ),

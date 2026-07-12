@@ -1,72 +1,73 @@
 import 'package:budgetly/core/import_to_export.dart';
 
-class CategoryProvider extends ChangeNotifier {
+// ─── Asynchronous Data Providers ─────────────────────────────────────────────
+
+/// Fetches and caches the user's categories.
+final categoriesProvider = FutureProvider<List<Category>>((ref) async {
+  final repo = ref.watch(categoryRepositoryProvider);
+  return repo.getCategories();
+});
+
+/// Fetches and caches totals spent in each category.
+final categoryTotalsProvider = FutureProvider<Map<String, double>>((ref) async {
+  final repo = ref.watch(categoryRepositoryProvider);
+  final categoriesList = await ref.watch(categoriesProvider.future);
+  final Map<String, double> totalsMap = {};
+  await Future.wait(
+    categoriesList.map((category) async {
+      final total = await repo.getCategoryTotal(category.id);
+      totalsMap[category.id] = total;
+    }),
+  );
+  return totalsMap;
+});
+
+/// Fetches and caches transaction counts in each category.
+final categoryTransactionCountsProvider = FutureProvider<Map<String, int>>((ref) async {
+  final repo = ref.watch(categoryRepositoryProvider);
+  final categoriesList = await ref.watch(categoriesProvider.future);
+  final Map<String, int> countsMap = {};
+  await Future.wait(
+    categoriesList.map((category) async {
+      final count = await repo.getCategoryTransactionCount(category.id);
+      countsMap[category.id] = count;
+    }),
+  );
+  return countsMap;
+});
+
+// ─── Combined Categories State Provider ──────────────────────────────────────
+
+final categoriesStateProvider = Provider<AsyncValue<CategoriesState>>((ref) {
+  final asyncValues = [
+    ref.watch(categoriesProvider),
+    ref.watch(categoryTotalsProvider),
+    ref.watch(categoryTransactionCountsProvider),
+  ];
+
+  for (final value in asyncValues) {
+    if (value.isLoading) return const AsyncValue.loading();
+    if (value.hasError) return AsyncValue.error(value.error!, value.stackTrace!);
+  }
+
+  return AsyncValue.data(
+    CategoriesState(
+      categories: (asyncValues[0] as AsyncValue<List<Category>>).value ?? [],
+      categoryTotals: (asyncValues[1] as AsyncValue<Map<String, double>>).value ?? {},
+      categoryTransactionCounts: (asyncValues[2] as AsyncValue<Map<String, int>>).value ?? {},
+    ),
+  );
+});
+
+// ─── Category Action Controller ──────────────────────────────────────────────
+
+final categoryControllerProvider = Provider<CategoryController>((ref) {
+  return CategoryController(ref);
+});
+
+class CategoryController {
   final Ref ref;
-
-  List<Category> _categories = [];
-  Map<String, double> _categoryTotals = {};
-  Map<String, int> _categoryTransactionCounts = {};
-  bool _isLoading = true;
-
-  List<Category> get categories => _categories;
-  int get categoryCount => _categories.length;
-  bool get isLoading => _isLoading;
-  Map<String, double> get categoryTotals => _categoryTotals;
-
-  CategoryProvider(this.ref) {
-    loadCategories();
-  }
-
-  List<Category> get sortedCategories {
-    return _categories.toList()..sort((a, b) {
-      final amountA = _categoryTotals[a.id] ?? 0.0;
-      final amountB = _categoryTotals[b.id] ?? 0.0;
-      return amountB.compareTo(amountA);
-    });
-  }
-
-  int getTransactionCount(String categoryId) {
-    return _categoryTransactionCounts[categoryId] ?? 0;
-  }
-
-  double getCategoryTotal(String categoryId) {
-    return _categoryTotals[categoryId] ?? 0.0;
-  }
-
-  // MARK: Public Actions
-
-  Future<void> loadCategories({bool isRefresh = true}) async {
-    final user = FirebaseHelper.currentUser;
-    if (user == null) return;
-
-    if (isRefresh) {
-      _isLoading = true;
-      notifyListeners();
-    }
-    final result = await FirebaseHelper.getCategories();
-    final categoriesList = result;
-    _categories = result;
-
-    final totalsMap = <String, double>{};
-    final countsMap = <String, int>{};
-
-    await Future.wait(
-      categoriesList.map((category) async {
-        final total = await FirebaseHelper.getCategoryTotal(category.id);
-        final count = await FirebaseHelper.getCategoryTransactionCount(category.id);
-        totalsMap[category.id] = total;
-        countsMap[category.id] = count;
-      }),
-    );
-
-    _categoryTotals = totalsMap;
-    _categoryTransactionCounts = countsMap;
-
-    if (isRefresh) {
-      _isLoading = false;
-    }
-    notifyListeners();
-  }
+  CategoryController(this.ref);
 
   Future<void> addCategory(BuildContext context) async {
     final nameController = TextEditingController();
@@ -105,8 +106,9 @@ class CategoryProvider extends ChangeNotifier {
             onPressed: () async {
               if (nameController.text.isNotEmpty && emojiController.text.isNotEmpty) {
                 try {
-                  await FirebaseHelper.addCategory(nameController.text, emojiController.text);
-                  await loadCategories();
+                  final categoryRepo = ref.read(categoryRepositoryProvider);
+                  await categoryRepo.addCategory(nameController.text, emojiController.text);
+                  _invalidateAll();
                   if (dialogContext.mounted) appRouter.pop();
                 } catch (e) {
                   if (dialogContext.mounted) {
@@ -176,8 +178,9 @@ class CategoryProvider extends ChangeNotifier {
                     userId: category.userId,
                   );
                   appRouter.pop();
-                  await FirebaseHelper.updateCategory(updatedCategory);
-                  await loadCategories(isRefresh: false);
+                  final categoryRepo = ref.read(categoryRepositoryProvider);
+                  await categoryRepo.updateCategory(updatedCategory);
+                  _invalidateAll();
                 } catch (e) {
                   // Error handling
                 }
@@ -204,19 +207,16 @@ class CategoryProvider extends ChangeNotifier {
     );
 
     if (confirmed) {
-      await FirebaseHelper.deleteCategory(id);
-      await loadCategories();
+      final categoryRepo = ref.read(categoryRepositoryProvider);
+      await categoryRepo.deleteCategory(id);
+      _invalidateAll();
     }
   }
 
-  // MARK: Helpers
-
-  Category? getCategoryById(String id) {
-    try {
-      return _categories.firstWhere((c) => c.id == id);
-    } catch (e) {
-      return null;
-    }
+  void _invalidateAll() {
+    ref.invalidate(categoriesProvider);
+    ref.invalidate(categoryTotalsProvider);
+    ref.invalidate(categoryTransactionCountsProvider);
   }
 
   InputDecoration _inputDecoration(String hint) {

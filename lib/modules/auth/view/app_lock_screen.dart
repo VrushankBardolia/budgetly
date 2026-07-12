@@ -57,9 +57,12 @@ class _AppLockScreenState extends State<AppLockScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            Text('Budgetly is Locked', style: boldText(24, color: Colors.white)),
+            Text('Budgetly is Locked', style: boldText(24, color: AppColors.textPrimary)),
             const SizedBox(height: 16),
-            Text('Verify your identity to proceed.', style: regularText(15, color: Colors.grey)),
+            Text(
+              'Verify your identity to proceed.',
+              style: regularText(15, color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 48),
             ElevatedButton(
               onPressed: _authenticate,

@@ -1,72 +1,108 @@
-import '../../../core/import_to_export.dart';
+import 'package:budgetly/core/import_to_export.dart';
 
-class SettingProvider extends ChangeNotifier {
-  final Ref ref;
+// ─── Asynchronous Data Providers ─────────────────────────────────────────────
 
-  // ─── State ───────────────────────────────────────────────────────
-  UserModel? currentUser;
+/// Fetches and caches the current logged-in user model from Firestore.
+final currentUserProvider = FutureProvider<UserModel?>((ref) async {
+  final user = FirebaseHelper.currentUser;
+  if (user?.uid == null) {
+    return PreferenceHelper.user;
+  }
+
+  try {
+    final repo = ref.watch(userRepositoryProvider);
+    final userModel = await repo.getUserData(user!.email!);
+
+    if (userModel != null) {
+      PreferenceHelper.user = userModel;
+      return userModel;
+    }
+  } catch (e) {
+    debugPrint('Error loading user data: $e');
+  }
+  return PreferenceHelper.user;
+});
+
+/// Fetches and caches the app version.
+final appVersionProvider = FutureProvider<String>((ref) async {
+  try {
+    final info = await PackageInfo.fromPlatform();
+    return info.version;
+  } catch (e) {
+    debugPrint('Error loading package info: $e');
+    return '1.0.0';
+  }
+});
+
+// ─── Local UI State Providers ────────────────────────────────────────────────
+
+/// Holds whether biometric lock is enabled.
+final biometricEnabledProvider = StateProvider<bool>((ref) {
+  return PreferenceHelper.isEnabledBiometric;
+});
+
+// ─── Combined Settings State Provider ────────────────────────────────────────
+
+final settingStateProvider = Provider<AsyncValue<SettingState>>((ref) {
+  final asyncValues = [ref.watch(currentUserProvider), ref.watch(appVersionProvider)];
+
+  for (final value in asyncValues) {
+    if (value.isLoading) return const AsyncValue.loading();
+    if (value.hasError) return AsyncValue.error(value.error!, value.stackTrace!);
+  }
+
+  final user = (asyncValues[0] as AsyncValue<UserModel?>).value;
+  final isBiometricEnabled = ref.watch(biometricEnabledProvider);
+  final version = (asyncValues[1] as AsyncValue<String>).value ?? '1.0.0';
+
   String usingSince = '';
-  bool isLoading = true;
-  bool notificationsEnabled = false;
-  bool isNotificationLoading = false;
-  bool isBiometricEnabled = false;
-  String version = '1.0.0';
+  if (user != null && user.createdAt != null) {
+    usingSince = 'Using since ${_monthName(user.createdAt!.month)} ${user.createdAt!.year}';
+  }
 
+  return AsyncValue.data(
+    SettingState(
+      currentUser: user,
+      usingSince: usingSince,
+      isBiometricEnabled: isBiometricEnabled,
+      version: version,
+      notificationsEnabled: PreferenceHelper.isNotificationEnabled,
+    ),
+  );
+});
+
+String _monthName(int month) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  return months[month - 1];
+}
+
+// ─── Settings Action Controller ──────────────────────────────────────────────
+
+final settingsControllerProvider = Provider<SettingsController>((ref) {
+  return SettingsController(ref);
+});
+
+class SettingsController {
+  final Ref ref;
   final LocalAuthentication _localAuth = LocalAuthentication();
 
-  SettingProvider(this.ref) {
-    currentUser = PreferenceHelper.user;
-    isBiometricEnabled = PreferenceHelper.isEnabledBiometric;
-    loadUserData();
-    loadVersionInfo();
-  }
-
-  // ─── User Data ────────────────────────────────────────────────────────────
-
-  Future<void> loadUserData() async {
-    final user = FirebaseHelper.currentUser;
-    if (user?.uid == null) {
-      isLoading = false;
-      notifyListeners();
-      return;
-    }
-
-    try {
-      final doc = await FirebaseHelper.getUserData(user!.email!);
-
-      if (doc.exists && doc.data() != null) {
-        final data = doc.data()!;
-        data['uid'] = user.uid;
-
-        final userModel = UserModel.fromJson(data);
-        currentUser = userModel;
-        PreferenceHelper.user = userModel;
-
-        final Timestamp? ts = data['createdAt'];
-        usingSince = ts != null
-            ? 'Using since ${_monthName(ts.toDate().month)} ${ts.toDate().year}'
-            : '';
-      }
-    } catch (e) {
-      debugPrint('Error loading user data: $e');
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  String get initials => currentUser?.name.isNotEmpty == true
-      ? currentUser!.name.trim().split(' ').length > 1
-            ? '${currentUser!.name.trim().split(' ')[0][0]}${currentUser!.name.trim().split(' ')[1][0]}'
-                  .toUpperCase()
-            : currentUser!.name.trim().split(' ')[0][0].toUpperCase()
-      : 'U';
-
-  // ─── Biometric ────────────────────────────────────────────────────────────
+  SettingsController(this.ref);
 
   Future<void> toggleBiometric(bool value) async {
     if (value) {
-      // Trying to enable
       try {
         final canCheck = await _localAuth.canCheckBiometrics;
         final isDeviceSupported = await _localAuth.isDeviceSupported();
@@ -75,20 +111,17 @@ class SettingProvider extends ChangeNotifier {
           errorSnackbar('Biometric authentication is not supported on this device.');
           return;
         }
-        isBiometricEnabled = true;
+        ref.read(biometricEnabledProvider.notifier).state = true;
         PreferenceHelper.isEnabledBiometric = true;
       } catch (e) {
         debugPrint('Biometric Error: $e');
         errorSnackbar('Failed to authenticate.');
       }
     } else {
-      isBiometricEnabled = false;
+      ref.read(biometricEnabledProvider.notifier).state = false;
       PreferenceHelper.isEnabledBiometric = false;
     }
-    notifyListeners();
   }
-
-  // ─── Sign Out ─────────────────────────────────────────────────────────────
 
   Future<void> handleSignOut() async {
     HapticFeedback.heavyImpact();
@@ -108,46 +141,12 @@ class SettingProvider extends ChangeNotifier {
     PreferenceHelper.clearAll();
     await FirebaseHelper.signOut();
     WidgetHelper.updateRemainingBudgetWidget();
-    ref.read(homeProvider).currentIndex = 0;
+    ref.read(homeProvider).changeIndex(0);
     appRouter.pushReplacementNamed(Routes.ONBOARDING);
   }
 
-  // ─── About ────────────────────────────────────────────────────────────────
-
-  void showAboutAppDialog() {
+  void showAboutAppDialog(String version) {
     HapticFeedback.heavyImpact();
     AboutSheet.show(version);
-  }
-
-  Future<void> loadVersionInfo() async {
-    try {
-      final info = await PackageInfo.fromPlatform();
-      version = info.version;
-    } catch (e) {
-      debugPrint('Error loading package info: $e');
-    } finally {
-      isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // ─── Helpers ──────────────────────────────────────────────────────────────
-
-  String _monthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
   }
 }
